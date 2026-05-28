@@ -44,6 +44,7 @@ kotlin {
             implementation(libs.compose.uiToolingPreview)
             // Koin
             implementation(libs.koin.android)
+            implementation(libs.ktor.client.cio)
         }
         commonMain.dependencies {
             implementation(libs.compose.runtime)
@@ -77,12 +78,25 @@ kotlin {
             implementation(libs.kotlinx.datetime)
             // Persistent storage in KMP, for small data
             implementation(libs.multiplatformSettings)
+            // Ktor core
+            implementation(libs.ktor.client.core)
+            implementation(libs.ktor.client.websockets)
             //Room
             implementation(libs.androidx.room.runtime)
             implementation(libs.androidx.sqlite.bundled)
+            // Supabase Core SDK via BOM
+            implementation(project.dependencies.platform(libs.supabase.bom))
+            implementation(libs.supabase.postgrest)
+            implementation(libs.supabase.realtime)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
+        }
+        iosMain.dependencies {
+            implementation(libs.ktor.client.darwin)
+        }
+        jvmMain.dependencies {
+            implementation(libs.ktor.client.cio)
         }
     }
 }
@@ -93,4 +107,8 @@ room {
 
 dependencies {
     androidRuntimeClasspath(libs.compose.uiTooling)
+    add("kspAndroid", libs.androidx.room.compiler)
+    add("kspIosArm64", libs.androidx.room.compiler)
+    add("kspIosSimulatorArm64", libs.androidx.room.compiler)
+    add("kspJvm", libs.androidx.room.compiler)
 }

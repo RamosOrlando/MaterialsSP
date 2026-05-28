@@ -1,0 +1,366 @@
+package com.materials.features.category.presentation
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import coil3.compose.SubcomposeAsyncImage
+import com.materials.core.presentation.theme.*
+import com.materials.features.category.domain.model.Category
+
+import org.koin.compose.viewmodel.koinViewModel
+
+@Composable
+fun CategoryScreen(
+    modifier: Modifier = Modifier,
+    viewModel: CategoryViewModel = koinViewModel()
+) {
+    val uiState by viewModel.uiState.collectAsState()
+    val searchQuery by viewModel.searchQuery.collectAsState()
+
+    CategoryScreenContent(
+        uiState = uiState,
+        searchQuery = searchQuery,
+        onEvent = { viewModel.onEvent(it) },
+        modifier = modifier
+    )
+}
+
+@Composable
+fun CategoryScreenContent(
+    uiState: CategoryUiState,
+    searchQuery: String,
+    onEvent: (CategoryEvent) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .background(IndustrialBackground)
+    ) {
+        // Header Content: Title and Subtitle
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp)
+        ) {
+            Text(
+                text = "Categorías de materiales",
+                fontWeight = FontWeight.ExtraBold,
+                color = IndustrialCharcoalDark,
+                style = MaterialTheme.typography.headlineMedium.copy(
+                    fontSize = 28.sp,
+                    letterSpacing = (-0.5).sp
+                )
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "Explore nuestra selección de materiales ordenado por categorias.",
+                color = IndustrialCharcoalMedium,
+                style = MaterialTheme.typography.bodyMedium,
+                lineHeight = 20.sp
+            )
+        }
+
+        // Search Bar
+        SearchBarSection(
+            query = searchQuery,
+            onQueryChange = { onEvent(CategoryEvent.OnSearchQueryChanged(it)) }
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Body Area (State handling)
+        Box(modifier = Modifier.fillMaxSize().weight(1f)) {
+            when (val state = uiState) {
+                is CategoryUiState.Loading -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(color = IndustrialOrange)
+                    }
+                }
+                is CategoryUiState.Success -> {
+                    if (state.categories.isEmpty()) {
+                        Box(
+                            modifier = Modifier.fillMaxSize().padding(32.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Icon(
+                                    imageVector = Icons.Default.SearchOff,
+                                    contentDescription = null,
+                                    tint = IndustrialCharcoalMedium,
+                                    modifier = Modifier.size(64.dp)
+                                )
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Text(
+                                    text = "No se encontraron categorías",
+                                    color = IndustrialCharcoalDark,
+                                    fontWeight = FontWeight.SemiBold,
+                                    style = MaterialTheme.typography.titleMedium
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = "Intenta buscar con otros términos",
+                                    color = IndustrialCharcoalMedium,
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
+                        }
+                    } else {
+                        LazyColumn(
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                            verticalArrangement = Arrangement.spacedBy(16.dp),
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            items(state.categories, key = { it.categoryId!! }) { category ->
+                                CategoryCard(category = category)
+                            }
+                        }
+                    }
+                }
+                is CategoryUiState.Error -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize().padding(16.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Card(
+                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                            shape = IndustrialShapes.medium,
+                            modifier = Modifier.fillMaxWidth().padding(16.dp)
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(24.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.ErrorOutline,
+                                    contentDescription = "Error",
+                                    tint = Color.Red,
+                                    modifier = Modifier.size(48.dp)
+                                )
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Text(
+                                    text = "Error de Conexión",
+                                    fontWeight = FontWeight.Bold,
+                                    color = IndustrialCharcoalDark,
+                                    style = MaterialTheme.typography.titleMedium
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = state.message,
+                                    color = IndustrialCharcoalMedium,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    modifier = Modifier.padding(horizontal = 8.dp)
+                                )
+                                Spacer(modifier = Modifier.height(20.dp))
+                                Button(
+                                    onClick = { onEvent(CategoryEvent.Refresh) },
+                                    colors = ButtonDefaults.buttonColors(containerColor = IndustrialOrange),
+                                    shape = IndustrialShapes.small
+                                ) {
+                                    Text(text = "Reintentar", color = Color.White)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun SearchBarSection(
+    query: String,
+    onQueryChange: (String) -> Unit
+) {
+    val keyboardController = LocalSoftwareKeyboardController.current
+
+    OutlinedTextField(
+        value = query,
+        onValueChange = onQueryChange,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        placeholder = {
+            Text(
+                text = "Buscar Categoría",
+                color = IndustrialCharcoalMedium.copy(alpha = 0.8f),
+                style = MaterialTheme.typography.bodyLarge
+            )
+        },
+        leadingIcon = {
+            Icon(
+                imageVector = Icons.Default.Search,
+                contentDescription = "Icono buscar",
+                tint = IndustrialCharcoalDark
+            )
+        },
+        trailingIcon = {
+            if (query.isNotEmpty()) {
+                IconButton(onClick = { onQueryChange("") }) {
+                    Icon(
+                        imageVector = Icons.Default.Clear,
+                        contentDescription = "Limpiar",
+                        tint = IndustrialCharcoalMedium
+                    )
+                }
+            }
+        },
+        keyboardOptions = KeyboardOptions(
+            imeAction = ImeAction.Search
+        ),
+        keyboardActions = KeyboardActions(
+            onSearch = {
+                keyboardController?.hide()
+            }
+        ),
+        singleLine = true,
+        shape = IndustrialShapes.small,
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = IndustrialOrange,
+            unfocusedBorderColor = Color.LightGray,
+            focusedContainerColor = Color.White,
+            unfocusedContainerColor = Color.White,
+            focusedTextColor = IndustrialCharcoalDark,
+            unfocusedTextColor = IndustrialCharcoalDark
+        )
+    )
+}
+
+@Composable
+fun CategoryCard(
+    category: Category,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(200.dp)
+            .clip(IndustrialShapes.medium)
+            .clickable { /* Navegar a los detalles de la categoría */ }
+    ) {
+        SubcomposeAsyncImage(
+            model = category.imagePath,
+            contentDescription = category.name,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize(),
+            loading = {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            Brush.linearGradient(
+                                colors = listOf(Color(0xFFE6E8EA), Color(0xFFECEEF0))
+                            )
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(
+                        color = IndustrialOrange,
+                        strokeWidth = 2.dp,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+            },
+            error = {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(IndustrialSteelBlue, IndustrialCharcoalDark)
+                            )
+                        )
+                )
+            }
+        )
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            Color.Transparent,
+                            Color.Black.copy(alpha = 0.3f),
+                            Color.Black.copy(alpha = 0.8f)
+                        ),
+                        startY = 100f
+                    )
+                )
+        )
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.BottomStart)
+                .padding(16.dp)
+        ) {
+            Text(
+                text = category.name,
+                color = Color.White,
+                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontSize = 20.sp,
+                    letterSpacing = 0.5.sp
+                ),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = category.description,
+                color = Color.White.copy(alpha = 0.85f),
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    fontSize = 14.sp,
+                    lineHeight = 18.sp
+                ),
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun CategoryScreenPreview() {
+    IndustrialTheme {
+        CategoryScreenContent(
+            uiState = CategoryUiState.Success(
+                listOf(
+                    Category(1, "Construcción", "Materiales para obra civil y edificación.", ""),
+                    Category(2, "Electricidad", "Cables, interruptores y componentes eléctricos.", ""),
+                    Category(3, "Fontanería", "Tuberías, grifos y sistemas de riego.", "")
+                )
+            ),
+            searchQuery = "",
+            onEvent = {}
+        )
+    }
+}
