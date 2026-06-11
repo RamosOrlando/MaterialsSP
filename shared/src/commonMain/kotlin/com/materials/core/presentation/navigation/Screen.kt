@@ -5,14 +5,23 @@ import kotlinx.serialization.Serializable
 @Serializable
 sealed interface Screen {
     @Serializable
-    data object Home : Screen
-    
+    data object Login : Screen
+
     @Serializable
     data object Category : Screen
     
     @Serializable
-    data object Orders : Screen
+    data object Maker : Screen
+
+    @Serializable
+    data object Provider : Screen
     
     @Serializable
-    data object Profile : Screen
+    data class Section(val categoryId: Int? = null) : Screen
+    
+    @Serializable
+    data class Material(val sectionId: Int? = null) : Screen
+    
+    @Serializable
+    data object PriceHistory : Screen
 }

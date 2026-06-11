@@ -1,0 +1,15 @@
+package com.materials.features.provider.domain.model
+
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+
+@Serializable
+data class Provider(
+    @SerialName("providerId") val providerId: Int,
+    @SerialName("name") val name: String,
+    @SerialName("address") val address: String? = null,
+    @SerialName("telephone") val telephone: Long? = null,
+    @SerialName("city") val city: String? = null,
+    @SerialName("email") val email: String? = null,
+    @SerialName("imagePath") val imagePath: String? = null
+)

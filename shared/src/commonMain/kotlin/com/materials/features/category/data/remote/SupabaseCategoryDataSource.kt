@@ -2,8 +2,18 @@ package com.materials.features.category.data.remote
 
 import com.materials.features.category.domain.model.Category
 import io.github.jan.supabase.postgrest.postgrest
+import io.github.jan.supabase.realtime.PostgresAction
+import io.github.jan.supabase.realtime.channel
+import io.github.jan.supabase.realtime.postgresChangeFlow
+import io.github.jan.supabase.realtime.realtime
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class SupabaseCategoryDataSource(
@@ -14,5 +24,25 @@ class SupabaseCategoryDataSource(
         supabaseClient.postgrest["Category"]
             .select()
             .decodeList<Category>()
+    }
+
+    override fun observeCategories(): Flow<Unit> = callbackFlow {
+        val channel = supabaseClient.realtime.channel("category_changes") {}
+        val flow = channel.postgresChangeFlow<PostgresAction>(schema = "public") {
+            table = "Category"
+        }
+        
+        val job = flow.onEach {
+            trySend(Unit)
+        }.launchIn(this)
+
+        channel.subscribe()
+        
+        awaitClose {
+            launch {
+                channel.unsubscribe()
+            }
+            job.cancel()
+        }
     }
 }

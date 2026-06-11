@@ -1,0 +1,44 @@
+/Users/orly/AndroidStudioProjects/MaterialsSP/specs/materials
+
+import androidx.room.ColumnInfo
+import androidx.room.Entity
+import androidx.room.ForeignKey
+import androidx.room.Index
+import androidx.room.PrimaryKey
+@Entity(
+    tableName = "Material",
+    indices = [
+        Index(value = ["code"], unique = true),
+        Index(value = ["makerId"]),
+        Index(value = ["sectionId"])
+    ],
+    foreignKeys = [
+        ForeignKey(
+            entity = MakerEntity::class,
+            parentColumns = ["makerId"],
+            childColumns = ["makerId"],
+            onDelete = ForeignKey.SET_NULL
+        ),
+        ForeignKey(
+            entity = SectionEntity::class,
+            parentColumns = ["sectionId"],
+            childColumns = ["sectionId"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ]
+)
+data class MaterialEntity(
+    @PrimaryKey
+    @ColumnInfo(name = "materialId")
+    val materialId: String,
+    @ColumnInfo(name = "code")
+    val code: String,
+    @ColumnInfo(name = "name")
+    val name: String,
+    @ColumnInfo(name = "unit")
+    val unit: String?, // Nullable en PostgreSQL
+    @ColumnInfo(name = "makerId")
+    val makerId: String?, // Nullable en PostgreSQL (Clave Foránea)
+    @ColumnInfo(name = "sectionId")
+    val sectionId: Int // NOT NULL en PostgreSQL (Clave Foránea)
+)

@@ -1,0 +1,28 @@
+import androidx.room.ColumnInfo
+import androidx.room.Entity
+import androidx.room.Index
+import androidx.room.PrimaryKey
+@Entity(
+    tableName = "Provider",
+    indices = [
+        // Representa la restricción UNIQUE ("name", "address") de la web
+        Index(value = ["name", "address"], unique = true)
+    ]
+)
+data class ProviderEntity(
+    @PrimaryKey
+    @ColumnInfo(name = "providerId")
+    val providerId: Int, // BIGINT (como identity en PostgreSQL)
+    @ColumnInfo(name = "name")
+    val name: String, // VARCHAR(255) NOT NULL
+    @ColumnInfo(name = "address")
+    val address: String?, // VARCHAR(255) NULL
+    @ColumnInfo(name = "telephone")
+    val telephone: Long?, // BIGINT NULL (Usamos Long para soportar números de teléfono grandes)
+    @ColumnInfo(name = "city")
+    val city: String?, // VARCHAR(100) NULL
+    @ColumnInfo(name = "email")
+    val email: String?, // VARCHAR(255) NULL
+    @ColumnInfo(name = "imagePath")
+    val imagePath: String? // VARCHAR(255) NULL
+)

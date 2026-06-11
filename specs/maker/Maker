@@ -1,0 +1,6 @@
+
+data class Maker(
+    val categoryId: Text = null, //Primary key
+    val name: String,
+    val imagePath: String
+)

@@ -1,0 +1,9 @@
+package com.materials.features.price_history.data.remote
+
+import com.materials.features.price_history.domain.model.PriceHistory
+import kotlinx.coroutines.flow.Flow
+
+interface PriceHistoryRemoteDataSource {
+    suspend fun getPriceHistories(): List<PriceHistory>
+    fun observePriceHistories(): Flow<Unit>
+}

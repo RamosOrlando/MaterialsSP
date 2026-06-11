@@ -1,0 +1,42 @@
+
+import androidx.room.ColumnInfo
+import androidx.room.Entity
+import androidx.room.ForeignKey
+import androidx.room.Index
+import androidx.room.PrimaryKey
+@Entity(
+    tableName = "PriceHistory",
+    indices = [
+        Index(value = ["materialId"]),
+        Index(value = ["providerId"])
+    ],
+    foreignKeys = [
+        // 1. Relación con la tabla Material
+        ForeignKey(
+            entity = MaterialEntity::class,
+            parentColumns = ["materialId"],
+            childColumns = ["materialId"],
+            onDelete = ForeignKey.CASCADE
+        ),
+        // 2. Relación con la tabla Provider (Detectada en la web)
+        ForeignKey(
+            entity = ProviderEntity::class,
+            parentColumns = ["providerId"],
+            childColumns = ["providerId"],
+            onDelete = ForeignKey.CASCADE // Si se elimina el proveedor, se borra su historial de precios
+        )
+    ]
+)
+data class PriceHistoryEntity(
+    @PrimaryKey
+    @ColumnInfo(name = "historyId")
+    val historyId: Long, // 'bigint' en Supabase
+    @ColumnInfo(name = "materialId")
+    val materialId: String, // 'text' en Supabase (Clave Foránea a Material)
+    @ColumnInfo(name = "providerId")
+    val providerId: Long, // 'bigint' en Supabase (Clave Foránea a Provider)
+    @ColumnInfo(name = "price")
+    val price: Double, // 'numeric' en Supabase
+    @ColumnInfo(name = "quoteDate")
+    val quoteDate: Long // 'timestamp with time zone' (Unix Epoch Milliseconds)
+)

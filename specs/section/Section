@@ -1,0 +1,9 @@
+
+data class Section(
+    @PrimaryKey
+    val sectionId: String, // Representa la llave primaria (ícono de llave verde)
+    val code: String,
+    val name: String,
+    val categoryId: String?, // Llave foránea (ícono de eslabón verde), puede ser nullable si permite nulos
+    val imagePath: String?   // Generalmente las rutas de imagen pueden ser opcionales
+)

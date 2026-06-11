@@ -3,6 +3,7 @@ package com.materials.features.category.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.materials.core.domain.util.Resource
+import com.materials.features.auth.domain.repository.AuthRepository
 import com.materials.features.category.domain.model.Category
 import com.materials.features.category.domain.use_case.GetCategoriesUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,11 +24,16 @@ sealed interface CategoryUiState {
 sealed interface CategoryEvent {
     data class OnSearchQueryChanged(val query: String) : CategoryEvent
     object Refresh : CategoryEvent
+    object SignOut : CategoryEvent
 }
 
 class CategoryViewModel(
-    private val getCategoriesUseCase: GetCategoriesUseCase
+    private val getCategoriesUseCase: GetCategoriesUseCase,
+    private val authRepository: AuthRepository
 ) : ViewModel() {
+
+    private val _isSignedOut = MutableStateFlow(false)
+    val isSignedOut = _isSignedOut.asStateFlow()
 
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
@@ -67,6 +73,12 @@ class CategoryViewModel(
                     if (result is Resource.Error) {
                         _refreshError.value = result.message
                     }
+                }
+            }
+            CategoryEvent.SignOut -> {
+                viewModelScope.launch {
+                    authRepository.signOut()
+                    _isSignedOut.value = true
                 }
             }
         }

@@ -7,4 +7,5 @@ import kotlinx.coroutines.flow.Flow
 interface CategoryRepository {
     suspend fun refreshCategories(): Resource<Unit>
     fun getCategoriesFlow(): Flow<Resource<List<Category>>>
+    fun listenToRealtimeChanges(): Flow<Unit>
 }

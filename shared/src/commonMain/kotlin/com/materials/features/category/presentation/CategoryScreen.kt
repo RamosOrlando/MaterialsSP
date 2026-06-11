@@ -32,16 +32,26 @@ import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun CategoryScreen(
+    onCategoryClick: (Int) -> Unit,
+    onLogout: () -> Unit = {},
     modifier: Modifier = Modifier,
     viewModel: CategoryViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
+    val isSignedOut by viewModel.isSignedOut.collectAsState()
+
+    LaunchedEffect(isSignedOut) {
+        if (isSignedOut) {
+            onLogout()
+        }
+    }
 
     CategoryScreenContent(
         uiState = uiState,
         searchQuery = searchQuery,
         onEvent = { viewModel.onEvent(it) },
+        onCategoryClick = onCategoryClick,
         modifier = modifier
     )
 }
@@ -51,6 +61,7 @@ fun CategoryScreenContent(
     uiState: CategoryUiState,
     searchQuery: String,
     onEvent: (CategoryEvent) -> Unit,
+    onCategoryClick: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -65,7 +76,7 @@ fun CategoryScreenContent(
                 .padding(horizontal = 16.dp, vertical = 12.dp)
         ) {
             Text(
-                text = "Categorías de materiales",
+                text = "Categorías",
                 fontWeight = FontWeight.ExtraBold,
                 color = IndustrialCharcoalDark,
                 style = MaterialTheme.typography.headlineMedium.copy(
@@ -136,7 +147,10 @@ fun CategoryScreenContent(
                             modifier = Modifier.fillMaxSize()
                         ) {
                             items(state.categories, key = { it.categoryId!! }) { category ->
-                                CategoryCard(category = category)
+                                CategoryCard(
+                                    category = category,
+                                    onCategoryClick = onCategoryClick
+                                )
                             }
                         }
                     }
@@ -255,6 +269,7 @@ fun SearchBarSection(
 @Composable
 fun CategoryCard(
     category: Category,
+    onCategoryClick: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Box(
@@ -262,7 +277,7 @@ fun CategoryCard(
             .fillMaxWidth()
             .height(200.dp)
             .clip(IndustrialShapes.medium)
-            .clickable { /* Navegar a los detalles de la categoría */ }
+            .clickable { category.categoryId?.let { onCategoryClick(it) } }
     ) {
         SubcomposeAsyncImage(
             model = category.imagePath,
@@ -347,20 +362,75 @@ fun CategoryCard(
     }
 }
 
-@Preview(showBackground = true)
+@Preview(showBackground = true, name = "Success")
 @Composable
-fun CategoryScreenPreview() {
+fun CategoryScreenSuccessPreview() {
     IndustrialTheme {
         CategoryScreenContent(
             uiState = CategoryUiState.Success(
                 listOf(
-                    Category(1, "Construcción", "Materiales para obra civil y edificación.", ""),
-                    Category(2, "Electricidad", "Cables, interruptores y componentes eléctricos.", ""),
-                    Category(3, "Fontanería", "Tuberías, grifos y sistemas de riego.", "")
+                    Category(
+                        categoryId = 1,
+                        name = "Construcción",
+                        description = "Materiales para obra civil y edificación.",
+                        imagePath = ""
+                    ),
+                    Category(
+                        categoryId = 2,
+                        name = "Electricidad",
+                        description = "Cables, interruptores y componentes eléctricos.",
+                        imagePath = ""
+                    ),
+                    Category(
+                        categoryId = 3,
+                        name = "Fontanería",
+                        description = "Tuberías, grifos y sistemas de riego.",
+                        imagePath = ""
+                    )
                 )
             ),
             searchQuery = "",
-            onEvent = {}
+            onEvent = {},
+            onCategoryClick = {}
+        )
+    }
+}
+
+@Preview(showBackground = true, name = "Loading")
+@Composable
+fun CategoryScreenLoadingPreview() {
+    IndustrialTheme {
+        CategoryScreenContent(
+            uiState = CategoryUiState.Loading,
+            searchQuery = "",
+            onEvent = {},
+            onCategoryClick = {}
+        )
+    }
+}
+
+@Preview(showBackground = true, name = "Error")
+@Composable
+fun CategoryScreenErrorPreview() {
+    IndustrialTheme {
+        CategoryScreenContent(
+            uiState = CategoryUiState.Error("No se pudo conectar al servidor."),
+            searchQuery = "",
+            onEvent = {},
+            onCategoryClick = {}
+        )
+    }
+}
+
+@Preview(showBackground = true, name = "Empty")
+@Composable
+fun CategoryScreenEmptyPreview() {
+    IndustrialTheme {
+        CategoryScreenContent(
+            uiState = CategoryUiState.Success(emptyList()),
+            searchQuery = "Material inexistente",
+            onEvent = {},
+            onCategoryClick = {}
         )
     }
 }
