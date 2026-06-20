@@ -23,10 +23,15 @@ class MakerRepositoryImpl(
 
     override suspend fun refreshMakers(): Resource<Unit> = withContext(Dispatchers.IO) {
         try {
+            println("Starting refreshMakers...")
             val remoteMakers = remoteDataSource.getMakers()
+            println("Fetched ${remoteMakers.size} makers")
             makerDao.insertMakers(remoteMakers.map { it.toEntity() })
+            println("refreshMakers finished successfully")
             Resource.Success(Unit)
         } catch (e: Exception) {
+            println("Error refreshing makers: ${e.message}")
+            e.printStackTrace()
             Resource.Error(e.message ?: "Unknown error")
         }
     }

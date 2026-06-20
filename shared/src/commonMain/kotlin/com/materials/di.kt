@@ -33,6 +33,7 @@ import com.materials.features.material.data.repository.MaterialRepositoryImpl
 import com.materials.features.material.domain.repository.MaterialRepository
 import com.materials.features.material.domain.use_case.GetMaterialsUseCase
 import com.materials.features.material.presentation.MaterialViewModel
+import com.materials.features.material.presentation.MaterialsSelectedViewModel
 import com.materials.features.price_history.data.remote.PriceHistoryRemoteDataSource
 import com.materials.features.price_history.data.remote.SupabasePriceHistoryDataSource
 import com.materials.features.price_history.data.repository.PriceHistoryRepositoryImpl
@@ -74,7 +75,18 @@ val dataModule = module {
     factory<MaterialRemoteDataSource> { SupabaseMaterialDataSource(get()) }
     factory<PriceHistoryRemoteDataSource> { SupabasePriceHistoryDataSource(get()) }
     
-    single<MaterialRepository> { MaterialRepositoryImpl(get(), get(), get(), get(), get(), get()) }
+    single<MaterialRepository> { 
+        MaterialRepositoryImpl(
+            materialDao = get(),
+            providerDao = get(),
+            priceHistoryDao = get(),
+            makerDao = get(),
+            remoteDataSource = get(),
+            priceHistoryRemoteDataSource = get(),
+            makerRemoteDataSource = get(),
+            providerRemoteDataSource = get()
+        )
+    }
     single<PriceHistoryRepository> { PriceHistoryRepositoryImpl(get(), get(), get(), get()) }
 
     factory<ProviderRemoteDataSource> { SupabaseProviderDataSource(get()) }
@@ -104,6 +116,9 @@ val viewModelModule = module {
     viewModelOf(::LoginViewModel)
     viewModelOf(::NavigationViewModel)
     viewModelOf(::MainViewModel)
+    factory { (materialIds: List<String>, initialQuantities: Map<String, Double>?) -> 
+        MaterialsSelectedViewModel(materialIds, initialQuantities ?: emptyMap(), get()) 
+    }
 }
 
 expect val platformModule: Module

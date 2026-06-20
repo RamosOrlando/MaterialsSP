@@ -23,10 +23,15 @@ class SectionRepositoryImpl(
 
     override suspend fun refreshSections(): Resource<Unit> = withContext(Dispatchers.IO) {
         try {
+            println("Starting refreshSections...")
             val remoteSections = remoteDataSource.getSections()
+            println("Fetched ${remoteSections.size} sections")
             sectionDao.insertSections(remoteSections.map { it.toEntity() })
+            println("refreshSections finished successfully")
             Resource.Success(Unit)
         } catch (e: Exception) {
+            println("Error refreshing sections: ${e.message}")
+            e.printStackTrace()
             Resource.Error(e.message ?: "Unknown error")
         }
     }

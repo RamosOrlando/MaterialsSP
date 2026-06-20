@@ -11,7 +11,7 @@ class GetSectionsUseCase(
 ) {
     suspend fun refresh(): Resource<Unit> = repository.refreshSections()
     
-    fun executeFlow(query: String = "", categoryId: Int? = null): Flow<Resource<List<Section>>> {
+    fun executeFlow(query: String = "", categoryId: String? = null): Flow<Resource<List<Section>>> {
         return repository.getSectionsFlow().map { resource ->
             if (resource is Resource.Success<List<Section>>) {
                 var filtered = resource.data
@@ -22,8 +22,7 @@ class GetSectionsUseCase(
                 
                 if (query.isNotBlank()) {
                     filtered = filtered.filter {
-                        it.name.contains(query, ignoreCase = true) ||
-                                it.code.contains(query, ignoreCase = true)
+                        it.name.contains(query, ignoreCase = true)
                     }
                 }
                 Resource.Success(filtered)

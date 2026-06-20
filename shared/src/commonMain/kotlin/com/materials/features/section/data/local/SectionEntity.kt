@@ -20,16 +20,14 @@ import com.materials.features.section.domain.model.Section
     indices = [Index(value = ["categoryId"])]
 )
 data class SectionEntity(
-    @PrimaryKey val sectionId: Int,
-    val code: String,
+    @PrimaryKey val sectionId: String,
     val name: String,
-    val categoryId: Int?,
+    val categoryId: String?,
     val imagePath: String?
 )
 
 fun SectionEntity.toDomain() = Section(
     sectionId = sectionId,
-    code = code,
     name = name,
     categoryId = categoryId,
     imagePath = imagePath
@@ -37,7 +35,6 @@ fun SectionEntity.toDomain() = Section(
 
 fun Section.toEntity() = SectionEntity(
     sectionId = sectionId,
-    code = code,
     name = name,
     categoryId = categoryId,
     imagePath = imagePath

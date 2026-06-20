@@ -13,27 +13,16 @@ class GetPriceHistoryUseCase(
     private val repository: MaterialRepository
 ) {
     fun executeFlow(query: String = ""): Flow<Resource<List<MaterialWithPrices>>> {
-        return repository.getMaterialsFlow().map { resource ->
+        return repository.getMaterialsFlow(query, null).map { resource ->
             if (resource is Resource.Success<List<MaterialWithPrices>>) {
-                val filtered = if (query.isNotBlank()) {
-                    resource.data.filter {
-                        it.material.name.contains(query, ignoreCase = true) ||
-                                it.material.code.contains(query, ignoreCase = true) ||
-                                it.maker?.name?.contains(query, ignoreCase = true) == true ||
-                                it.prices.any { p -> p.provider?.name?.contains(query, ignoreCase = true) == true }
-                    }
-                } else {
-                    resource.data
-                }
+                // Ensure we only show materials that actually have prices
+                val filtered = resource.data.filter { it.prices.isNotEmpty() }
 
-                // Sort by:
-                // 1. Availability of prices (materials with prices first)
-                // 2. Latest quote date (descending)
-                // 3. Material name (ascending)
+                // Sort by latest quote date (descending), then by material name (ascending)
                 val sorted = filtered.sortedWith(
-                    compareByDescending<MaterialWithPrices> { it.prices.isNotEmpty() }
-                        .thenByDescending { it.prices.maxByOrNull { p -> p.priceHistory.quoteDate }?.priceHistory?.quoteDate }
-                        .thenBy { it.material.name }
+                    compareByDescending<MaterialWithPrices> { 
+                        it.prices.maxByOrNull { p -> p.priceHistory.quoteDate ?: "" }?.priceHistory?.quoteDate ?: ""
+                    }.thenBy { it.material.name }
                 )
 
                 Resource.Success(sorted)

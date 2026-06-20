@@ -36,12 +36,26 @@ class RealtimeSyncManager(
     }
 
     private suspend fun initialSync() {
+        println("Starting initialSync...")
         // Fetch in order to satisfy foreign keys
-        categoryRepository.refreshCategories()
-        sectionRepository.refreshSections()
-        makerRepository.refreshMakers()
-        providerRepository.refreshProviders()
-        materialRepository.refreshMaterials()
-        priceHistoryRepository.refreshPriceHistory()
+        val catResult = categoryRepository.refreshCategories()
+        println("Category refresh: $catResult")
+        
+        val secResult = sectionRepository.refreshSections()
+        println("Section refresh: $secResult")
+        
+        val makResult = makerRepository.refreshMakers()
+        println("Maker refresh: $makResult")
+        
+        val proResult = providerRepository.refreshProviders()
+        println("Provider refresh: $proResult")
+        
+        val matResult = materialRepository.refreshMaterials()
+        println("Material refresh: $matResult")
+        
+        val priResult = priceHistoryRepository.refreshPriceHistory()
+        println("PriceHistory refresh: $priResult")
+        
+        println("initialSync finished")
     }
 }

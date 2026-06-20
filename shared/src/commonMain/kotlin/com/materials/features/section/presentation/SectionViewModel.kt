@@ -23,7 +23,7 @@ sealed interface SectionUiState {
 
 sealed interface SectionEvent {
     data class OnSearchQueryChanged(val query: String) : SectionEvent
-    data class SetCategory(val categoryId: Int?) : SectionEvent
+    data class SetCategory(val categoryId: String?) : SectionEvent
     object Refresh : SectionEvent
 }
 
@@ -34,7 +34,7 @@ class SectionViewModel(
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 
-    private val _categoryId = MutableStateFlow<Int?>(null)
+    private val _categoryId = MutableStateFlow<String?>(null)
 
     private val _refreshError = MutableStateFlow<String?>(null)
 

@@ -32,7 +32,7 @@ import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun CategoryScreen(
-    onCategoryClick: (Int) -> Unit,
+    onCategoryClick: (String) -> Unit,
     onLogout: () -> Unit = {},
     modifier: Modifier = Modifier,
     viewModel: CategoryViewModel = koinViewModel()
@@ -61,7 +61,7 @@ fun CategoryScreenContent(
     uiState: CategoryUiState,
     searchQuery: String,
     onEvent: (CategoryEvent) -> Unit,
-    onCategoryClick: (Int) -> Unit,
+    onCategoryClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -269,7 +269,7 @@ fun SearchBarSection(
 @Composable
 fun CategoryCard(
     category: Category,
-    onCategoryClick: (Int) -> Unit,
+    onCategoryClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Box(
@@ -370,19 +370,19 @@ fun CategoryScreenSuccessPreview() {
             uiState = CategoryUiState.Success(
                 listOf(
                     Category(
-                        categoryId = 1,
+                        categoryId = "1",
                         name = "Construcción",
                         description = "Materiales para obra civil y edificación.",
                         imagePath = ""
                     ),
                     Category(
-                        categoryId = 2,
+                        categoryId = "2",
                         name = "Electricidad",
                         description = "Cables, interruptores y componentes eléctricos.",
                         imagePath = ""
                     ),
                     Category(
-                        categoryId = 3,
+                        categoryId = "3",
                         name = "Fontanería",
                         description = "Tuberías, grifos y sistemas de riego.",
                         imagePath = ""

@@ -42,6 +42,7 @@ kotlin {
     sourceSets {
         androidMain.dependencies {
             implementation(libs.compose.uiToolingPreview)
+            implementation(libs.androidx.core.ktx)
             // Koin
             implementation(libs.koin.android)
             implementation(libs.ktor.client.cio)

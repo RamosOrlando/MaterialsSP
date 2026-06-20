@@ -5,9 +5,10 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class PriceHistory(
-    @SerialName("historyId") val historyId: Long,
+    @SerialName("historyId") val historyId: String,
     @SerialName("materialId") val materialId: String,
-    @SerialName("providerId") val providerId: Int,
+    @SerialName("providerId") val providerId: String,
     @SerialName("price") val price: Double,
-    @SerialName("quoteDate") val quoteDate: String
+    @SerialName("quoteDate") val quoteDate: String? = null,
+    @SerialName("username") val username: String
 )

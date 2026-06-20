@@ -38,10 +38,6 @@ fun PriceHistoryScreen(
     modifier: Modifier = Modifier,
     viewModel: PriceHistoryViewModel = koinViewModel()
 ) {
-    LaunchedEffect(Unit) {
-        viewModel.onEvent(PriceHistoryEvent.Refresh)
-    }
-
     val uiState by viewModel.uiState.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
 
@@ -219,6 +215,17 @@ fun PriceHistoryItem(
     materialWithPrices: MaterialWithPrices,
     modifier: Modifier = Modifier
 ) {
+    val latestPricesByProvider = remember(materialWithPrices) {
+        materialWithPrices.prices
+            .groupBy { it.provider?.providerId }
+            .mapValues { entry ->
+                entry.value.maxByOrNull { it.priceHistory.quoteDate ?: "" }
+            }
+            .values
+            .filterNotNull()
+            .sortedByDescending { it.priceHistory.quoteDate ?: "" }
+    }
+
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -252,16 +259,6 @@ fun PriceHistoryItem(
             Spacer(modifier = Modifier.height(12.dp))
             HorizontalDivider(color = Color.LightGray.copy(alpha = 0.2f))
             Spacer(modifier = Modifier.height(12.dp))
-
-            // Providers and latest prices
-            val latestPricesByProvider = materialWithPrices.prices
-                .groupBy { it.provider?.providerId }
-                .mapValues { entry ->
-                    entry.value.maxByOrNull { it.priceHistory.quoteDate }
-                }
-                .values
-                .filterNotNull()
-                .sortedByDescending { it.priceHistory.quoteDate }
 
             if (latestPricesByProvider.isEmpty()) {
                 Text(
@@ -357,38 +354,39 @@ fun PriceHistoryScreenSuccessPreview() {
                     MaterialWithPrices(
                         material = Material(
                             materialId = "1",
-                            code = "CEM-001",
                             name = "Cemento Holcim Fuerte",
                             unit = "Bulto 50kg",
                             makerId = "MAKER-1",
-                            sectionId = 1
+                            sectionId = "1"
                         ),
                         maker = Maker("MAKER-1", "Holcim"),
                         prices = listOf(
                             PriceWithProvider(
                                 priceHistory = PriceHistory(
-                                    historyId = 1,
+                                    historyId = "1",
                                     materialId = "1",
-                                    providerId = 1,
+                                    providerId = "1",
                                     price = 185.50,
-                                    quoteDate = "2024-05-16"
+                                    quoteDate = "2024-05-16",
+                                    username = "admin"
                                 ),
                                 provider = Provider(
-                                    providerId = 1,
+                                    providerId = "1",
                                     name = "Materiales del Norte",
                                     city = "Monterrey"
                                 )
                             ),
                             PriceWithProvider(
                                 priceHistory = PriceHistory(
-                                    historyId = 2,
+                                    historyId = "2",
                                     materialId = "1",
-                                    providerId = 2,
+                                    providerId = "2",
                                     price = 190.00,
-                                    quoteDate = "2024-05-15"
+                                    quoteDate = "2024-05-15",
+                                    username = "admin"
                                 ),
                                 provider = Provider(
-                                    providerId = 2,
+                                    providerId = "2",
                                     name = "Ferretería El Martillo",
                                     city = "Monterrey"
                                 )

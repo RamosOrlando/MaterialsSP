@@ -8,7 +8,6 @@ import androidx.room.PrimaryKey
 @Entity(
     tableName = "Material",
     indices = [
-        Index(value = ["code"], unique = true),
         Index(value = ["makerId"]),
         Index(value = ["sectionId"])
     ],
@@ -31,8 +30,6 @@ data class MaterialEntity(
     @PrimaryKey
     @ColumnInfo(name = "materialId")
     val materialId: String,
-    @ColumnInfo(name = "code")
-    val code: String,
     @ColumnInfo(name = "name")
     val name: String,
     @ColumnInfo(name = "unit")
@@ -40,5 +37,5 @@ data class MaterialEntity(
     @ColumnInfo(name = "makerId")
     val makerId: String?, // Nullable en PostgreSQL (Clave Foránea)
     @ColumnInfo(name = "sectionId")
-    val sectionId: Int // NOT NULL en PostgreSQL (Clave Foránea)
+    val sectionId: String // NOT NULL en PostgreSQL (Clave Foránea)
 )

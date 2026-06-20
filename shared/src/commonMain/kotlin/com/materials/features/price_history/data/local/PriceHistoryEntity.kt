@@ -33,15 +33,17 @@ import com.materials.features.provider.data.local.ProviderEntity
 data class PriceHistoryEntity(
     @PrimaryKey
     @ColumnInfo(name = "historyId")
-    val historyId: Long,
+    val historyId: String,
     @ColumnInfo(name = "materialId")
     val materialId: String,
     @ColumnInfo(name = "providerId")
-    val providerId: Int,
+    val providerId: String,
     @ColumnInfo(name = "price")
     val price: Double,
     @ColumnInfo(name = "quoteDate")
-    val quoteDate: String
+    val quoteDate: String?,
+    @ColumnInfo(name = "username")
+    val username: String
 )
 
 fun PriceHistoryEntity.toDomain() = PriceHistory(
@@ -49,7 +51,8 @@ fun PriceHistoryEntity.toDomain() = PriceHistory(
     materialId = materialId,
     providerId = providerId,
     price = price,
-    quoteDate = quoteDate
+    quoteDate = quoteDate,
+    username = username
 )
 
 fun PriceHistory.toEntity() = PriceHistoryEntity(
@@ -57,5 +60,6 @@ fun PriceHistory.toEntity() = PriceHistoryEntity(
     materialId = materialId,
     providerId = providerId,
     price = price,
-    quoteDate = quoteDate
+    quoteDate = quoteDate,
+    username = username
 )

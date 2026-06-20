@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class Provider(
-    @SerialName("providerId") val providerId: Int,
+    @SerialName("providerId") val providerId: String,
     @SerialName("name") val name: String,
     @SerialName("address") val address: String? = null,
     @SerialName("telephone") val telephone: Long? = null,

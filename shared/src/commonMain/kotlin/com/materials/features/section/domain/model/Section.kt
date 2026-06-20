@@ -5,9 +5,8 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class Section(
-    @SerialName("sectionId") val sectionId: Int,
-    @SerialName("code") val code: String,
+    @SerialName("sectionId") val sectionId: String,
     @SerialName("name") val name: String,
-    @SerialName("categoryId") val categoryId: Int? = null,
+    @SerialName("categoryId") val categoryId: String? = null,
     @SerialName("imagePath") val imagePath: String? = null
 )

@@ -6,6 +6,6 @@ import kotlinx.coroutines.flow.Flow
 
 interface MaterialRepository {
     suspend fun refreshMaterials(): Resource<Unit>
-    fun getMaterialsFlow(): Flow<Resource<List<MaterialWithPrices>>>
+    fun getMaterialsFlow(query: String = "", sectionId: String? = null): Flow<Resource<List<MaterialWithPrices>>>
     fun listenToRealtimeChanges(): Flow<Unit>
 }

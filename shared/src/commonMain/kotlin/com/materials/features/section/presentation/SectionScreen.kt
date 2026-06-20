@@ -33,8 +33,8 @@ import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun SectionScreen(
-    categoryId: Int? = null,
-    onSectionClick: (Int) -> Unit = {},
+    categoryId: String? = null,
+    onSectionClick: (String) -> Unit = {},
     onBackClick: () -> Unit = {},
     modifier: Modifier = Modifier,
     viewModel: SectionViewModel = koinViewModel()
@@ -61,7 +61,7 @@ fun SectionScreenContent(
     uiState: SectionUiState,
     searchQuery: String,
     onEvent: (SectionEvent) -> Unit,
-    onSectionClick: (Int) -> Unit = {},
+    onSectionClick: (String) -> Unit = {},
     onBackClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
@@ -286,7 +286,7 @@ fun SearchBarSection(
 @Composable
 fun SectionCard(
     section: Section,
-    onSectionClick: (Int) -> Unit = {},
+    onSectionClick: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Box(
@@ -364,17 +364,6 @@ fun SectionCard(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
-            Spacer(modifier = Modifier.height(2.dp))
-            Text(
-                text = "Código: ${section.code}",
-                color = Color.White.copy(alpha = 0.85f),
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    fontSize = 12.sp,
-                    lineHeight = 16.sp
-                ),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
         }
     }
 }
@@ -387,17 +376,15 @@ fun SectionScreenSuccessPreview() {
             uiState = SectionUiState.Success(
                 listOf(
                     Section(
-                        sectionId = 1,
-                        code = "SEC-001",
+                        sectionId = "1",
                         name = "Tuberías de PVC",
-                        categoryId = 1,
+                        categoryId = "1",
                         imagePath = ""
                     ),
                     Section(
-                        sectionId = 2,
-                        code = "SEC-002",
+                        sectionId = "2",
                         name = "Accesorios de Cobre",
-                        categoryId = 1,
+                        categoryId = "1",
                         imagePath = ""
                     )
                 )

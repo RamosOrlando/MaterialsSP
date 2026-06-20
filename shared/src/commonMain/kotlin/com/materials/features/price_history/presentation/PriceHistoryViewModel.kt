@@ -8,6 +8,7 @@ import com.materials.features.material.domain.repository.MaterialRepository
 import com.materials.features.price_history.domain.use_case.GetPriceHistoryUseCase
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
 sealed interface PriceHistoryUiState {
     object Loading : PriceHistoryUiState
@@ -30,8 +31,9 @@ class PriceHistoryViewModel(
 
     private val _refreshError = MutableStateFlow<String?>(null)
 
-    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class, kotlinx.coroutines.FlowPreview::class)
     val uiState: StateFlow<PriceHistoryUiState> = _searchQuery
+        .debounce(300.milliseconds)
         .flatMapLatest { query ->
             getPriceHistoryUseCase.executeFlow(query)
         }
@@ -46,6 +48,10 @@ class PriceHistoryViewModel(
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = PriceHistoryUiState.Loading
         )
+
+    init {
+        onEvent(PriceHistoryEvent.Refresh)
+    }
 
     fun onEvent(event: PriceHistoryEvent) {
         when (event) {

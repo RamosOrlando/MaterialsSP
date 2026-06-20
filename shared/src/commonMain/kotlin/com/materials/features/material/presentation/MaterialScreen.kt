@@ -37,8 +37,9 @@ import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun MaterialScreen(
-    sectionId: Int? = null,
+    sectionId: String? = null,
     onBackClick: () -> Unit = {},
+    onMaterialsSelected: (List<String>) -> Unit = {},
     modifier: Modifier = Modifier,
     viewModel: MaterialViewModel = koinViewModel()
 ) {
@@ -48,12 +49,15 @@ fun MaterialScreen(
 
     val uiState by viewModel.uiState.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
+    val selectedIds by viewModel.selectedMaterialIds.collectAsState()
 
     MaterialScreenContent(
         uiState = uiState,
         searchQuery = searchQuery,
+        selectedIds = selectedIds,
         onEvent = { viewModel.onEvent(it) },
         onBackClick = onBackClick,
+        onProceed = { onMaterialsSelected(selectedIds.toList()) },
         modifier = modifier
     )
 }
@@ -62,16 +66,34 @@ fun MaterialScreen(
 fun MaterialScreenContent(
     uiState: MaterialUiState,
     searchQuery: String,
+    selectedIds: Set<String> = emptySet(),
     onEvent: (MaterialEvent) -> Unit,
     onBackClick: () -> Unit = {},
+    onProceed: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    Column(
+    Scaffold(
         modifier = modifier
-            .fillMaxSize()
-            .background(IndustrialBackground)
-    ) {
-        // Header Content
+            .fillMaxSize(),
+        containerColor = IndustrialBackground,
+        floatingActionButton = {
+            if (selectedIds.isNotEmpty()) {
+                ExtendedFloatingActionButton(
+                    onClick = onProceed,
+                    containerColor = IndustrialOrange,
+                    contentColor = Color.White,
+                    icon = { Icon(Icons.Default.Check, contentDescription = null) },
+                    text = { Text("Continuar (${selectedIds.size})") }
+                )
+            }
+        }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
+            // Header Content
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -141,7 +163,12 @@ fun MaterialScreenContent(
                             modifier = Modifier.fillMaxSize()
                         ) {
                             items(state.materials, key = { it.material.materialId }) { materialWithPrices ->
-                                MaterialCard(materialWithPrices = materialWithPrices)
+                                val isSelected = selectedIds.contains(materialWithPrices.material.materialId)
+                                MaterialCard(
+                                    materialWithPrices = materialWithPrices,
+                                    isSelected = isSelected,
+                                    onSelect = { onEvent(MaterialEvent.ToggleMaterialSelection(it)) }
+                                )
                             }
                         }
                     }
@@ -152,6 +179,7 @@ fun MaterialScreenContent(
             }
         }
     }
+}
 }
 
 @Composable
@@ -216,6 +244,8 @@ fun MaterialSearchBar(
 @Composable
 fun MaterialCard(
     materialWithPrices: MaterialWithPrices,
+    isSelected: Boolean = false,
+    onSelect: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val material = materialWithPrices.material
@@ -224,10 +254,14 @@ fun MaterialCard(
         modifier = modifier
             .fillMaxWidth()
             .clip(IndustrialShapes.medium)
-            .border(1.dp, Color.LightGray.copy(alpha = 0.3f), IndustrialShapes.medium)
-            .clickable { /* Ver detalles del material */ },
+            .border(
+                width = if (isSelected) 2.dp else 1.dp,
+                color = if (isSelected) IndustrialOrange else Color.LightGray.copy(alpha = 0.3f),
+                shape = IndustrialShapes.medium
+            )
+            .clickable { onSelect(material.materialId) },
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = if (isSelected) 4.dp else 1.dp)
     ) {
         Column(
             modifier = Modifier.padding(16.dp)
@@ -236,24 +270,6 @@ fun MaterialCard(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Indicador visual/Icono
-                Surface(
-                    color = IndustrialBackground,
-                    shape = IndustrialShapes.small,
-                    modifier = Modifier.size(48.dp)
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            imageVector = Icons.Default.Inventory,
-                            contentDescription = null,
-                            tint = IndustrialOrange,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.width(12.dp))
-
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = material.name,
@@ -297,7 +313,7 @@ fun MaterialCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 val lowestPriceWithProvider = materialWithPrices.prices.minByOrNull { it.priceHistory.price }
-                
+
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = "Fabricante",
@@ -430,34 +446,32 @@ fun MaterialScreenSuccessPreview() {
                     MaterialWithPrices(
                         material = Material(
                             materialId = "1",
-                            code = "MAT-001",
                             name = "Tubo PVC Presión 1/2\"",
                             unit = "Metro",
                             makerId = "MAKER-01",
-                            sectionId = 1
+                            sectionId = "1"
                         ),
                         maker = Maker("MAKER-01", "Mexichem Amanco"),
                         prices = listOf(
                             PriceWithProvider(
-                                priceHistory = PriceHistory(1, "1", 1, 12.5, "2024-05-16"),
-                                provider = Provider(1, "Suministros Industriales", city = "Madrid")
+                                priceHistory = PriceHistory("1", "1", "1", 12.5, "2024-05-16", "cesar"),
+                                provider = Provider("1", "Suministros Industriales", city = "Madrid")
                             )
                         )
                     ),
                     MaterialWithPrices(
                         material = Material(
                             materialId = "2",
-                            code = "MAT-002",
                             name = "Codo 90° PVC 1/2\"",
                             unit = "Unidad",
                             makerId = "MAKER-02",
-                            sectionId = 1
+                            sectionId = "1"
                         ),
                         maker = Maker("MAKER-02", "Pavco Wavin"),
                         prices = listOf(
                             PriceWithProvider(
-                                priceHistory = PriceHistory(2, "2", 2, 3.75, "2024-05-15"),
-                                provider = Provider(2, "Ferretería Central", city = "Barcelona")
+                                priceHistory = PriceHistory("2", "2", "2", 3.75, "2024-05-15", "cesar"),
+                                provider = Provider("2", "Ferretería Central", city = "Barcelona")
                             )
                         )
                     )

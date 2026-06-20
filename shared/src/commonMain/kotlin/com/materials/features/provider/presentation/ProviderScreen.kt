@@ -385,13 +385,13 @@ fun ProviderScreenSuccessPreview() {
             uiState = ProviderUiState.Success(
                 listOf(
                     Provider(
-                        providerId = 1,
+                        providerId = "1",
                         name = "Suministros Industriales",
                         city = "Madrid",
                         imagePath = ""
                     ),
                     Provider(
-                        providerId = 2,
+                        providerId = "2",
                         name = "Ferretería Central",
                         city = "Barcelona",
                         imagePath = ""

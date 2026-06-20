@@ -24,6 +24,8 @@ import com.materials.features.category.presentation.CategoryScreen
 import com.materials.features.section.presentation.SectionScreen
 import com.materials.features.maker.presentation.MakerScreen
 import com.materials.features.material.presentation.MaterialScreen
+import com.materials.features.material.presentation.MaterialsSelectedScreen
+import com.materials.features.material.presentation.PrintPreviewScreen
 import com.materials.features.price_history.presentation.PriceHistoryScreen
 import com.materials.features.provider.presentation.ProviderScreen
 import org.koin.compose.viewmodel.koinViewModel
@@ -159,8 +161,8 @@ fun MainScreen(
             NavEntry(key) {
                 when (key) {
                     Screen.Category -> CategoryScreen(
-                        onCategoryClick = { categoryId ->
-                            backstack.add(Screen.Section(categoryId))
+                        onCategoryClick = { id ->
+                            backstack.add(Screen.Section(id))
                         },
                         onLogout = onLogout
                     )
@@ -187,7 +189,22 @@ fun MainScreen(
                                 backstack.clear()
                                 backstack.add(Screen.Category)
                             }
+                        },
+                        onMaterialsSelected = { ids ->
+                            backstack.add(Screen.MaterialsSelected(ids))
                         }
+                    )
+                    is Screen.MaterialsSelected -> MaterialsSelectedScreen(
+                        materialIds = key.materialIds,
+                        onBackClick = { backstack.removeLast() },
+                        onPrintPreview = { ids, quantities ->
+                            backstack.add(Screen.PrintPreview(ids, quantities))
+                        }
+                    )
+                    is Screen.PrintPreview -> PrintPreviewScreen(
+                        materialIds = key.materialIds,
+                        quantities = key.quantities,
+                        onBackClick = { backstack.removeLast() }
                     )
                     Screen.Maker -> MakerScreen(
                         onBackClick = {

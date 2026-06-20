@@ -11,25 +11,7 @@ class GetMaterialsUseCase(
 ) {
     suspend fun refresh(): Resource<Unit> = repository.refreshMaterials()
     
-    fun executeFlow(query: String = "", sectionId: Int? = null): Flow<Resource<List<MaterialWithPrices>>> {
-        return repository.getMaterialsFlow().map { resource ->
-            if (resource is Resource.Success<List<MaterialWithPrices>>) {
-                var filtered = resource.data
-                
-                if (sectionId != null) {
-                    filtered = filtered.filter { it.material.sectionId == sectionId }
-                }
-                
-                if (query.isNotBlank()) {
-                    filtered = filtered.filter {
-                        it.material.name.contains(query, ignoreCase = true) ||
-                                it.material.code.contains(query, ignoreCase = true)
-                    }
-                }
-                Resource.Success(filtered)
-            } else {
-                resource
-            }
-        }
+    fun executeFlow(query: String = "", sectionId: String? = null): Flow<Resource<List<MaterialWithPrices>>> {
+        return repository.getMaterialsFlow(query, sectionId)
     }
 }

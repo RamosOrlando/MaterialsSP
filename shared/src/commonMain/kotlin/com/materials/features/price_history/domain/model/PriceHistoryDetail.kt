@@ -4,9 +4,8 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class PriceHistoryDetail(
-    val historyId: Long,
+    val historyId: String,
     val materialName: String,
-    val materialCode: String,
     val providerName: String,
     val price: Double,
     val quoteDate: String,

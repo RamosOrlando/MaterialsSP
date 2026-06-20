@@ -12,7 +12,7 @@ import androidx.room.PrimaryKey
 data class ProviderEntity(
     @PrimaryKey
     @ColumnInfo(name = "providerId")
-    val providerId: Int, // BIGINT (como identity en PostgreSQL)
+    val providerId: String, // Representa la llave primaria
     @ColumnInfo(name = "name")
     val name: String, // VARCHAR(255) NOT NULL
     @ColumnInfo(name = "address")

@@ -5,6 +5,7 @@ import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.materials.features.maker.data.local.MakerEntity
+import com.materials.features.section.data.local.SectionEntity
 import com.materials.features.material.domain.model.Material
 
 @Entity(
@@ -15,33 +16,42 @@ import com.materials.features.material.domain.model.Material
             parentColumns = ["makerId"],
             childColumns = ["makerId"],
             onDelete = ForeignKey.SET_NULL
+        ),
+        ForeignKey(
+            entity = SectionEntity::class,
+            parentColumns = ["sectionId"],
+            childColumns = ["sectionId"],
+            onDelete = ForeignKey.CASCADE
         )
     ],
-    indices = [Index(value = ["makerId"])]
+    indices = [
+        Index(value = ["makerId"]),
+        Index(value = ["sectionId"])
+    ]
 )
 data class MaterialEntity(
     @PrimaryKey val materialId: String,
-    val code: String,
     val name: String,
     val unit: String?,
     val makerId: String?,
-    val sectionId: Int
+    val sectionId: String,
+    val especification: String?
 )
 
 fun MaterialEntity.toDomain() = Material(
     materialId = materialId,
-    code = code,
     name = name,
     unit = unit,
     makerId = makerId,
-    sectionId = sectionId
+    sectionId = sectionId,
+    especification = especification
 )
 
 fun Material.toEntity() = MaterialEntity(
     materialId = materialId,
-    code = code,
     name = name,
     unit = unit,
     makerId = makerId,
-    sectionId = sectionId
+    sectionId = sectionId,
+    especification = especification
 )

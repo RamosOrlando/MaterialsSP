@@ -12,7 +12,7 @@ import com.materials.features.provider.domain.model.Provider
     ]
 )
 data class ProviderEntity(
-    @PrimaryKey val providerId: Int,
+    @PrimaryKey val providerId: String,
     val name: String,
     val address: String?,
     val telephone: Long?,

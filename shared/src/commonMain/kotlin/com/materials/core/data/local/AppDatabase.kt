@@ -16,7 +16,7 @@ import com.materials.features.price_history.data.local.PriceHistoryEntity
 import com.materials.features.provider.data.local.ProviderDao
 import com.materials.features.provider.data.local.ProviderEntity
 
-@Database(entities = [CategoryEntity::class, SectionEntity::class, MakerEntity::class, MaterialEntity::class, ProviderEntity::class, PriceHistoryEntity::class], version = 4)
+@Database(entities = [CategoryEntity::class, SectionEntity::class, MakerEntity::class, MaterialEntity::class, ProviderEntity::class, PriceHistoryEntity::class], version = 6)
 @ConstructedBy(AppDatabaseConstructor::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun categoryDao(): CategoryDao

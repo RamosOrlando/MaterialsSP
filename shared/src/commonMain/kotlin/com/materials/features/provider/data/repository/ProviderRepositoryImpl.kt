@@ -23,10 +23,15 @@ class ProviderRepositoryImpl(
 
     override suspend fun refreshProviders(): Resource<Unit> = withContext(Dispatchers.IO) {
         try {
+            println("Starting refreshProviders...")
             val remoteProviders = remoteDataSource.getProviders()
+            println("Fetched ${remoteProviders.size} providers")
             providerDao.insertProviders(remoteProviders.map { it.toEntity() })
+            println("refreshProviders finished successfully")
             Resource.Success(Unit)
         } catch (e: Exception) {
+            println("Error refreshing providers: ${e.message}")
+            e.printStackTrace()
             Resource.Error(e.message ?: "Unknown error")
         }
     }

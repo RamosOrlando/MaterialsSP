@@ -11,6 +11,19 @@ interface MaterialDao {
     @Query("SELECT * FROM materials")
     fun getMaterials(): Flow<List<MaterialEntity>>
 
+    @Query("""
+        SELECT DISTINCT m.* FROM materials m
+        LEFT JOIN makers mk ON m.makerId = mk.makerId
+        LEFT JOIN PriceHistory ph ON m.materialId = ph.materialId
+        LEFT JOIN providers p ON ph.providerId = p.providerId
+        WHERE (:sectionId IS NULL OR m.sectionId = :sectionId)
+        AND (:query = '' 
+             OR m.name LIKE '%' || :query || '%' 
+             OR mk.name LIKE '%' || :query || '%'
+             OR p.name LIKE '%' || :query || '%')
+    """)
+    fun getMaterialsFiltered(query: String, sectionId: String?): Flow<List<MaterialEntity>>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertMaterials(materials: List<MaterialEntity>)
 

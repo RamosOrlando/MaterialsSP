@@ -27,19 +27,24 @@ class PriceHistoryRepositoryImpl(
 
     override suspend fun refreshPriceHistory(): Resource<Unit> = withContext(Dispatchers.IO) {
         try {
+            println("Starting refreshPriceHistory...")
             val remotePrices = remoteDataSource.getPriceHistories()
+            println("Fetched ${remotePrices.size} prices")
             priceHistoryDao.insertPriceHistories(remotePrices.map { it.toEntity() })
+            println("refreshPriceHistory finished successfully")
             Resource.Success(Unit)
         } catch (e: Exception) {
+            println("Error refreshing price history: ${e.message}")
+            e.printStackTrace()
             Resource.Error(e.message ?: "Unknown error")
         }
     }
 
     override fun getPriceHistoryDetailFlow(): Flow<Resource<List<PriceHistoryDetail>>> {
         return combine(
-            materialDao.getMaterials(),
-            providerDao.getProviders(),
-            priceHistoryDao.getAllPriceHistory()
+            materialDao.getMaterials().onStart { emit(emptyList()) },
+            providerDao.getProviders().onStart { emit(emptyList()) },
+            priceHistoryDao.getAllPriceHistory().onStart { emit(emptyList()) }
         ) { materials, providers, prices ->
             prices.map { priceEntity ->
                 val material = materials.find { it.materialId == priceEntity.materialId }
@@ -47,10 +52,9 @@ class PriceHistoryRepositoryImpl(
                 PriceHistoryDetail(
                     historyId = priceEntity.historyId,
                     materialName = material?.name ?: "Desconocido",
-                    materialCode = material?.code ?: "N/A",
                     providerName = provider?.name ?: "Desconocido",
                     price = priceEntity.price,
-                    quoteDate = priceEntity.quoteDate,
+                    quoteDate = priceEntity.quoteDate ?: "Desconocido",
                     unit = material?.unit
                 )
             }.sortedByDescending { it.quoteDate }
