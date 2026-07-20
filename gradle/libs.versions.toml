@@ -36,6 +36,8 @@ ksp = "2.3.6"
 room = "2.8.4"
 sqliteBundled = "2.6.2"
 
+screenshot = "0.0.1-alpha13"
+
 supabase = "3.6.0"
 
 ktor = "3.5.0"
@@ -88,6 +90,9 @@ multiplatformSettings = { module = "com.russhwolf:multiplatform-settings-no-arg"
 androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
 androidx-sqlite-bundled = { group = "androidx.sqlite", name = "sqlite-bundled", version.ref = "sqliteBundled"}
 androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
+# Screenshot Testing
+screenshot-validation-api = { group = "com.android.tools.screenshot", name = "screenshot-validation-api", version.ref = "screenshot" }
+androidx-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
 # Supabase SDK Modules (via BOM)
 supabase-bom = { group = "io.github.jan-tennert.supabase", name = "bom", version.ref = "supabase" }
 supabase-postgrest = { group = "io.github.jan-tennert.supabase", name = "postgrest-kt" }
@@ -111,3 +116,4 @@ kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref =
 jetbrains-kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlinSerialization"}
 google-devtools-ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 androidx-room = { id = "androidx.room", version.ref = "room" }
+screenshot = { id = "com.android.compose.screenshot", version.ref = "screenshot" }

@@ -8,6 +8,7 @@ plugins {
     alias(libs.plugins.jetbrains.kotlin.serialization)
     alias(libs.plugins.google.devtools.ksp)
     alias(libs.plugins.androidx.room)
+    alias(libs.plugins.screenshot)
 }
 
 kotlin {
@@ -27,6 +28,8 @@ kotlin {
        namespace = "com.materials.shared"
        compileSdk = libs.versions.android.compileSdk.get().toInt()
        minSdk = libs.versions.android.minSdk.get().toInt()
+       
+       experimentalProperties["android.experimental.enableScreenshotTest"] = true
     
        compilerOptions {
            jvmTarget = JvmTarget.JVM_11
@@ -46,6 +49,9 @@ kotlin {
             // Koin
             implementation(libs.koin.android)
             implementation(libs.ktor.client.cio)
+            
+            // Screenshot Testing Support
+            implementation(libs.screenshot.validation.api)
         }
         commonMain.dependencies {
             implementation(libs.compose.runtime)

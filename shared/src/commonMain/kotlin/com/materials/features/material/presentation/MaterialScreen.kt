@@ -13,6 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -70,6 +71,15 @@ fun MaterialScreenContent(
     onProceed: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
+    val adaptiveInfo = currentWindowAdaptiveInfo()
+    val columns = with(adaptiveInfo.windowSizeClass) {
+        when {
+            isWidthAtLeastBreakpoint(840) -> 3
+            isWidthAtLeastBreakpoint(600) -> 2
+            else -> 1
+        }
+    }
+
     Scaffold(
         modifier = modifier
             .fillMaxSize(),
@@ -165,9 +175,10 @@ fun MaterialScreenContent(
                             }
                         } else {
                             LazyVerticalGrid(
-                                columns = GridCells.Fixed(1), // Cambiado a 1 columna para el nuevo diseño de lista detallada
+                                columns = GridCells.Fixed(columns),
                                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                                 verticalArrangement = Arrangement.spacedBy(16.dp),
+                                horizontalArrangement = Arrangement.spacedBy(16.dp),
                                 modifier = Modifier.fillMaxSize()
                             ) {
                                 items(state.materials, key = { it.materialId }) { material ->

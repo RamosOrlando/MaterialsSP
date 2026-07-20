@@ -2,16 +2,16 @@ package com.materials.core.presentation.navigation
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.NavEntry
@@ -41,6 +41,18 @@ fun MainScreen(
     val backstack = remember { mutableStateListOf<Screen>(initialScreen) }
     val currentScreen = backstack.last()
     val userEmail = viewModel.userEmail
+
+    val adaptiveInfo = currentWindowAdaptiveInfo()
+    val shouldUseRail = adaptiveInfo.windowSizeClass.isWidthAtLeastBreakpoint(600)
+
+    val navItems = remember {
+        listOf(
+            NavigationItem("Catalogo", Icons.Default.GridView, Screen.Category),
+            NavigationItem("Fabricantes", Icons.Default.Business, Screen.Maker),
+            NavigationItem("Proveedores", Icons.Default.LocalShipping, Screen.Provider),
+            NavigationItem("Historial", Icons.Default.History, Screen.PriceHistory)
+        )
+    }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -100,133 +112,187 @@ fun MainScreen(
             )
         },
         bottomBar = {
-            NavigationBar(
-                containerColor = Color.White,
-                tonalElevation = 8.dp
-            ) {
-                val items = listOf(
-                    Triple("Catalogo", Icons.Default.GridView, Screen.Category),
-                    Triple("Fabricantes", Icons.Default.Business, Screen.Maker),
-                    Triple("Proveedores", Icons.Default.LocalShipping, Screen.Provider),
-                    Triple("Historial", Icons.Default.History, Screen.PriceHistory)
-                )
-
-                items.forEach { (label, icon, screen) ->
-                    val isSelected = when (screen) {
-                        is Screen.Category if (currentScreen is Screen.Category || currentScreen is Screen.Section || currentScreen is Screen.Material) -> true
-                        is Screen.Maker if currentScreen is Screen.Maker -> true
-                        is Screen.Provider if currentScreen is Screen.Provider -> true
-                        is Screen.PriceHistory if currentScreen is Screen.PriceHistory -> true
-                        else -> currentScreen == screen
-                    }
-                    NavigationBarItem(
-                        selected = isSelected,
-                        onClick = {
-                            if (!isSelected || (screen is Screen.Category && (currentScreen is Screen.Section || currentScreen is Screen.Material))) {
-                                backstack.clear()
-                                backstack.add(screen)
-                            }
-                        },
-                        icon = {
-                            Icon(
-                                imageVector = icon,
-                                contentDescription = label
+            if (!shouldUseRail) {
+                NavigationBar(
+                    containerColor = Color.White,
+                    tonalElevation = 8.dp
+                ) {
+                    navItems.forEach { item ->
+                        val isSelected = isNavItemSelected(currentScreen, item.screen)
+                        NavigationBarItem(
+                            selected = isSelected,
+                            onClick = { handleNavClick(item.screen, currentScreen, backstack) },
+                            icon = {
+                                Icon(
+                                    imageVector = item.icon,
+                                    contentDescription = item.label
+                                )
+                            },
+                            label = {
+                                Text(
+                                    text = item.label,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                    style = MaterialTheme.typography.labelMedium
+                                )
+                            },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = IndustrialOrange,
+                                selectedTextColor = IndustrialOrange,
+                                indicatorColor = Color(0xFFFFDBCC).copy(alpha = 0.5f),
+                                unselectedIconColor = IndustrialCharcoalMedium,
+                                unselectedTextColor = IndustrialCharcoalMedium
                             )
-                        },
-                        label = {
-                            Text(
-                                text = label,
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                style = MaterialTheme.typography.labelMedium
-                            )
-                        },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = IndustrialOrange,
-                            selectedTextColor = IndustrialOrange,
-                            indicatorColor = Color(0xFFFFDBCC).copy(alpha = 0.5f),
-                            unselectedIconColor = IndustrialCharcoalMedium,
-                            unselectedTextColor = IndustrialCharcoalMedium
                         )
-                    )
+                    }
                 }
             }
         },
         containerColor = IndustrialBackground
     ) { innerPadding ->
-        NavDisplay(
-            backStack = backstack,
-            modifier = Modifier.padding(innerPadding),
-            onBack = { if (backstack.size > 1) backstack.removeLast() }
-        ) { key ->
-            NavEntry(key) {
-                when (key) {
-                    Screen.Category -> CategoryScreen(
-                        onCategoryClick = { id ->
-                            backstack.add(Screen.Section(id))
-                        },
-                        onLogout = onLogout
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+        ) {
+            if (shouldUseRail) {
+                NavigationRail(
+                    containerColor = Color.White,
+                    modifier = Modifier.border(
+                        width = 0.5.dp,
+                        color = Color.LightGray.copy(alpha = 0.5f)
                     )
-                    is Screen.Section -> SectionScreen(
-                        categoryId = key.categoryId,
-                        onSectionClick = { sectionId ->
-                            backstack.add(Screen.Material(sectionId))
-                        },
-                        onBackClick = {
-                            if (backstack.size > 1) {
-                                backstack.removeLast()
-                            } else {
+                ) {
+                    Spacer(modifier = Modifier.weight(1f))
+                    navItems.forEach { item ->
+                        val isSelected = isNavItemSelected(currentScreen, item.screen)
+                        NavigationRailItem(
+                            selected = isSelected,
+                            onClick = { handleNavClick(item.screen, currentScreen, backstack) },
+                            icon = {
+                                Icon(
+                                    imageVector = item.icon,
+                                    contentDescription = item.label
+                                )
+                            },
+                            label = {
+                                Text(
+                                    text = item.label,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                    style = MaterialTheme.typography.labelMedium
+                                )
+                            },
+                            colors = NavigationRailItemDefaults.colors(
+                                selectedIconColor = IndustrialOrange,
+                                selectedTextColor = IndustrialOrange,
+                                indicatorColor = Color(0xFFFFDBCC).copy(alpha = 0.5f),
+                                unselectedIconColor = IndustrialCharcoalMedium,
+                                unselectedTextColor = IndustrialCharcoalMedium
+                            )
+                        )
+                    }
+                    Spacer(modifier = Modifier.weight(1f))
+                }
+            }
+
+            NavDisplay(
+                backStack = backstack,
+                modifier = Modifier.weight(1f),
+                onBack = { if (backstack.size > 1) backstack.removeLast() }
+            ) { key ->
+                NavEntry(key) {
+                    when (key) {
+                        Screen.Category -> CategoryScreen(
+                            onCategoryClick = { id ->
+                                backstack.add(Screen.Section(id))
+                            },
+                            onLogout = onLogout
+                        )
+                        is Screen.Section -> SectionScreen(
+                            categoryId = key.categoryId,
+                            onSectionClick = { sectionId ->
+                                backstack.add(Screen.Material(sectionId))
+                            },
+                            onBackClick = {
+                                if (backstack.size > 1) {
+                                    backstack.removeLast()
+                                } else {
+                                    backstack.clear()
+                                    backstack.add(Screen.Category)
+                                }
+                            }
+                        )
+                        is Screen.Material -> MaterialScreen(
+                            sectionId = key.sectionId,
+                            onBackClick = {
+                                if (backstack.size > 1) {
+                                    backstack.removeLast()
+                                } else {
+                                    backstack.clear()
+                                    backstack.add(Screen.Category)
+                                }
+                            },
+                            onMaterialsSelected = { ids ->
+                                backstack.add(Screen.MaterialsSelected(ids))
+                            }
+                        )
+                        is Screen.MaterialsSelected -> MaterialsSelectedScreen(
+                            materialIds = key.materialIds,
+                            onBackClick = { backstack.removeLast() },
+                            onPrintPreview = { ids, quantities ->
+                                backstack.add(Screen.PrintPreview(ids, quantities))
+                            }
+                        )
+                        is Screen.PrintPreview -> PrintPreviewScreen(
+                            materialIds = key.materialIds,
+                            quantities = key.quantities,
+                            onBackClick = { backstack.removeLast() }
+                        )
+                        Screen.Maker -> MakerScreen(
+                            onBackClick = {
                                 backstack.clear()
                                 backstack.add(Screen.Category)
                             }
-                        }
-                    )
-                    is Screen.Material -> MaterialScreen(
-                        sectionId = key.sectionId,
-                        onBackClick = {
-                            if (backstack.size > 1) {
-                                backstack.removeLast()
-                            } else {
+                        )
+                        Screen.Provider -> ProviderScreen(
+                            onBackClick = {
                                 backstack.clear()
                                 backstack.add(Screen.Category)
                             }
-                        },
-                        onMaterialsSelected = { ids ->
-                            backstack.add(Screen.MaterialsSelected(ids))
-                        }
-                    )
-                    is Screen.MaterialsSelected -> MaterialsSelectedScreen(
-                        materialIds = key.materialIds,
-                        onBackClick = { backstack.removeLast() },
-                        onPrintPreview = { ids, quantities ->
-                            backstack.add(Screen.PrintPreview(ids, quantities))
-                        }
-                    )
-                    is Screen.PrintPreview -> PrintPreviewScreen(
-                        materialIds = key.materialIds,
-                        quantities = key.quantities,
-                        onBackClick = { backstack.removeLast() }
-                    )
-                    Screen.Maker -> MakerScreen(
-                        onBackClick = {
-                            backstack.clear()
-                            backstack.add(Screen.Category)
-                        }
-                    )
-                    Screen.Provider -> ProviderScreen(
-                        onBackClick = {
-                            backstack.clear()
-                            backstack.add(Screen.Category)
-                        }
-                    )
-                    Screen.PriceHistory -> PriceHistoryScreen(
-                        onBackClick = {
-                            backstack.clear()
-                            backstack.add(Screen.Category)
-                        }
-                    )
-                    else -> {}
+                        )
+                        Screen.PriceHistory -> PriceHistoryScreen(
+                            onBackClick = {
+                                backstack.clear()
+                                backstack.add(Screen.Category)
+                            }
+                        )
+                        else -> {}
+                    }
                 }
             }
         }
+    }
+}
+
+private data class NavigationItem(
+    val label: String,
+    val icon: ImageVector,
+    val screen: Screen
+)
+
+private fun isNavItemSelected(currentScreen: Screen, targetScreen: Screen): Boolean {
+    return when (targetScreen) {
+        is Screen.Category -> currentScreen is Screen.Category || currentScreen is Screen.Section || currentScreen is Screen.Material
+        is Screen.Maker -> currentScreen is Screen.Maker
+        is Screen.Provider -> currentScreen is Screen.Provider
+        is Screen.PriceHistory -> currentScreen is Screen.PriceHistory
+        else -> currentScreen == targetScreen
+    }
+}
+
+private fun handleNavClick(targetScreen: Screen, currentScreen: Screen, backstack: MutableList<Screen>) {
+    val isSelected = isNavItemSelected(currentScreen, targetScreen)
+    if (!isSelected || (targetScreen is Screen.Category && (currentScreen is Screen.Section || currentScreen is Screen.Material))) {
+        backstack.clear()
+        backstack.add(targetScreen)
     }
 }

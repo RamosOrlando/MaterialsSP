@@ -3,13 +3,15 @@ package com.materials.features.category.presentation
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -27,7 +29,6 @@ import androidx.compose.ui.unit.sp
 import coil3.compose.SubcomposeAsyncImage
 import com.materials.core.presentation.theme.*
 import com.materials.features.category.domain.model.Category
-
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -64,6 +65,15 @@ fun CategoryScreenContent(
     onCategoryClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val adaptiveInfo = currentWindowAdaptiveInfo()
+    val columns = with(adaptiveInfo.windowSizeClass) {
+        when {
+            isWidthAtLeastBreakpoint(840) -> 3
+            isWidthAtLeastBreakpoint(600) -> 2
+            else -> 1
+        }
+    }
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -141,9 +151,11 @@ fun CategoryScreenContent(
                             }
                         }
                     } else {
-                        LazyColumn(
+                        LazyVerticalGrid(
+                            columns = GridCells.Fixed(columns),
                             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                             verticalArrangement = Arrangement.spacedBy(16.dp),
+                            horizontalArrangement = Arrangement.spacedBy(16.dp),
                             modifier = Modifier.fillMaxSize()
                         ) {
                             items(state.categories, key = { it.categoryId!! }) { category ->
