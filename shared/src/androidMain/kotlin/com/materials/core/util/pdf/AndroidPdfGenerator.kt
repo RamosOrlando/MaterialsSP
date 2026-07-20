@@ -8,7 +8,7 @@ import android.graphics.Typeface
 import android.graphics.pdf.PdfDocument
 import android.os.Environment
 import android.widget.Toast
-import com.materials.features.material.domain.model.MaterialWithPrices
+import com.materials.features.material.domain.model.Material
 import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
@@ -18,7 +18,7 @@ import java.util.Locale
 class AndroidPdfGenerator(private val context: Context) : PdfGenerator {
 
     override fun generateMaterialsPdf(
-        materials: List<MaterialWithPrices>,
+        materials: List<Material>,
         quantities: Map<String, Double>,
         title: String
     ): String? {
@@ -91,7 +91,7 @@ class AndroidPdfGenerator(private val context: Context) : PdfGenerator {
         
         var grandTotal = 0.0
         
-        for (item in materials) {
+        for (material in materials) {
             // Check for new page
             if (currentY > pageHeight - margin - 40f) {
                 pdfDocument.finishPage(page)
@@ -115,18 +115,17 @@ class AndroidPdfGenerator(private val context: Context) : PdfGenerator {
                 paint.typeface = Typeface.create(Typeface.SANS_SERIF, Typeface.NORMAL)
             }
             
-            val material = item.material
             val unit = material.unit ?: "---"
             val quantity = quantities[material.materialId] ?: 1.0
-            val lowestPrice = item.prices.minByOrNull { it.priceHistory.price }?.priceHistory?.price ?: 0.0
-            val rowTotal = quantity * lowestPrice
+            val price = material.price ?: 0.0
+            val rowTotal = quantity * price
             grandTotal += rowTotal
             
-            val priceStr = "$${String.format("%.2f", lowestPrice)}"
+            val priceStr = "$${String.format("%.2f", price)}"
             val totalStr = "$${String.format("%.2f", rowTotal)}"
             
             // Alternating row background
-            if (materials.indexOf(item) % 2 != 0) {
+            if (materials.indexOf(material) % 2 != 0) {
                 paint.color = Color.parseColor("#FAFAFA")
                 canvas.drawRect(margin, currentY - 12f, pageWidth - margin, currentY + 5f, paint)
             }

@@ -9,7 +9,7 @@ import com.materials.features.section.data.local.SectionEntity
 import com.materials.features.material.domain.model.Material
 
 @Entity(
-    tableName = "materials",
+    tableName = "Material",
     foreignKeys = [
         ForeignKey(
             entity = MakerEntity::class,
@@ -35,7 +35,9 @@ data class MaterialEntity(
     val unit: String?,
     val makerId: String?,
     val sectionId: String,
-    val especification: String?
+    val specId: String?,
+    val price: Double?,
+    val quoteDate: String?
 )
 
 fun MaterialEntity.toDomain() = Material(
@@ -44,7 +46,9 @@ fun MaterialEntity.toDomain() = Material(
     unit = unit,
     makerId = makerId,
     sectionId = sectionId,
-    especification = especification
+    specId = specId,
+    price = price,
+    quoteDate = quoteDate
 )
 
 fun Material.toEntity() = MaterialEntity(
@@ -53,5 +57,7 @@ fun Material.toEntity() = MaterialEntity(
     unit = unit,
     makerId = makerId,
     sectionId = sectionId,
-    especification = especification
+    specId = specId,
+    price = price,
+    quoteDate = quoteDate
 )

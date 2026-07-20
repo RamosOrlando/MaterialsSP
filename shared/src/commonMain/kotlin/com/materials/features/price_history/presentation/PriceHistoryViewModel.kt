@@ -29,6 +29,9 @@ class PriceHistoryViewModel(
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
+
     private val _refreshError = MutableStateFlow<String?>(null)
 
     @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class, kotlinx.coroutines.FlowPreview::class)
@@ -60,11 +63,13 @@ class PriceHistoryViewModel(
             }
             PriceHistoryEvent.Refresh -> {
                 viewModelScope.launch {
+                    _isRefreshing.value = true
                     _refreshError.value = null
                     val result = repository.refreshMaterials()
                     if (result is Resource.Error) {
                         _refreshError.value = result.message
                     }
+                    _isRefreshing.value = false
                 }
             }
         }

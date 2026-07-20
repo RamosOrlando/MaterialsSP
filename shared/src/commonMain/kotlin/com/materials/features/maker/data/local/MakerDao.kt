@@ -8,12 +8,12 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface MakerDao {
-    @Query("SELECT * FROM makers")
+    @Query("SELECT * FROM Maker")
     fun getMakers(): Flow<List<MakerEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertMakers(makers: List<MakerEntity>)
 
-    @Query("DELETE FROM makers")
+    @Query("DELETE FROM Maker")
     suspend fun clearAll()
 }

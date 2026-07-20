@@ -1,13 +1,13 @@
 package com.materials.core.util.pdf
 
-import com.materials.features.material.domain.model.MaterialWithPrices
+import com.materials.features.material.domain.model.Material
 import platform.UIKit.*
 import platform.Foundation.*
 import platform.CoreGraphics.*
 
 class IosPdfGenerator : PdfGenerator {
     override fun generateMaterialsPdf(
-        materials: List<MaterialWithPrices>,
+        materials: List<Material>,
         quantities: Map<String, Double>,
         title: String
     ): String? {

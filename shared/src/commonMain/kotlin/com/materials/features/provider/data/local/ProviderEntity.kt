@@ -6,7 +6,7 @@ import androidx.room.PrimaryKey
 import com.materials.features.provider.domain.model.Provider
 
 @Entity(
-    tableName = "providers",
+    tableName = "Provider",
     indices = [
         Index(value = ["name", "address"], unique = true)
     ]

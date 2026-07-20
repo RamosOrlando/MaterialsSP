@@ -40,10 +40,12 @@ fun PriceHistoryScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
+    val isRefreshing by viewModel.isRefreshing.collectAsState()
 
     PriceHistoryScreenContent(
         uiState = uiState,
         searchQuery = searchQuery,
+        isRefreshing = isRefreshing,
         onEvent = { viewModel.onEvent(it) },
         onBackClick = onBackClick,
         modifier = modifier
@@ -54,6 +56,7 @@ fun PriceHistoryScreen(
 fun PriceHistoryScreenContent(
     uiState: PriceHistoryUiState,
     searchQuery: String,
+    isRefreshing: Boolean = false,
     onEvent: (PriceHistoryEvent) -> Unit,
     onBackClick: () -> Unit = {},
     modifier: Modifier = Modifier
@@ -125,7 +128,16 @@ fun PriceHistoryScreenContent(
                 }
                 is PriceHistoryUiState.Success -> {
                     if (state.history.isEmpty()) {
-                        EmptyHistoryState()
+                        if (isRefreshing) {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator(color = IndustrialOrange)
+                            }
+                        } else {
+                            EmptyHistoryState()
+                        }
                     } else {
                         LazyColumn(
                             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
@@ -272,19 +284,11 @@ fun PriceHistoryItem(
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                            verticalAlignment = Alignment.Top
                         ) {
-                            Row(
-                                modifier = Modifier.weight(1f),
-                                verticalAlignment = Alignment.CenterVertically
+                            Column(
+                                modifier = Modifier.weight(1f)
                             ) {
-                                Icon(
-                                    imageVector = Icons.Default.Business,
-                                    contentDescription = null,
-                                    tint = IndustrialSteelBlue,
-                                    modifier = Modifier.size(16.dp)
-                                )
-                                Spacer(modifier = Modifier.width(6.dp))
                                 Text(
                                     text = priceWithProvider.provider?.name ?: "Proveedor desconocido",
                                     color = IndustrialCharcoalDark,
@@ -292,6 +296,15 @@ fun PriceHistoryItem(
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis
                                 )
+                                priceWithProvider.provider?.address?.let { address ->
+                                    Text(
+                                        text = address,
+                                        color = IndustrialCharcoalMedium,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
                             }
                             
                             Text(
@@ -304,8 +317,7 @@ fun PriceHistoryItem(
                         Text(
                             text = "Fecha: ${priceWithProvider.priceHistory.quoteDate}",
                             color = IndustrialCharcoalMedium,
-                            style = MaterialTheme.typography.labelSmall,
-                            modifier = Modifier.padding(start = 22.dp)
+                            style = MaterialTheme.typography.labelSmall
                         )
                     }
                 }

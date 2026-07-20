@@ -8,14 +8,14 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface MaterialDao {
-    @Query("SELECT * FROM materials")
+    @Query("SELECT * FROM Material")
     fun getMaterials(): Flow<List<MaterialEntity>>
 
     @Query("""
-        SELECT DISTINCT m.* FROM materials m
-        LEFT JOIN makers mk ON m.makerId = mk.makerId
+        SELECT DISTINCT m.* FROM Material m
+        LEFT JOIN Maker mk ON m.makerId = mk.makerId
         LEFT JOIN PriceHistory ph ON m.materialId = ph.materialId
-        LEFT JOIN providers p ON ph.providerId = p.providerId
+        LEFT JOIN Provider p ON ph.providerId = p.providerId
         WHERE (:sectionId IS NULL OR m.sectionId = :sectionId)
         AND (:query = '' 
              OR m.name LIKE '%' || :query || '%' 
@@ -27,6 +27,6 @@ interface MaterialDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertMaterials(materials: List<MaterialEntity>)
 
-    @Query("DELETE FROM materials")
+    @Query("DELETE FROM Material")
     suspend fun clearAll()
 }

@@ -26,13 +26,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.materials.core.presentation.theme.*
-import com.materials.features.material.domain.model.MaterialWithPrices
-import com.materials.features.material.domain.model.PriceWithProvider
-import com.materials.features.price_history.domain.model.PriceHistory
-import com.materials.features.provider.domain.model.Provider
-import androidx.compose.ui.tooling.preview.Preview
 import com.materials.features.material.domain.model.Material
-import com.materials.features.maker.domain.model.Maker
+import androidx.compose.ui.tooling.preview.Preview
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -50,11 +45,13 @@ fun MaterialScreen(
     val uiState by viewModel.uiState.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
     val selectedIds by viewModel.selectedMaterialIds.collectAsState()
+    val isRefreshing by viewModel.isRefreshing.collectAsState()
 
     MaterialScreenContent(
         uiState = uiState,
         searchQuery = searchQuery,
         selectedIds = selectedIds,
+        isRefreshing = isRefreshing,
         onEvent = { viewModel.onEvent(it) },
         onBackClick = onBackClick,
         onProceed = { onMaterialsSelected(selectedIds.toList()) },
@@ -67,6 +64,7 @@ fun MaterialScreenContent(
     uiState: MaterialUiState,
     searchQuery: String,
     selectedIds: Set<String> = emptySet(),
+    isRefreshing: Boolean = false,
     onEvent: (MaterialEvent) -> Unit,
     onBackClick: () -> Unit = {},
     onProceed: () -> Unit = {},
@@ -94,92 +92,111 @@ fun MaterialScreenContent(
                 .padding(paddingValues)
         ) {
             // Header Content
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(bottom = 8.dp)
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
             ) {
-                IconButton(
-                    onClick = onBackClick,
-                    modifier = Modifier.size(32.dp)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(bottom = 8.dp)
                 ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Regresar",
-                        tint = IndustrialCharcoalDark
+                    IconButton(
+                        onClick = onBackClick,
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Regresar",
+                            tint = IndustrialCharcoalDark
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Materiales",
+                        fontWeight = FontWeight.ExtraBold,
+                        color = IndustrialCharcoalDark,
+                        style = MaterialTheme.typography.headlineMedium.copy(
+                            fontSize = 28.sp,
+                            letterSpacing = (-0.5).sp
+                        )
                     )
                 }
-                Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "Materiales",
-                    fontWeight = FontWeight.ExtraBold,
-                    color = IndustrialCharcoalDark,
-                    style = MaterialTheme.typography.headlineMedium.copy(
-                        fontSize = 28.sp,
-                        letterSpacing = (-0.5).sp
-                    )
+                    text = "Catálogo detallado de materiales industriales.",
+                    color = IndustrialCharcoalMedium,
+                    style = MaterialTheme.typography.bodyMedium,
+                    lineHeight = 20.sp,
+                    modifier = Modifier.padding(start = 40.dp)
                 )
             }
-            Text(
-                text = "Catálogo detallado de materiales industriales.",
-                color = IndustrialCharcoalMedium,
-                style = MaterialTheme.typography.bodyMedium,
-                lineHeight = 20.sp,
-                modifier = Modifier.padding(start = 40.dp)
+
+            // Search Bar
+            MaterialSearchBar(
+                query = searchQuery,
+                onQueryChange = { onEvent(MaterialEvent.OnSearchQueryChanged(it)) }
             )
-        }
 
-        // Search Bar
-        MaterialSearchBar(
-            query = searchQuery,
-            onQueryChange = { onEvent(MaterialEvent.OnSearchQueryChanged(it)) }
-        )
+            Spacer(modifier = Modifier.height(8.dp))
 
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // Body Area
-        Box(modifier = Modifier.fillMaxSize().weight(1f)) {
-            when (val state = uiState) {
-                is MaterialUiState.Loading -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator(color = IndustrialOrange)
-                    }
-                }
-                is MaterialUiState.Success -> {
-                    if (state.materials.isEmpty()) {
-                        EmptyState()
-                    } else {
-                        LazyVerticalGrid(
-                            columns = GridCells.Fixed(1), // Cambiado a 1 columna para el nuevo diseño de lista detallada
-                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                            verticalArrangement = Arrangement.spacedBy(16.dp),
-                            modifier = Modifier.fillMaxSize()
+            // Body Area
+            Box(modifier = Modifier.fillMaxSize().weight(1f)) {
+                when (val state = uiState) {
+                    is MaterialUiState.Loading -> {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
                         ) {
-                            items(state.materials, key = { it.material.materialId }) { materialWithPrices ->
-                                val isSelected = selectedIds.contains(materialWithPrices.material.materialId)
-                                MaterialCard(
-                                    materialWithPrices = materialWithPrices,
-                                    isSelected = isSelected,
-                                    onSelect = { onEvent(MaterialEvent.ToggleMaterialSelection(it)) }
-                                )
+                            CircularProgressIndicator(color = IndustrialOrange)
+                        }
+                    }
+
+                    is MaterialUiState.Success -> {
+                        if (state.materials.isEmpty()) {
+                            if (isRefreshing) {
+                                Box(
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    CircularProgressIndicator(color = IndustrialOrange)
+                                }
+                            } else {
+                                EmptyState()
+                            }
+                        } else {
+                            LazyVerticalGrid(
+                                columns = GridCells.Fixed(1), // Cambiado a 1 columna para el nuevo diseño de lista detallada
+                                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                                verticalArrangement = Arrangement.spacedBy(16.dp),
+                                modifier = Modifier.fillMaxSize()
+                            ) {
+                                items(state.materials, key = { it.materialId }) { material ->
+                                    val isSelected = selectedIds.contains(material.materialId)
+                                    MaterialCard(
+                                        material = material,
+                                        isSelected = isSelected,
+                                        onSelect = {
+                                            onEvent(
+                                                MaterialEvent.ToggleMaterialSelection(
+                                                    it
+                                                )
+                                            )
+                                        }
+                                    )
+                                }
                             }
                         }
                     }
-                }
-                is MaterialUiState.Error -> {
-                    ErrorState(message = state.message, onRetry = { onEvent(MaterialEvent.Refresh) })
+
+                    is MaterialUiState.Error -> {
+                        ErrorState(
+                            message = state.message,
+                            onRetry = { onEvent(MaterialEvent.Refresh) })
+                    }
                 }
             }
         }
     }
-}
 }
 
 @Composable
@@ -243,13 +260,11 @@ fun MaterialSearchBar(
 
 @Composable
 fun MaterialCard(
-    materialWithPrices: MaterialWithPrices,
+    material: Material,
     isSelected: Boolean = false,
     onSelect: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    val material = materialWithPrices.material
-
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -266,91 +281,61 @@ fun MaterialCard(
         Column(
             modifier = Modifier.padding(16.dp)
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = material.name,
-                        color = IndustrialCharcoalDark,
-                        fontWeight = FontWeight.Bold,
-                        style = MaterialTheme.typography.titleMedium,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    Text(
-                        text = "ID: ${material.materialId}${materialWithPrices.maker?.let { " • ${it.name}" } ?: ""}",
-                        color = IndustrialCharcoalMedium,
-                        style = MaterialTheme.typography.labelMedium
-                    )
-                }
-
-                if (material.unit != null) {
-                    Surface(
-                        color = IndustrialOrange.copy(alpha = 0.1f),
-                        shape = IndustrialShapes.small
-                    ) {
+            Column {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = material.unit,
-                            color = IndustrialOrange,
-                            style = MaterialTheme.typography.labelSmall,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                            fontWeight = FontWeight.Bold
+                            text = material.name,
+                            color = IndustrialCharcoalDark,
+                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.bodyLarge,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
+
+                    Column {
+                        if (material.unit != null) {
+                            Surface(
+                                color = IndustrialOrange.copy(alpha = 0.1f),
+                                shape = IndustrialShapes.small
+                            ) {
+                                Text(
+                                    text = material.unit,
+                                    color = IndustrialOrange,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+
+                    }
                 }
-            }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
 
-            Spacer(modifier = Modifier.height(16.dp))
-            HorizontalDivider(color = Color.LightGray.copy(alpha = 0.3f))
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Información de Maker, Fecha y Precio más bajo
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                val lowestPriceWithProvider = materialWithPrices.prices.minByOrNull { it.priceHistory.price }
-
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "Fabricante",
-                        color = IndustrialCharcoalMedium,
-                        style = MaterialTheme.typography.labelSmall
-                    )
-                    Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
-                            text = materialWithPrices.maker?.name ?: "Sin fabricante",
+                            text = material.quoteDate ?: "---",
                             color = IndustrialCharcoalDark,
                             fontWeight = FontWeight.SemiBold,
-                            style = MaterialTheme.typography.bodyMedium
+                            style = MaterialTheme.typography.bodySmall
                         )
-                        lowestPriceWithProvider?.priceHistory?.quoteDate?.let { date ->
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = "• $date",
-                                color = IndustrialCharcoalMedium.copy(alpha = 0.6f),
-                                style = MaterialTheme.typography.labelSmall
-                            )
-                        }
-                    }
-                }
 
-                Column(horizontalAlignment = Alignment.End) {
-                    Text(
-                        text = "Mejor precio",
-                        color = IndustrialCharcoalMedium,
-                        style = MaterialTheme.typography.labelSmall
-                    )
-                    Text(
-                        text = if (lowestPriceWithProvider != null) "$${lowestPriceWithProvider.priceHistory.price}" else "---",
-                        color = IndustrialOrange,
-                        fontWeight = FontWeight.ExtraBold,
-                        style = MaterialTheme.typography.titleLarge,
-                        fontSize = 22.sp
-                    )
+                        Text(
+                            text = if (material.price != null) "Bs. ${material.price}" else "---",
+                            color = IndustrialOrange,
+                            fontWeight = FontWeight.ExtraBold,
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontSize = 22.sp,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        )
                 }
             }
         }
@@ -443,37 +428,23 @@ fun MaterialScreenSuccessPreview() {
         MaterialScreenContent(
             uiState = MaterialUiState.Success(
                 listOf(
-                    MaterialWithPrices(
-                        material = Material(
-                            materialId = "1",
-                            name = "Tubo PVC Presión 1/2\"",
-                            unit = "Metro",
-                            makerId = "MAKER-01",
-                            sectionId = "1"
-                        ),
-                        maker = Maker("MAKER-01", "Mexichem Amanco"),
-                        prices = listOf(
-                            PriceWithProvider(
-                                priceHistory = PriceHistory("1", "1", "1", 12.5, "2024-05-16", "cesar"),
-                                provider = Provider("1", "Suministros Industriales", city = "Madrid")
-                            )
-                        )
+                    Material(
+                        materialId = "1",
+                        name = "Tubo PVC Presión 1/2\"",
+                        unit = "Barra",
+                        makerId = "MAKER-01",
+                        sectionId = "1",
+                        price = 12.5,
+                        quoteDate = "12-06-2026"
                     ),
-                    MaterialWithPrices(
-                        material = Material(
-                            materialId = "2",
-                            name = "Codo 90° PVC 1/2\"",
-                            unit = "Unidad",
-                            makerId = "MAKER-02",
-                            sectionId = "1"
-                        ),
-                        maker = Maker("MAKER-02", "Pavco Wavin"),
-                        prices = listOf(
-                            PriceWithProvider(
-                                priceHistory = PriceHistory("2", "2", "2", 3.75, "2024-05-15", "cesar"),
-                                provider = Provider("2", "Ferretería Central", city = "Barcelona")
-                            )
-                        )
+                    Material(
+                        materialId = "2",
+                        name = "Codo 90° PVC 1/2\"",
+                        unit = "Unidad",
+                        makerId = "MAKER-02",
+                        sectionId = "1",
+                        price = 3.75,
+                        quoteDate = "25-11-2026"
                     )
                 )
             ),

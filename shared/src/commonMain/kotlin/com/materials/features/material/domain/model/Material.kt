@@ -10,5 +10,7 @@ data class Material(
     @SerialName("unit") val unit: String? = null,
     @SerialName("makerId") val makerId: String? = null,
     @SerialName("sectionId") val sectionId: String,
-    @SerialName("especification") val especification: String? = null
+    @SerialName("specId") val specId: String? = null,
+    @SerialName("price") val price: Double? = null,
+    @SerialName("quoteDate") val quoteDate: String? = null
 )

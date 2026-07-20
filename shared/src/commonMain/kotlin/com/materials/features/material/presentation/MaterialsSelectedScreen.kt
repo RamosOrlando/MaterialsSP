@@ -20,15 +20,10 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.border
 import com.materials.core.presentation.theme.*
-import com.materials.features.material.domain.model.MaterialWithPrices
+import com.materials.features.material.domain.model.Material
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import androidx.compose.ui.tooling.preview.Preview
-import com.materials.features.material.domain.model.Material
-import com.materials.features.maker.domain.model.Maker
-import com.materials.features.material.domain.model.PriceWithProvider
-import com.materials.features.price_history.domain.model.PriceHistory
-import com.materials.features.provider.domain.model.Provider
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -114,12 +109,12 @@ fun MaterialsSelectedScreenContent(
                         contentPadding = PaddingValues(16.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        items(uiState.materials) { materialWithPrices ->
+                        items(uiState.materials) { material ->
                             SelectedMaterialCard(
-                                materialWithPrices = materialWithPrices,
-                                quantity = quantities[materialWithPrices.material.materialId] ?: 1.0,
+                                material = material,
+                                quantity = quantities[material.materialId] ?: 1.0,
                                 onQuantityChange = { q -> 
-                                    onQuantityChange(materialWithPrices.material.materialId, q)
+                                    onQuantityChange(material.materialId, q)
                                 }
                             )
                         }
@@ -139,14 +134,13 @@ fun MaterialsSelectedScreenContent(
 
 @Composable
 fun SelectedMaterialCard(
-    materialWithPrices: MaterialWithPrices,
+    material: Material,
     quantity: Double,
     onQuantityChange: (Double) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val material = materialWithPrices.material
     var quantityText by remember(quantity) { mutableStateOf(if (quantity == quantity.toInt().toDouble()) quantity.toInt().toString() else quantity.toString()) }
-    val bestPrice = materialWithPrices.prices.minByOrNull { it.priceHistory.price }?.priceHistory?.price ?: 0.0
+    val bestPrice = material.price ?: 0.0
     val total = quantity * bestPrice
 
     Card(
@@ -178,7 +172,7 @@ fun SelectedMaterialCard(
                         overflow = TextOverflow.Ellipsis
                     )
                     Text(
-                        text = "ID: ${material.materialId}${materialWithPrices.maker?.let { " • ${it.name}" } ?: ""}",
+                        text = "ID: ${material.materialId}",
                         color = IndustrialCharcoalMedium,
                         style = MaterialTheme.typography.labelMedium
                     )
@@ -280,37 +274,23 @@ fun MaterialsSelectedScreenPreview() {
         MaterialsSelectedScreenContent(
             uiState = MaterialsSelectedUiState.Success(
                 listOf(
-                    MaterialWithPrices(
-                        material = Material(
-                            materialId = "1",
-                            name = "Tubo PVC Presión 1/2\"",
-                            unit = "Metro",
-                            makerId = "MAKER-01",
-                            sectionId = "1"
-                        ),
-                        maker = Maker("MAKER-01", "Mexichem Amanco"),
-                        prices = listOf(
-                            PriceWithProvider(
-                                priceHistory = PriceHistory("1", "1", "1", 12.5, "2024-05-16", "Cesar"),
-                                provider = Provider("1", "Suministros Industriales", city = "Madrid")
-                            )
-                        )
+                    Material(
+                        materialId = "1",
+                        name = "Tubo PVC Presión 1/2\"",
+                        unit = "Metro",
+                        makerId = "MAKER-01",
+                        sectionId = "1",
+                        price = 12.5,
+                        quoteDate = "2024-05-16"
                     ),
-                    MaterialWithPrices(
-                        material = Material(
-                            materialId = "2",
-                            name = "Codo 90° PVC 1/2\"",
-                            unit = "Unidad",
-                            makerId = "MAKER-02",
-                            sectionId = "1"
-                        ),
-                        maker = Maker("MAKER-02", "Pavco Wavin"),
-                        prices = listOf(
-                            PriceWithProvider(
-                                priceHistory = PriceHistory("2", "2", "2", 3.75, "2024-05-15", "Juan"),
-                                provider = Provider("2", "Ferretería Central", city = "Barcelona")
-                            )
-                        )
+                    Material(
+                        materialId = "2",
+                        name = "Codo 90° PVC 1/2\"",
+                        unit = "Unidad",
+                        makerId = "MAKER-02",
+                        sectionId = "1",
+                        price = 3.75,
+                        quoteDate = "2024-05-15"
                     )
                 )
             ),

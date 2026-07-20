@@ -126,7 +126,7 @@ fun ProviderScreenContent(
                         EmptyState()
                     } else {
                         LazyVerticalGrid(
-                            columns = GridCells.Fixed(2),
+                            columns = GridCells.Fixed(1),
                             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                             verticalArrangement = Arrangement.spacedBy(16.dp),
                             horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -213,56 +213,10 @@ fun ProviderCard(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(140.dp)
             .clip(IndustrialShapes.medium)
             .background(Color.White)
             .clickable { /* Ver detalles del proveedor */ }
     ) {
-        SubcomposeAsyncImage(
-            model = provider.imagePath,
-            contentDescription = provider.name,
-            contentScale = ContentScale.Fit,
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
-            loading = {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(
-                            Brush.linearGradient(
-                                colors = listOf(Color(0xFFE6E8EA), Color(0xFFECEEF0))
-                            )
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator(
-                        color = IndustrialOrange,
-                        strokeWidth = 2.dp,
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
-            },
-            error = {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(
-                            Brush.verticalGradient(
-                                colors = listOf(IndustrialSteelBlue, IndustrialCharcoalDark)
-                            )
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Business,
-                        contentDescription = null,
-                        tint = Color.White.copy(alpha = 0.5f),
-                        modifier = Modifier.size(48.dp)
-                    )
-                }
-            }
-        )
 
         Column(
             modifier = Modifier
@@ -280,18 +234,24 @@ fun ProviderCard(
                 ),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.align(Alignment.CenterHorizontally)
+                modifier = Modifier.align(Alignment.Start)
             )
-            if (provider.city != null) {
+            // Construimos la ubicación uniendo los campos de forma segura
+            val locationText = remember(provider.address, provider.city) {
+                listOfNotNull(provider.address, provider.city)
+                    .joinToString(separator = " - ")
+            }
+
+            if (locationText.isNotEmpty()) {
                 Text(
-                    text = provider.city,
+                    text = locationText,
                     color = IndustrialCharcoalMedium,
                     style = MaterialTheme.typography.labelSmall.copy(
-                        fontSize = 11.sp
+                        fontSize = 10.sp
                     ),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                    modifier = Modifier.align(Alignment.Start)
                 )
             }
         }
@@ -387,12 +347,14 @@ fun ProviderScreenSuccessPreview() {
                     Provider(
                         providerId = "1",
                         name = "Suministros Industriales",
+                        address = "Calle Montesinos No. 200",
                         city = "Madrid",
                         imagePath = ""
                     ),
                     Provider(
                         providerId = "2",
                         name = "Ferretería Central",
+                        address = "Av. Brasil, entre Santa Barbara",
                         city = "Barcelona",
                         imagePath = ""
                     )

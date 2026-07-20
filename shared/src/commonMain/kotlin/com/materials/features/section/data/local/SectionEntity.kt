@@ -8,7 +8,7 @@ import com.materials.features.category.data.local.CategoryEntity
 import com.materials.features.section.domain.model.Section
 
 @Entity(
-    tableName = "sections",
+    tableName = "Section",
     foreignKeys = [
         ForeignKey(
             entity = CategoryEntity::class,

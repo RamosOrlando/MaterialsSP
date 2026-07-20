@@ -152,18 +152,18 @@ fun PrintPreviewScreen(
                                 modifier = Modifier.fillMaxWidth().weight(1f),
                                 verticalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
-                                items(state.materials) { item ->
-                                    val lowestPrice = item.prices.minByOrNull { it.priceHistory.price }?.priceHistory?.price ?: 0.0
-                                    val quantity = vmQuantities[item.material.materialId] ?: 1.0
-                                    val rowTotal = quantity * lowestPrice
+                                items(state.materials) { material ->
+                                    val price = material.price ?: 0.0
+                                    val quantity = vmQuantities[material.materialId] ?: 1.0
+                                    val rowTotal = quantity * price
                                     
                                     Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .padding(8.dp)
                                     ) {
-                                        Text(item.material.name, Modifier.weight(2f), fontSize = 10.sp, maxLines = 1)
-                                        Text(item.material.unit ?: "---", Modifier.weight(1f), fontSize = 10.sp)
+                                        Text(material.name, Modifier.weight(2f), fontSize = 10.sp, maxLines = 1)
+                                        Text(material.unit ?: "---", Modifier.weight(1f), fontSize = 10.sp)
                                         Text(quantity.toString(), Modifier.weight(0.7f), fontSize = 10.sp)
                                         Text(
                                             text = "$${((rowTotal * 100).toInt() / 100.0)}",
@@ -181,10 +181,10 @@ fun PrintPreviewScreen(
                             Spacer(modifier = Modifier.height(16.dp))
                             
                             // Gran Total
-                            val grandTotal = state.materials.sumOf { item ->
-                                val lowestPrice = item.prices.minByOrNull { it.priceHistory.price }?.priceHistory?.price ?: 0.0
-                                val quantity = vmQuantities[item.material.materialId] ?: 1.0
-                                quantity * lowestPrice
+                            val grandTotal = state.materials.sumOf { material ->
+                                val price = material.price ?: 0.0
+                                val quantity = vmQuantities[material.materialId] ?: 1.0
+                                quantity * price
                             }
                             
                             Row(

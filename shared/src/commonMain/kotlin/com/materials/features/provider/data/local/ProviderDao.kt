@@ -8,12 +8,12 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ProviderDao {
-    @Query("SELECT * FROM providers")
+    @Query("SELECT * FROM Provider")
     fun getProviders(): Flow<List<ProviderEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertProviders(providers: List<ProviderEntity>)
 
-    @Query("DELETE FROM providers")
+    @Query("DELETE FROM Provider")
     suspend fun clearAll()
 }

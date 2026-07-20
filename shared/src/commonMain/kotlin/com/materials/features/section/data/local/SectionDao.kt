@@ -8,12 +8,12 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface SectionDao {
-    @Query("SELECT * FROM sections")
+    @Query("SELECT * FROM Section")
     fun getSections(): Flow<List<SectionEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertSections(sections: List<SectionEntity>)
 
-    @Query("DELETE FROM sections")
+    @Query("DELETE FROM Section")
     suspend fun clearAll()
 }

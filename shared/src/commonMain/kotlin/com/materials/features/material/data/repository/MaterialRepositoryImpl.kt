@@ -21,6 +21,7 @@ import com.materials.features.maker.data.local.toDomain
 import com.materials.features.maker.data.local.toEntity
 import com.materials.features.provider.data.local.toDomain
 import com.materials.features.provider.data.local.toEntity
+import com.materials.features.material.domain.model.Material
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow
@@ -101,6 +102,17 @@ class MaterialRepositoryImpl(
             .onStart { emit(Resource.Loading) }
             .catch { e -> emit(Resource.Error(e.message ?: "Unknown error")) }
             .flowOn(Dispatchers.Default)
+    }
+
+    override fun getMaterialsOnlyFlow(query: String, sectionId: String?): Flow<Resource<List<Material>>> {
+        return materialDao.getMaterialsFiltered(query, sectionId)
+            .map { entities ->
+                val materials = entities.map { it.toDomain() }
+                Resource.Success(materials) as Resource<List<Material>>
+            }
+            .onStart { emit(Resource.Loading) }
+            .catch { e -> emit(Resource.Error(e.message ?: "Unknown error")) }
+            .flowOn(Dispatchers.IO)
     }
 
     override fun listenToRealtimeChanges(): Flow<Unit> = combine(
