@@ -79,6 +79,7 @@ kotlin {
             implementation(libs.compose.multiplatform.media.player)
             // Adaptative interface
             implementation(libs.material3.adaptive.layout)
+            implementation(libs.material3.adaptive.navigation)
             // Datetime, Serialization Json for KMP
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.kotlinx.serialization.json)

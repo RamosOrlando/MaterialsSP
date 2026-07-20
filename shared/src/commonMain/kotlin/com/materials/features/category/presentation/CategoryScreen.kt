@@ -1,6 +1,7 @@
 package com.materials.features.category.presentation
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -35,6 +36,8 @@ import org.koin.compose.viewmodel.koinViewModel
 fun CategoryScreen(
     onCategoryClick: (String) -> Unit,
     onLogout: () -> Unit = {},
+    selectedCategoryId: String? = null,
+    columns: Int? = null,
     modifier: Modifier = Modifier,
     viewModel: CategoryViewModel = koinViewModel()
 ) {
@@ -53,6 +56,8 @@ fun CategoryScreen(
         searchQuery = searchQuery,
         onEvent = { viewModel.onEvent(it) },
         onCategoryClick = onCategoryClick,
+        selectedCategoryId = selectedCategoryId,
+        columns = columns,
         modifier = modifier
     )
 }
@@ -63,10 +68,12 @@ fun CategoryScreenContent(
     searchQuery: String,
     onEvent: (CategoryEvent) -> Unit,
     onCategoryClick: (String) -> Unit,
+    selectedCategoryId: String? = null,
+    columns: Int? = null,
     modifier: Modifier = Modifier
 ) {
     val adaptiveInfo = currentWindowAdaptiveInfo()
-    val columns = with(adaptiveInfo.windowSizeClass) {
+    val finalColumns = columns ?: with(adaptiveInfo.windowSizeClass) {
         when {
             isWidthAtLeastBreakpoint(840) -> 3
             isWidthAtLeastBreakpoint(600) -> 2
@@ -152,7 +159,7 @@ fun CategoryScreenContent(
                         }
                     } else {
                         LazyVerticalGrid(
-                            columns = GridCells.Fixed(columns),
+                            columns = GridCells.Fixed(finalColumns),
                             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                             verticalArrangement = Arrangement.spacedBy(16.dp),
                             horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -161,7 +168,8 @@ fun CategoryScreenContent(
                             items(state.categories, key = { it.categoryId!! }) { category ->
                                 CategoryCard(
                                     category = category,
-                                    onCategoryClick = onCategoryClick
+                                    onCategoryClick = onCategoryClick,
+                                    isSelected = category.categoryId == selectedCategoryId
                                 )
                             }
                         }
@@ -282,6 +290,7 @@ fun SearchBarSection(
 fun CategoryCard(
     category: Category,
     onCategoryClick: (String) -> Unit,
+    isSelected: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     Box(
@@ -289,6 +298,10 @@ fun CategoryCard(
             .fillMaxWidth()
             .height(200.dp)
             .clip(IndustrialShapes.medium)
+            .then(
+                if (isSelected) Modifier.border(4.dp, IndustrialOrange, IndustrialShapes.medium)
+                else Modifier
+            )
             .clickable { category.categoryId?.let { onCategoryClick(it) } }
     ) {
         SubcomposeAsyncImage(

@@ -9,6 +9,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.*
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -16,6 +17,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.ui.NavDisplay
+import com.materials.core.presentation.navigation.components.CatalogDetailPlaceholder
 import com.materials.core.presentation.theme.IndustrialBackground
 import com.materials.core.presentation.theme.IndustrialCharcoalDark
 import com.materials.core.presentation.theme.IndustrialCharcoalMedium
@@ -201,40 +203,14 @@ fun MainScreen(
             ) { key ->
                 NavEntry(key) {
                     when (key) {
-                        Screen.Category -> CategoryScreen(
-                            onCategoryClick = { id ->
-                                backstack.add(Screen.Section(id))
-                            },
-                            onLogout = onLogout
-                        )
-                        is Screen.Section -> SectionScreen(
-                            categoryId = key.categoryId,
-                            onSectionClick = { sectionId ->
-                                backstack.add(Screen.Material(sectionId))
-                            },
-                            onBackClick = {
-                                if (backstack.size > 1) {
-                                    backstack.removeLast()
-                                } else {
-                                    backstack.clear()
-                                    backstack.add(Screen.Category)
-                                }
-                            }
-                        )
-                        is Screen.Material -> MaterialScreen(
-                            sectionId = key.sectionId,
-                            onBackClick = {
-                                if (backstack.size > 1) {
-                                    backstack.removeLast()
-                                } else {
-                                    backstack.clear()
-                                    backstack.add(Screen.Category)
-                                }
-                            },
-                            onMaterialsSelected = { ids ->
-                                backstack.add(Screen.MaterialsSelected(ids))
-                            }
-                        )
+                        Screen.Category, is Screen.Section, is Screen.Material -> {
+                            CatalogPane(
+                                screen = key,
+                                shouldUseDualPane = shouldUseRail,
+                                backstack = backstack,
+                                onLogout = onLogout
+                            )
+                        }
                         is Screen.MaterialsSelected -> MaterialsSelectedScreen(
                             materialIds = key.materialIds,
                             onBackClick = { backstack.removeLast() },
@@ -269,6 +245,82 @@ fun MainScreen(
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun CatalogPane(
+    screen: Screen,
+    shouldUseDualPane: Boolean,
+    backstack: SnapshotStateList<Screen>,
+    onLogout: () -> Unit
+) {
+    if (shouldUseDualPane) {
+        Row(modifier = Modifier.fillMaxSize()) {
+            Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
+                CategoryScreen(
+                    onCategoryClick = { id ->
+                        if (screen is Screen.Category) {
+                            backstack.add(element = Screen.Section(id))
+                        } else {
+                            // If already in detail, replace the detail
+                            backstack.removeAt(backstack.size - 1)
+                            backstack.add(element = Screen.Section(id))
+                        }
+                    },
+                    onLogout = onLogout,
+                    selectedCategoryId = when (screen) {
+                        is Screen.Section -> screen.categoryId
+                        // For material, we'd need to know its parent category... 
+                        // for now let's just highlight if it's a section
+                        else -> null
+                    },
+                    columns = 1
+                )
+            }
+            VerticalDivider(color = Color.LightGray.copy(alpha = 0.5f))
+            Box(modifier = Modifier.weight(2.4f).fillMaxHeight()) {
+                when (screen) {
+                    Screen.Category -> CatalogDetailPlaceholder()
+                    is Screen.Section -> SectionScreen(
+                        categoryId = screen.categoryId,
+                        onSectionClick = { sectionId ->
+                            backstack.add(element = Screen.Material(sectionId))
+                        },
+                        onBackClick = { backstack.removeAt(backstack.size - 1) }
+                    )
+                    is Screen.Material -> MaterialScreen(
+                        sectionId = screen.sectionId,
+                        onBackClick = { backstack.removeAt(backstack.size - 1) },
+                        onMaterialsSelected = { ids ->
+                            backstack.add(element = Screen.MaterialsSelected(ids))
+                        }
+                    )
+                    else -> {}
+                }
+            }
+        }
+    } else {
+        // Single Pane
+        when (screen) {
+            Screen.Category -> CategoryScreen(
+                onCategoryClick = { id -> backstack.add(Screen.Section(id)) },
+                onLogout = onLogout
+            )
+            is Screen.Section -> SectionScreen(
+                categoryId = screen.categoryId,
+                onSectionClick = { sectionId -> backstack.add(Screen.Material(sectionId)) },
+                onBackClick = { backstack.removeLast() }
+            )
+            is Screen.Material -> MaterialScreen(
+                sectionId = screen.sectionId,
+                onBackClick = { backstack.removeLast() },
+                onMaterialsSelected = { ids ->
+                    backstack.add(Screen.MaterialsSelected(ids))
+                }
+            )
+            else -> {}
         }
     }
 }
