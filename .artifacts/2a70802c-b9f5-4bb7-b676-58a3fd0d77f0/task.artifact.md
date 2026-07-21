@@ -1,0 +1,4 @@
+- [x] Delete desktop database files (`~/materials.db*`)
+- [x] Add destructive migration to `DatabaseBuilder.kt`
+- [x] Verify files are deleted
+- [x] Create walkthrough

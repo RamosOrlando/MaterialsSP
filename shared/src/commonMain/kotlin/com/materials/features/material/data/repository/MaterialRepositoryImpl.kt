@@ -115,6 +115,18 @@ class MaterialRepositoryImpl(
             .flowOn(Dispatchers.IO)
     }
 
+    override suspend fun updateMaterial(material: Material): Resource<Unit> = withContext(Dispatchers.IO) {
+        try {
+            // 1. Update Remote
+            remoteDataSource.updateMaterial(material)
+            // 2. Update Local
+            materialDao.insertMaterial(material.toEntity())
+            Resource.Success(Unit)
+        } catch (e: Exception) {
+            Resource.Error(e.message ?: "Error al actualizar material")
+        }
+    }
+
     override fun listenToRealtimeChanges(): Flow<Unit> = combine(
         remoteDataSource.observeMaterials(),
         priceHistoryRemoteDataSource.observePriceHistories()

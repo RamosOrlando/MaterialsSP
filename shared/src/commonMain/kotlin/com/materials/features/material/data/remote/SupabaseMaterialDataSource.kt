@@ -29,6 +29,16 @@ class SupabaseMaterialDataSource(
             .decodeList<Material>()
     }
 
+    override suspend fun updateMaterial(material: Material): Unit = withContext(Dispatchers.IO) {
+        supabaseClient.postgrest["Material"]
+            .update(material) {
+                filter {
+                    Material::materialId eq material.materialId
+                }
+            }
+        Unit
+    }
+
     override fun observeMaterials(): Flow<Unit> = callbackFlow {
         // Wait for auth to be initialized to avoid invalid access token error
         supabaseClient.auth.sessionStatus.first { it !is SessionStatus.Initializing }

@@ -11,5 +11,6 @@ fun getRoomDatabase(
     return builder
         .setDriver(BundledSQLiteDriver())
         .setQueryCoroutineContext(Dispatchers.IO)
+        .fallbackToDestructiveMigration(true) //permitirá que, si realizas cambios en el esquema de las tablas en el futuro, Room recree la base de datos automáticamente en lugar de fallar por falta de migraciones
         .build()
 }

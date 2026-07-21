@@ -5,5 +5,6 @@ import kotlinx.coroutines.flow.Flow
 
 interface MaterialRemoteDataSource {
     suspend fun getMaterials(): List<Material>
+    suspend fun updateMaterial(material: Material)
     fun observeMaterials(): Flow<Unit>
 }

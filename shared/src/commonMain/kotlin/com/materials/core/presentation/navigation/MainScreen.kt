@@ -295,7 +295,8 @@ private fun CatalogPane(
                         onBackClick = { backstack.removeAt(backstack.size - 1) },
                         onMaterialsSelected = { ids ->
                             backstack.add(element = Screen.MaterialsSelected(ids))
-                        }
+                        },
+                        columns = 1
                     )
                     else -> {}
                 }

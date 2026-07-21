@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.materials.core.presentation.theme.*
 import com.materials.features.material.domain.model.Material
+import com.materials.core.util.date.formatDateToDisplay
 import androidx.compose.ui.tooling.preview.Preview
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -36,6 +37,7 @@ fun MaterialScreen(
     sectionId: String? = null,
     onBackClick: () -> Unit = {},
     onMaterialsSelected: (List<String>) -> Unit = {},
+    columns: Int? = null,
     modifier: Modifier = Modifier,
     viewModel: MaterialViewModel = koinViewModel()
 ) {
@@ -47,6 +49,8 @@ fun MaterialScreen(
     val searchQuery by viewModel.searchQuery.collectAsState()
     val selectedIds by viewModel.selectedMaterialIds.collectAsState()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
+    
+    var editingMaterial by remember { mutableStateOf<Material?>(null) }
 
     MaterialScreenContent(
         uiState = uiState,
@@ -56,8 +60,21 @@ fun MaterialScreen(
         onEvent = { viewModel.onEvent(it) },
         onBackClick = onBackClick,
         onProceed = { onMaterialsSelected(selectedIds.toList()) },
+        onEditMaterial = { editingMaterial = it },
+        columns = columns,
         modifier = modifier
     )
+    
+    editingMaterial?.let { material ->
+        EditMaterialDialog(
+            material = material,
+            onDismiss = { editingMaterial = null },
+            onConfirm = { updatedMaterial ->
+                viewModel.onEvent(MaterialEvent.UpdateMaterial(updatedMaterial))
+                editingMaterial = null
+            }
+        )
+    }
 }
 
 @Composable
@@ -69,10 +86,12 @@ fun MaterialScreenContent(
     onEvent: (MaterialEvent) -> Unit,
     onBackClick: () -> Unit = {},
     onProceed: () -> Unit = {},
+    onEditMaterial: (Material) -> Unit = {},
+    columns: Int? = null,
     modifier: Modifier = Modifier
 ) {
     val adaptiveInfo = currentWindowAdaptiveInfo()
-    val columns = with(adaptiveInfo.windowSizeClass) {
+    val finalColumns = columns ?: with(adaptiveInfo.windowSizeClass) {
         when {
             isWidthAtLeastBreakpoint(840) -> 3
             isWidthAtLeastBreakpoint(600) -> 2
@@ -175,16 +194,16 @@ fun MaterialScreenContent(
                             }
                         } else {
                             LazyVerticalGrid(
-                                columns = GridCells.Fixed(columns),
+                                columns = GridCells.Fixed(finalColumns),
                                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                                 verticalArrangement = Arrangement.spacedBy(16.dp),
                                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                                 modifier = Modifier.fillMaxSize()
                             ) {
-                                items(state.materials, key = { it.materialId }) { material ->
-                                    val isSelected = selectedIds.contains(material.materialId)
+                                items(state.materials, key = { it.material.materialId }) { materialItem ->
+                                    val isSelected = selectedIds.contains(materialItem.material.materialId)
                                     MaterialCard(
-                                        material = material,
+                                        materialItem = materialItem,
                                         isSelected = isSelected,
                                         onSelect = {
                                             onEvent(
@@ -192,7 +211,8 @@ fun MaterialScreenContent(
                                                     it
                                                 )
                                             )
-                                        }
+                                        },
+                                        onEdit = { onEditMaterial(materialItem.material) }
                                     )
                                 }
                             }
@@ -271,11 +291,13 @@ fun MaterialSearchBar(
 
 @Composable
 fun MaterialCard(
-    material: Material,
+    materialItem: MaterialItem,
     isSelected: Boolean = false,
     onSelect: (String) -> Unit = {},
+    onEdit: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
+    val material = materialItem.material
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -308,11 +330,24 @@ fun MaterialCard(
                         )
                     }
 
-                    Column {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        IconButton(
+                            onClick = { onEdit() },
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Edit,
+                                contentDescription = "Editar",
+                                tint = IndustrialCharcoalMedium,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                        
                         if (material.unit != null) {
                             Surface(
                                 color = IndustrialOrange.copy(alpha = 0.1f),
-                                shape = IndustrialShapes.small
+                                shape = IndustrialShapes.small,
+                                modifier = Modifier.padding(start = 8.dp)
                             ) {
                                 Text(
                                     text = material.unit,
@@ -331,13 +366,27 @@ fun MaterialCard(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-
-                        Text(
-                            text = material.quoteDate ?: "---",
-                            color = IndustrialCharcoalDark,
-                            fontWeight = FontWeight.SemiBold,
-                            style = MaterialTheme.typography.bodySmall
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            if (materialItem.makerName != null) {
+                                Text(
+                                    text = materialItem.makerName,
+                                    color = IndustrialCharcoalMedium,
+                                    fontWeight = FontWeight.Medium,
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                                Text(
+                                    text = " • ",
+                                    color = IndustrialCharcoalMedium,
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                            }
+                            Text(
+                                text = formatDateToDisplay(material.quoteDate),
+                                color = IndustrialCharcoalDark,
+                                fontWeight = FontWeight.SemiBold,
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
 
                         Text(
                             text = if (material.price != null) "Bs. ${material.price}" else "---",
@@ -351,6 +400,87 @@ fun MaterialCard(
             }
         }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun EditMaterialDialog(
+    material: Material,
+    onDismiss: () -> Unit,
+    onConfirm: (Material) -> Unit
+) {
+    var name by remember { mutableStateOf(material.name) }
+    var unit by remember { mutableStateOf(material.unit ?: "") }
+    var specId by remember { mutableStateOf(material.specId ?: "") }
+    var priceStr by remember { mutableStateOf(material.price?.toString() ?: "") }
+    var quoteDate by remember { mutableStateOf(material.quoteDate ?: "") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Editar Material", fontWeight = FontWeight.Bold) },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Nombre") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = unit,
+                    onValueChange = { unit = it },
+                    label = { Text("Unidad") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = specId,
+                    onValueChange = { specId = it },
+                    label = { Text("Spec ID") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = priceStr,
+                    onValueChange = { priceStr = it },
+                    label = { Text("Precio (Bs.)") },
+                    keyboardOptions = KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = quoteDate,
+                    onValueChange = { quoteDate = it },
+                    label = { Text("Fecha (e.g. 06-Ene-2026 o 06-01-2026)") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    onConfirm(
+                        material.copy(
+                            name = name,
+                            unit = unit.ifBlank { null },
+                            specId = specId.ifBlank { null },
+                            price = priceStr.toDoubleOrNull(),
+                            quoteDate = quoteDate.ifBlank { null }
+                        )
+                    )
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = IndustrialOrange)
+            ) {
+                Text("Guardar", color = Color.White)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancelar", color = IndustrialCharcoalMedium)
+            }
+        },
+        containerColor = Color.White
+    )
 }
 
 @Composable
@@ -439,23 +569,29 @@ fun MaterialScreenSuccessPreview() {
         MaterialScreenContent(
             uiState = MaterialUiState.Success(
                 listOf(
-                    Material(
-                        materialId = "1",
-                        name = "Tubo PVC Presión 1/2\"",
-                        unit = "Barra",
-                        makerId = "MAKER-01",
-                        sectionId = "1",
-                        price = 12.5,
-                        quoteDate = "12-06-2026"
+                    MaterialItem(
+                        material = Material(
+                            materialId = "1",
+                            name = "Tubo PVC Presión 1/2\"",
+                            unit = "Barra",
+                            makerId = "MAKER-01",
+                            sectionId = "1",
+                            price = 12.5,
+                            quoteDate = "12-06-2026"
+                        ),
+                        makerName = "Mexichem Amanco"
                     ),
-                    Material(
-                        materialId = "2",
-                        name = "Codo 90° PVC 1/2\"",
-                        unit = "Unidad",
-                        makerId = "MAKER-02",
-                        sectionId = "1",
-                        price = 3.75,
-                        quoteDate = "25-11-2026"
+                    MaterialItem(
+                        material = Material(
+                            materialId = "2",
+                            name = "Codo 90° PVC 1/2\"",
+                            unit = "Unidad",
+                            makerId = "MAKER-02",
+                            sectionId = "1",
+                            price = 3.75,
+                            quoteDate = "25-11-2026"
+                        ),
+                        makerName = "Pavco Wavin"
                     )
                 )
             ),

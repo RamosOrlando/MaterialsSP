@@ -21,8 +21,24 @@ compose.desktop {
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
-            packageName = "com.materials"
+            packageName = "MaterialsSP"
             packageVersion = "1.0.0"
+            description = "Gestión de Materiales Industriales"
+            vendor = "MaterialsSP Team"
+            
+            macOS {
+                bundleID = "com.materials.sp"
+                dockName = "MaterialsSP"
+            }
+            
+            linux {
+                shortcut = true
+            }
+            
+            windows {
+                shortcut = true
+                menu = true
+            }
         }
     }
 }

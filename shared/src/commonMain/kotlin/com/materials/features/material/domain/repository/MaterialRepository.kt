@@ -9,5 +9,6 @@ interface MaterialRepository {
     suspend fun refreshMaterials(): Resource<Unit>
     fun getMaterialsFlow(query: String = "", sectionId: String? = null): Flow<Resource<List<MaterialWithPrices>>>
     fun getMaterialsOnlyFlow(query: String = "", sectionId: String? = null): Flow<Resource<List<Material>>>
+    suspend fun updateMaterial(material: Material): Resource<Unit>
     fun listenToRealtimeChanges(): Flow<Unit>
 }

@@ -19,4 +19,8 @@ class GetMaterialsUseCase(
     fun executeFlowWithPrices(query: String = "", sectionId: String? = null): Flow<Resource<List<MaterialWithPrices>>> {
         return repository.getMaterialsFlow(query, sectionId)
     }
+
+    suspend fun updateMaterial(material: Material): Resource<Unit> {
+        return repository.updateMaterial(material)
+    }
 }
