@@ -10,7 +10,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
@@ -64,14 +63,15 @@ fun MaterialsSelectedScreenContent(
                     Text(
                         text = "Seleccionados",
                         fontWeight = FontWeight.ExtraBold,
-                        color = IndustrialCharcoalDark
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Regresar"
+                            contentDescription = "Regresar",
+                            tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
                 },
@@ -81,15 +81,15 @@ fun MaterialsSelectedScreenContent(
                             Icon(
                                 imageVector = Icons.Default.Print,
                                 contentDescription = "Vista Previa de Impresión",
-                                tint = IndustrialOrange
+                                tint = MaterialTheme.colorScheme.primary
                             )
                         }
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
             )
         },
-        containerColor = IndustrialBackground
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         Box(
             modifier = modifier
@@ -100,7 +100,7 @@ fun MaterialsSelectedScreenContent(
                 is MaterialsSelectedUiState.Loading -> {
                     CircularProgressIndicator(
                         modifier = Modifier.align(Alignment.Center),
-                        color = IndustrialOrange
+                        color = MaterialTheme.colorScheme.primary
                     )
                 }
                 is MaterialsSelectedUiState.Success -> {
@@ -124,7 +124,7 @@ fun MaterialsSelectedScreenContent(
                     Text(
                         text = uiState.message,
                         modifier = Modifier.align(Alignment.Center),
-                        color = Color.Red
+                        color = MaterialTheme.colorScheme.error
                     )
                 }
             }
@@ -149,10 +149,10 @@ fun SelectedMaterialCard(
             .clip(IndustrialShapes.medium)
             .border(
                 width = 1.dp,
-                color = Color.LightGray.copy(alpha = 0.3f),
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
                 shape = IndustrialShapes.medium
             ),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(
@@ -165,7 +165,7 @@ fun SelectedMaterialCard(
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = material.name,
-                        color = IndustrialCharcoalDark,
+                        color = MaterialTheme.colorScheme.onSurface,
                         fontWeight = FontWeight.Bold,
                         style = MaterialTheme.typography.titleMedium,
                         maxLines = 1,
@@ -173,19 +173,19 @@ fun SelectedMaterialCard(
                     )
                     Text(
                         text = "ID: ${material.materialId}",
-                        color = IndustrialCharcoalMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         style = MaterialTheme.typography.labelMedium
                     )
                 }
 
                 if (material.unit != null) {
                     Surface(
-                        color = IndustrialOrange.copy(alpha = 0.1f),
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
                         shape = IndustrialShapes.small
                     ) {
                         Text(
                             text = material.unit,
-                            color = IndustrialOrange,
+                            color = MaterialTheme.colorScheme.primary,
                             style = MaterialTheme.typography.labelSmall,
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                             fontWeight = FontWeight.Bold
@@ -195,7 +195,7 @@ fun SelectedMaterialCard(
             }
 
             Spacer(modifier = Modifier.height(16.dp))
-            HorizontalDivider(color = Color.LightGray.copy(alpha = 0.3f))
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
             Spacer(modifier = Modifier.height(12.dp))
 
             Row(
@@ -206,7 +206,7 @@ fun SelectedMaterialCard(
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = "Cantidad",
-                        color = IndustrialCharcoalMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         style = MaterialTheme.typography.labelSmall
                     )
                     OutlinedTextField(
@@ -220,8 +220,10 @@ fun SelectedMaterialCard(
                         singleLine = true,
                         textStyle = MaterialTheme.typography.bodyMedium,
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = IndustrialOrange,
-                            unfocusedBorderColor = Color.LightGray.copy(alpha = 0.5f)
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            unfocusedTextColor = MaterialTheme.colorScheme.onSurface
                         )
                     )
                 }
@@ -232,12 +234,12 @@ fun SelectedMaterialCard(
                 ) {
                     Text(
                         text = "Precio Unit.",
-                        color = IndustrialCharcoalMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         style = MaterialTheme.typography.labelSmall
                     )
                     Text(
                         text = "$${bestPrice}",
-                        color = IndustrialCharcoalDark,
+                        color = MaterialTheme.colorScheme.onSurface,
                         fontWeight = FontWeight.SemiBold,
                         style = MaterialTheme.typography.bodyLarge,
                         modifier = Modifier.padding(top = 8.dp)
@@ -250,12 +252,12 @@ fun SelectedMaterialCard(
                 ) {
                     Text(
                         text = "Total",
-                        color = IndustrialCharcoalMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         style = MaterialTheme.typography.labelSmall
                     )
                     Text(
                         text = "$${((total * 100).toInt() / 100.0)}",
-                        color = IndustrialOrange,
+                        color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.ExtraBold,
                         style = MaterialTheme.typography.titleLarge,
                         fontSize = 22.sp,

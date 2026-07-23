@@ -79,7 +79,7 @@ fun SectionScreenContent(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(IndustrialBackground)
+            .background(MaterialTheme.colorScheme.background)
     ) {
         // Header Content: Title and Subtitle
         Column(
@@ -98,14 +98,14 @@ fun SectionScreenContent(
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Regresar",
-                        tint = IndustrialCharcoalDark
+                        tint = MaterialTheme.colorScheme.onSurface
                     )
                 }
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = "Secciones",
                     fontWeight = FontWeight.ExtraBold,
-                    color = IndustrialCharcoalDark,
+                    color = MaterialTheme.colorScheme.onSurface,
                     style = MaterialTheme.typography.headlineMedium.copy(
                         fontSize = 28.sp,
                         letterSpacing = (-0.5).sp
@@ -114,7 +114,7 @@ fun SectionScreenContent(
             }
             Text(
                 text = "Explore los materiales disponibles por sección.",
-                color = IndustrialCharcoalMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.bodyMedium,
                 lineHeight = 20.sp,
                 modifier = Modifier.padding(start = 40.dp)
@@ -137,7 +137,7 @@ fun SectionScreenContent(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
-                        CircularProgressIndicator(color = IndustrialOrange)
+                        CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                     }
                 }
                 is SectionUiState.Success -> {
@@ -150,20 +150,20 @@ fun SectionScreenContent(
                                 Icon(
                                     imageVector = Icons.Default.SearchOff,
                                     contentDescription = null,
-                                    tint = IndustrialCharcoalMedium,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                     modifier = Modifier.size(64.dp)
                                 )
                                 Spacer(modifier = Modifier.height(16.dp))
                                 Text(
                                     text = "No se encontraron secciones",
-                                    color = IndustrialCharcoalDark,
+                                    color = MaterialTheme.colorScheme.onSurface,
                                     fontWeight = FontWeight.SemiBold,
                                     style = MaterialTheme.typography.titleMedium
                                 )
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
                                     text = "Intenta buscar con otros términos",
-                                    color = IndustrialCharcoalMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     style = MaterialTheme.typography.bodyMedium
                                 )
                             }
@@ -191,7 +191,7 @@ fun SectionScreenContent(
                         contentAlignment = Alignment.Center
                     ) {
                         Card(
-                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                             shape = IndustrialShapes.medium,
                             modifier = Modifier.fillMaxWidth().padding(16.dp)
@@ -203,30 +203,30 @@ fun SectionScreenContent(
                                 Icon(
                                     imageVector = Icons.Default.ErrorOutline,
                                     contentDescription = "Error",
-                                    tint = Color.Red,
+                                    tint = MaterialTheme.colorScheme.error,
                                     modifier = Modifier.size(48.dp)
                                 )
                                 Spacer(modifier = Modifier.height(16.dp))
                                 Text(
                                     text = "Error de Conexión",
                                     fontWeight = FontWeight.Bold,
-                                    color = IndustrialCharcoalDark,
+                                    color = MaterialTheme.colorScheme.onSurface,
                                     style = MaterialTheme.typography.titleMedium
                                 )
                                 Spacer(modifier = Modifier.height(8.dp))
                                 Text(
                                     text = state.message,
-                                    color = IndustrialCharcoalMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     style = MaterialTheme.typography.bodyMedium,
                                     modifier = Modifier.padding(horizontal = 8.dp)
                                 )
                                 Spacer(modifier = Modifier.height(20.dp))
                                 Button(
                                     onClick = { onEvent(SectionEvent.Refresh) },
-                                    colors = ButtonDefaults.buttonColors(containerColor = IndustrialOrange),
+                                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                                     shape = IndustrialShapes.small
                                 ) {
-                                    Text(text = "Reintentar", color = Color.White)
+                                    Text(text = "Reintentar", color = MaterialTheme.colorScheme.onPrimary)
                                 }
                             }
                         }
@@ -253,7 +253,7 @@ fun SearchBarSection(
         placeholder = {
             Text(
                 text = "Buscar Sección",
-                color = IndustrialCharcoalMedium.copy(alpha = 0.8f),
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
                 style = MaterialTheme.typography.bodyLarge
             )
         },
@@ -261,7 +261,7 @@ fun SearchBarSection(
             Icon(
                 imageVector = Icons.Default.Search,
                 contentDescription = "Icono buscar",
-                tint = IndustrialCharcoalDark
+                tint = MaterialTheme.colorScheme.onSurface
             )
         },
         trailingIcon = {
@@ -270,7 +270,7 @@ fun SearchBarSection(
                     Icon(
                         imageVector = Icons.Default.Clear,
                         contentDescription = "Limpiar",
-                        tint = IndustrialCharcoalMedium
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -286,12 +286,12 @@ fun SearchBarSection(
         singleLine = true,
         shape = IndustrialShapes.small,
         colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = IndustrialOrange,
-            unfocusedBorderColor = Color.LightGray,
-            focusedContainerColor = Color.White,
-            unfocusedContainerColor = Color.White,
-            focusedTextColor = IndustrialCharcoalDark,
-            unfocusedTextColor = IndustrialCharcoalDark
+            focusedBorderColor = MaterialTheme.colorScheme.primary,
+            unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+            focusedContainerColor = MaterialTheme.colorScheme.surface,
+            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+            unfocusedTextColor = MaterialTheme.colorScheme.onSurface
         )
     )
 }
@@ -320,13 +320,13 @@ fun SectionCard(
                         .fillMaxSize()
                         .background(
                             Brush.linearGradient(
-                                colors = listOf(Color(0xFFE6E8EA), Color(0xFFECEEF0))
+                                colors = listOf(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.background)
                             )
                         ),
                     contentAlignment = Alignment.Center
                 ) {
                     CircularProgressIndicator(
-                        color = IndustrialOrange,
+                        color = MaterialTheme.colorScheme.primary,
                         strokeWidth = 2.dp,
                         modifier = Modifier.size(24.dp)
                     )
@@ -338,7 +338,7 @@ fun SectionCard(
                         .fillMaxSize()
                         .background(
                             Brush.verticalGradient(
-                                colors = listOf(IndustrialSteelBlue, IndustrialCharcoalDark)
+                                colors = listOf(MaterialTheme.colorScheme.tertiary, MaterialTheme.colorScheme.onSurface)
                             )
                         )
                 )

@@ -31,12 +31,18 @@ private val LightColorScheme = lightColorScheme(
     onPrimaryContainer = Color(0xFF351000),
     secondary = IndustrialCharcoalMedium,
     onSecondary = Color.White,
+    secondaryContainer = Color(0xFFE9ECEF),
+    onSecondaryContainer = IndustrialCharcoalDark,
     background = IndustrialBackground,
     onBackground = IndustrialCharcoalDark,
     surface = IndustrialSurface,
     onSurface = IndustrialCharcoalDark,
+    surfaceVariant = Color(0xFFEDEEF0),
+    onSurfaceVariant = IndustrialCharcoalMedium,
     outline = IndustrialOutline,
-    tertiary = IndustrialSteelBlue
+    outlineVariant = Color(0xFFE9ECEF),
+    tertiary = IndustrialSteelBlue,
+    onTertiary = Color.White
 )
 
 // Standard shapes matching the "Soft (0.25rem / 4dp)" brand style guidelines in DESIGN.md
@@ -54,6 +60,12 @@ val IndustrialTypography = Typography(
         fontSize = 32.sp,
         lineHeight = 40.sp,
         letterSpacing = (-0.01).sp
+    ),
+    headlineMedium = TextStyle(
+        fontFamily = FontFamily.SansSerif,
+        fontWeight = FontWeight.Bold,
+        fontSize = 28.sp,
+        lineHeight = 36.sp
     ),
     titleLarge = TextStyle(
         fontFamily = FontFamily.SansSerif,
@@ -85,6 +97,12 @@ val IndustrialTypography = Typography(
         fontSize = 12.sp,
         lineHeight = 16.sp,
         letterSpacing = 0.05.sp
+    ),
+    labelSmall = TextStyle(
+        fontFamily = FontFamily.SansSerif,
+        fontWeight = FontWeight.Normal,
+        fontSize = 11.sp,
+        lineHeight = 16.sp
     )
 )
 
@@ -99,10 +117,22 @@ fun IndustrialTheme(
         darkColorScheme(
             primary = Color(0xFFFFB693),
             onPrimary = Color(0xFF572000),
+            primaryContainer = Color(0xFF7C2E00),
+            onPrimaryContainer = Color(0xFFffdbcd),
+            secondary = Color(0xFFC4C7C9),
+            onSecondary = Color(0xFF2E3133),
+            secondaryContainer = Color(0xFF40484C),
+            onSecondaryContainer = Color(0xFFECEEF0),
+            tertiary = Color(0xFFB5C8DF),
+            onTertiary = Color(0xFF1D3247),
             background = Color(0xFF191C1E),
             onBackground = Color(0xFFECEEF0),
-            surface = Color(0xFF2D3133),
-            onSurface = Color(0xFFEFF1F3)
+            surface = Color(0xFF191C1E),
+            onSurface = Color(0xFFECEEF0),
+            surfaceVariant = Color(0xFF2D3133),
+            onSurfaceVariant = Color(0xFFC0C7CD),
+            outline = Color(0xFF8A9297),
+            outlineVariant = Color(0xFF40484C)
         )
     } else {
         LightColorScheme

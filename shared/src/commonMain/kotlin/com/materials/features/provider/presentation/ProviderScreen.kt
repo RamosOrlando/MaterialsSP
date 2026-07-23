@@ -60,7 +60,7 @@ fun ProviderScreenContent(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(IndustrialBackground)
+            .background(MaterialTheme.colorScheme.background)
     ) {
         // Header Content
         Column(
@@ -79,14 +79,14 @@ fun ProviderScreenContent(
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Regresar",
-                        tint = IndustrialCharcoalDark
+                        tint = MaterialTheme.colorScheme.onSurface
                     )
                 }
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = "Proveedores",
                     fontWeight = FontWeight.ExtraBold,
-                    color = IndustrialCharcoalDark,
+                    color = MaterialTheme.colorScheme.onSurface,
                     style = MaterialTheme.typography.headlineMedium.copy(
                         fontSize = 28.sp,
                         letterSpacing = (-0.5).sp
@@ -95,7 +95,7 @@ fun ProviderScreenContent(
             }
             Text(
                 text = "Gestione sus proveedores de materiales.",
-                color = IndustrialCharcoalMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.bodyMedium,
                 lineHeight = 20.sp,
                 modifier = Modifier.padding(start = 40.dp)
@@ -118,7 +118,7 @@ fun ProviderScreenContent(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
-                        CircularProgressIndicator(color = IndustrialOrange)
+                        CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                     }
                 }
                 is ProviderUiState.Success -> {
@@ -162,7 +162,7 @@ fun ProviderSearchBar(
         placeholder = {
             Text(
                 text = "Buscar Proveedor",
-                color = IndustrialCharcoalMedium.copy(alpha = 0.8f),
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
                 style = MaterialTheme.typography.bodyLarge
             )
         },
@@ -170,7 +170,7 @@ fun ProviderSearchBar(
             Icon(
                 imageVector = Icons.Default.Search,
                 contentDescription = "Icono buscar",
-                tint = IndustrialCharcoalDark
+                tint = MaterialTheme.colorScheme.onSurface
             )
         },
         trailingIcon = {
@@ -179,7 +179,7 @@ fun ProviderSearchBar(
                     Icon(
                         imageVector = Icons.Default.Clear,
                         contentDescription = "Limpiar",
-                        tint = IndustrialCharcoalMedium
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -195,12 +195,12 @@ fun ProviderSearchBar(
         singleLine = true,
         shape = IndustrialShapes.small,
         colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = IndustrialOrange,
-            unfocusedBorderColor = Color.LightGray,
-            focusedContainerColor = Color.White,
-            unfocusedContainerColor = Color.White,
-            focusedTextColor = IndustrialCharcoalDark,
-            unfocusedTextColor = IndustrialCharcoalDark
+            focusedBorderColor = MaterialTheme.colorScheme.primary,
+            unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+            focusedContainerColor = MaterialTheme.colorScheme.surface,
+            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+            unfocusedTextColor = MaterialTheme.colorScheme.onSurface
         )
     )
 }
@@ -214,7 +214,7 @@ fun ProviderCard(
         modifier = modifier
             .fillMaxWidth()
             .clip(IndustrialShapes.medium)
-            .background(Color.White)
+            .background(MaterialTheme.colorScheme.surface)
             .clickable { /* Ver detalles del proveedor */ }
     ) {
 
@@ -222,12 +222,12 @@ fun ProviderCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.BottomCenter)
-                .background(Color.White.copy(alpha = 0.9f))
+                .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.9f))
                 .padding(vertical = 4.dp, horizontal = 8.dp)
         ) {
             Text(
                 text = provider.name,
-                color = IndustrialCharcoalDark,
+                color = MaterialTheme.colorScheme.onSurface,
                 fontWeight = FontWeight.Bold,
                 style = MaterialTheme.typography.titleSmall.copy(
                     fontSize = 14.sp
@@ -245,7 +245,7 @@ fun ProviderCard(
             if (locationText.isNotEmpty()) {
                 Text(
                     text = locationText,
-                    color = IndustrialCharcoalMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.labelSmall.copy(
                         fontSize = 10.sp
                     ),
@@ -268,20 +268,20 @@ private fun EmptyState() {
             Icon(
                 imageVector = Icons.Default.SearchOff,
                 contentDescription = null,
-                tint = IndustrialCharcoalMedium,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(64.dp)
             )
             Spacer(modifier = Modifier.height(16.dp))
             Text(
                 text = "No se encontraron proveedores",
-                color = IndustrialCharcoalDark,
+                color = MaterialTheme.colorScheme.onSurface,
                 fontWeight = FontWeight.SemiBold,
                 style = MaterialTheme.typography.titleMedium
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = "Intenta buscar con otros términos",
-                color = IndustrialCharcoalMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.bodyMedium
             )
         }
@@ -295,7 +295,7 @@ private fun ErrorState(message: String, onRetry: () -> Unit) {
         contentAlignment = Alignment.Center
     ) {
         Card(
-            colors = CardDefaults.cardColors(containerColor = Color.White),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
             shape = IndustrialShapes.medium,
             modifier = Modifier.fillMaxWidth().padding(16.dp)
@@ -307,30 +307,30 @@ private fun ErrorState(message: String, onRetry: () -> Unit) {
                 Icon(
                     imageVector = Icons.Default.ErrorOutline,
                     contentDescription = "Error",
-                    tint = Color.Red,
+                    tint = MaterialTheme.colorScheme.error,
                     modifier = Modifier.size(48.dp)
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
                     text = "Error de Conexión",
                     fontWeight = FontWeight.Bold,
-                    color = IndustrialCharcoalDark,
+                    color = MaterialTheme.colorScheme.onSurface,
                     style = MaterialTheme.typography.titleMedium
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = message,
-                    color = IndustrialCharcoalMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.padding(horizontal = 8.dp)
                 )
                 Spacer(modifier = Modifier.height(20.dp))
                 Button(
                     onClick = onRetry,
-                    colors = ButtonDefaults.buttonColors(containerColor = IndustrialOrange),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                     shape = IndustrialShapes.small
                 ) {
-                    Text(text = "Reintentar", color = Color.White)
+                    Text(text = "Reintentar", color = MaterialTheme.colorScheme.onPrimary)
                 }
             }
         }

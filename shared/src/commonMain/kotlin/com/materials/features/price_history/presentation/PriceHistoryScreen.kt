@@ -15,7 +15,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.text.font.FontWeight
@@ -64,7 +63,7 @@ fun PriceHistoryScreenContent(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(IndustrialBackground)
+            .background(MaterialTheme.colorScheme.background)
     ) {
         // Header Content
         Column(
@@ -83,14 +82,14 @@ fun PriceHistoryScreenContent(
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Regresar",
-                        tint = IndustrialCharcoalDark
+                        tint = MaterialTheme.colorScheme.onSurface
                     )
                 }
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = "Historial de Precios",
                     fontWeight = FontWeight.ExtraBold,
-                    color = IndustrialCharcoalDark,
+                    color = MaterialTheme.colorScheme.onSurface,
                     style = MaterialTheme.typography.headlineMedium.copy(
                         fontSize = 28.sp,
                         letterSpacing = (-0.5).sp
@@ -100,7 +99,7 @@ fun PriceHistoryScreenContent(
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = "Seguimiento de cotizaciones y cambios de costos.",
-                color = IndustrialCharcoalMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.bodyMedium,
                 lineHeight = 20.sp,
                 modifier = Modifier.padding(start = 40.dp)
@@ -123,7 +122,7 @@ fun PriceHistoryScreenContent(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
-                        CircularProgressIndicator(color = IndustrialOrange)
+                        CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                     }
                 }
                 is PriceHistoryUiState.Success -> {
@@ -133,7 +132,7 @@ fun PriceHistoryScreenContent(
                                 modifier = Modifier.fillMaxSize(),
                                 contentAlignment = Alignment.Center
                             ) {
-                                CircularProgressIndicator(color = IndustrialOrange)
+                                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                             }
                         } else {
                             EmptyHistoryState()
@@ -155,7 +154,7 @@ fun PriceHistoryScreenContent(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(text = state.message, color = Color.Red)
+                        Text(text = state.message, color = MaterialTheme.colorScheme.error)
                     }
                 }
             }
@@ -179,7 +178,7 @@ fun PriceHistorySearchBar(
         placeholder = {
             Text(
                 text = "Buscar material o proveedor",
-                color = IndustrialCharcoalMedium.copy(alpha = 0.8f),
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
                 style = MaterialTheme.typography.bodyLarge
             )
         },
@@ -187,7 +186,7 @@ fun PriceHistorySearchBar(
             Icon(
                 imageVector = Icons.Default.Search,
                 contentDescription = "Icono buscar",
-                tint = IndustrialCharcoalDark
+                tint = MaterialTheme.colorScheme.onSurface
             )
         },
         trailingIcon = {
@@ -196,7 +195,7 @@ fun PriceHistorySearchBar(
                     Icon(
                         imageVector = Icons.Default.Clear,
                         contentDescription = "Limpiar",
-                        tint = IndustrialCharcoalMedium
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -212,12 +211,12 @@ fun PriceHistorySearchBar(
         singleLine = true,
         shape = IndustrialShapes.small,
         colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = IndustrialOrange,
-            unfocusedBorderColor = Color.LightGray,
-            focusedContainerColor = Color.White,
-            unfocusedContainerColor = Color.White,
-            focusedTextColor = IndustrialCharcoalDark,
-            unfocusedTextColor = IndustrialCharcoalDark
+            focusedBorderColor = MaterialTheme.colorScheme.primary,
+            unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+            focusedContainerColor = MaterialTheme.colorScheme.surface,
+            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+            unfocusedTextColor = MaterialTheme.colorScheme.onSurface
         )
     )
 }
@@ -242,8 +241,8 @@ fun PriceHistoryItem(
         modifier = modifier
             .fillMaxWidth()
             .clip(IndustrialShapes.medium)
-            .border(1.dp, Color.LightGray.copy(alpha = 0.3f), IndustrialShapes.medium),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f), IndustrialShapes.medium),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(
@@ -251,7 +250,7 @@ fun PriceHistoryItem(
         ) {
             Text(
                 text = materialWithPrices.material.name,
-                color = IndustrialCharcoalDark,
+                color = MaterialTheme.colorScheme.onSurface,
                 fontWeight = FontWeight.Bold,
                 style = MaterialTheme.typography.titleMedium,
                 maxLines = 1,
@@ -262,20 +261,20 @@ fun PriceHistoryItem(
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = maker.name,
-                    color = IndustrialSteelBlue,
+                    color = MaterialTheme.colorScheme.tertiary,
                     style = MaterialTheme.typography.bodySmall,
                     fontWeight = FontWeight.Medium
                 )
             }
 
             Spacer(modifier = Modifier.height(12.dp))
-            HorizontalDivider(color = Color.LightGray.copy(alpha = 0.2f))
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f))
             Spacer(modifier = Modifier.height(12.dp))
 
             if (latestPricesByProvider.isEmpty()) {
                 Text(
                     text = "No hay cotizaciones disponibles",
-                    color = IndustrialCharcoalMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodySmall
                 )
             } else {
@@ -291,7 +290,7 @@ fun PriceHistoryItem(
                             ) {
                                 Text(
                                     text = priceWithProvider.provider?.name ?: "Proveedor desconocido",
-                                    color = IndustrialCharcoalDark,
+                                    color = MaterialTheme.colorScheme.onSurface,
                                     style = MaterialTheme.typography.bodyMedium,
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis
@@ -299,7 +298,7 @@ fun PriceHistoryItem(
                                 priceWithProvider.provider?.address?.let { address ->
                                     Text(
                                         text = address,
-                                        color = IndustrialCharcoalMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         style = MaterialTheme.typography.labelSmall,
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis
@@ -309,14 +308,14 @@ fun PriceHistoryItem(
                             
                             Text(
                                 text = "$${priceWithProvider.priceHistory.price}",
-                                color = IndustrialOrange,
+                                color = MaterialTheme.colorScheme.primary,
                                 fontWeight = FontWeight.ExtraBold,
                                 style = MaterialTheme.typography.bodyLarge
                             )
                         }
                         Text(
                             text = "Fecha: ${priceWithProvider.priceHistory.quoteDate}",
-                            color = IndustrialCharcoalMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             style = MaterialTheme.typography.labelSmall
                         )
                     }
@@ -336,20 +335,20 @@ private fun EmptyHistoryState() {
             Icon(
                 imageVector = Icons.Default.History,
                 contentDescription = null,
-                tint = IndustrialCharcoalMedium,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(64.dp)
             )
             Spacer(modifier = Modifier.height(16.dp))
             Text(
                 text = "Historial vacío",
-                color = IndustrialCharcoalDark,
+                color = MaterialTheme.colorScheme.onSurface,
                 fontWeight = FontWeight.SemiBold,
                 style = MaterialTheme.typography.titleMedium
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = "No hay registros de precios aún.",
-                color = IndustrialCharcoalMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.bodyMedium
             )
         }

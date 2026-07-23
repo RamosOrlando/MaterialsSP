@@ -60,7 +60,7 @@ fun MakerScreenContent(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(IndustrialBackground)
+            .background(MaterialTheme.colorScheme.background)
     ) {
         // Header Content
         Column(
@@ -79,14 +79,14 @@ fun MakerScreenContent(
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Regresar",
-                        tint = IndustrialCharcoalDark
+                        tint = MaterialTheme.colorScheme.onSurface
                     )
                 }
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = "Fabricantes",
                     fontWeight = FontWeight.ExtraBold,
-                    color = IndustrialCharcoalDark,
+                    color = MaterialTheme.colorScheme.onSurface,
                     style = MaterialTheme.typography.headlineMedium.copy(
                         fontSize = 28.sp,
                         letterSpacing = (-0.5).sp
@@ -95,7 +95,7 @@ fun MakerScreenContent(
             }
             Text(
                 text = "Explore los materiales por fabricante.",
-                color = IndustrialCharcoalMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.bodyMedium,
                 lineHeight = 20.sp,
                 modifier = Modifier.padding(start = 40.dp)
@@ -118,7 +118,7 @@ fun MakerScreenContent(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
-                        CircularProgressIndicator(color = IndustrialOrange)
+                        CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                     }
                 }
                 is MakerUiState.Success -> {
@@ -162,7 +162,7 @@ fun MakerSearchBar(
         placeholder = {
             Text(
                 text = "Buscar Fabricante",
-                color = IndustrialCharcoalMedium.copy(alpha = 0.8f),
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
                 style = MaterialTheme.typography.bodyLarge
             )
         },
@@ -170,7 +170,7 @@ fun MakerSearchBar(
             Icon(
                 imageVector = Icons.Default.Search,
                 contentDescription = "Icono buscar",
-                tint = IndustrialCharcoalDark
+                tint = MaterialTheme.colorScheme.onSurface
             )
         },
         trailingIcon = {
@@ -179,7 +179,7 @@ fun MakerSearchBar(
                     Icon(
                         imageVector = Icons.Default.Clear,
                         contentDescription = "Limpiar",
-                        tint = IndustrialCharcoalMedium
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -195,12 +195,12 @@ fun MakerSearchBar(
         singleLine = true,
         shape = IndustrialShapes.small,
         colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = IndustrialOrange,
-            unfocusedBorderColor = Color.LightGray,
-            focusedContainerColor = Color.White,
-            unfocusedContainerColor = Color.White,
-            focusedTextColor = IndustrialCharcoalDark,
-            unfocusedTextColor = IndustrialCharcoalDark
+            focusedBorderColor = MaterialTheme.colorScheme.primary,
+            unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+            focusedContainerColor = MaterialTheme.colorScheme.surface,
+            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+            unfocusedTextColor = MaterialTheme.colorScheme.onSurface
         )
     )
 }
@@ -215,7 +215,7 @@ fun MakerCard(
             .fillMaxWidth()
             .height(140.dp)
             .clip(IndustrialShapes.medium)
-            .background(Color.White) // Ensure white background for logos
+            .background(Color.White) // Mantener blanco para logos que suelen ser sobre fondo claro
             .clickable { /* Navegar a los materiales del fabricante */ }
     ) {
         SubcomposeAsyncImage(
@@ -231,13 +231,13 @@ fun MakerCard(
                         .fillMaxSize()
                         .background(
                             Brush.linearGradient(
-                                colors = listOf(Color(0xFFE6E8EA), Color(0xFFECEEF0))
+                                colors = listOf(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.background)
                             )
                         ),
                     contentAlignment = Alignment.Center
                 ) {
                     CircularProgressIndicator(
-                        color = IndustrialOrange,
+                        color = MaterialTheme.colorScheme.primary,
                         strokeWidth = 2.dp,
                         modifier = Modifier.size(24.dp)
                     )
@@ -249,7 +249,7 @@ fun MakerCard(
                         .fillMaxSize()
                         .background(
                             Brush.verticalGradient(
-                                colors = listOf(IndustrialSteelBlue, IndustrialCharcoalDark)
+                                colors = listOf(MaterialTheme.colorScheme.tertiary, MaterialTheme.colorScheme.onSurface)
                             )
                         )
                 )
@@ -267,7 +267,7 @@ fun MakerCard(
         ) {
             Text(
                 text = maker.name,
-                color = IndustrialCharcoalDark,
+                color = IndustrialCharcoalDark, // Mantener oscuro sobre fondo blanco
                 fontWeight = FontWeight.Bold,
                 style = MaterialTheme.typography.titleSmall.copy(
                     fontSize = 14.sp
@@ -290,20 +290,20 @@ private fun EmptyState() {
             Icon(
                 imageVector = Icons.Default.SearchOff,
                 contentDescription = null,
-                tint = IndustrialCharcoalMedium,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(64.dp)
             )
             Spacer(modifier = Modifier.height(16.dp))
             Text(
                 text = "No se encontraron fabricantes",
-                color = IndustrialCharcoalDark,
+                color = MaterialTheme.colorScheme.onSurface,
                 fontWeight = FontWeight.SemiBold,
                 style = MaterialTheme.typography.titleMedium
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = "Intenta buscar con otros términos",
-                color = IndustrialCharcoalMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.bodyMedium
             )
         }
@@ -317,7 +317,7 @@ private fun ErrorState(message: String, onRetry: () -> Unit) {
         contentAlignment = Alignment.Center
     ) {
         Card(
-            colors = CardDefaults.cardColors(containerColor = Color.White),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
             shape = IndustrialShapes.medium,
             modifier = Modifier.fillMaxWidth().padding(16.dp)
@@ -329,30 +329,30 @@ private fun ErrorState(message: String, onRetry: () -> Unit) {
                 Icon(
                     imageVector = Icons.Default.ErrorOutline,
                     contentDescription = "Error",
-                    tint = Color.Red,
+                    tint = MaterialTheme.colorScheme.error,
                     modifier = Modifier.size(48.dp)
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
                     text = "Error de Conexión",
                     fontWeight = FontWeight.Bold,
-                    color = IndustrialCharcoalDark,
+                    color = MaterialTheme.colorScheme.onSurface,
                     style = MaterialTheme.typography.titleMedium
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = message,
-                    color = IndustrialCharcoalMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.padding(horizontal = 8.dp)
                 )
                 Spacer(modifier = Modifier.height(20.dp))
                 Button(
                     onClick = onRetry,
-                    colors = ButtonDefaults.buttonColors(containerColor = IndustrialOrange),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                     shape = IndustrialShapes.small
                 ) {
-                    Text(text = "Reintentar", color = Color.White)
+                    Text(text = "Reintentar", color = MaterialTheme.colorScheme.onPrimary)
                 }
             }
         }

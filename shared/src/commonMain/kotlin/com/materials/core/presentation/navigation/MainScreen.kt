@@ -18,10 +18,6 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.ui.NavDisplay
 import com.materials.core.presentation.navigation.components.CatalogDetailPlaceholder
-import com.materials.core.presentation.theme.IndustrialBackground
-import com.materials.core.presentation.theme.IndustrialCharcoalDark
-import com.materials.core.presentation.theme.IndustrialCharcoalMedium
-import com.materials.core.presentation.theme.IndustrialOrange
 import com.materials.features.category.presentation.CategoryScreen
 import com.materials.features.section.presentation.SectionScreen
 import com.materials.features.maker.presentation.MakerScreen
@@ -64,14 +60,14 @@ fun MainScreen(
                     Column {
                         Text(
                             text = "Catálogo Industrial",
-                            color = IndustrialOrange,
+                            color = MaterialTheme.colorScheme.primary,
                             fontWeight = FontWeight.Bold,
                             style = MaterialTheme.typography.titleLarge
                         )
                         if (userEmail.isNotEmpty()) {
                             Text(
                                 text = userEmail,
-                                color = IndustrialCharcoalMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 style = MaterialTheme.typography.labelSmall
                             )
                         }
@@ -83,13 +79,13 @@ fun MainScreen(
                         Icon(
                             imageVector = Icons.Default.MoreVert,
                             contentDescription = "Opciones",
-                            tint = IndustrialCharcoalDark
+                            tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
                     DropdownMenu(
                         expanded = showMenu,
                         onDismissRequest = { showMenu = false },
-                        modifier = Modifier.background(Color.White)
+                        modifier = Modifier.background(MaterialTheme.colorScheme.surface)
                     ) {
                         DropdownMenuItem(
                             text = { Text("Cerrar Sesión") },
@@ -108,15 +104,15 @@ fun MainScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.White
+                    containerColor = MaterialTheme.colorScheme.surface
                 ),
-                modifier = Modifier.border(width = 0.5.dp, color = Color.LightGray.copy(alpha = 0.5f))
+                modifier = Modifier.border(width = 0.5.dp, color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
             )
         },
         bottomBar = {
             if (!shouldUseRail) {
                 NavigationBar(
-                    containerColor = Color.White,
+                    containerColor = MaterialTheme.colorScheme.surface,
                     tonalElevation = 8.dp
                 ) {
                     navItems.forEach { item ->
@@ -138,18 +134,18 @@ fun MainScreen(
                                 )
                             },
                             colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = IndustrialOrange,
-                                selectedTextColor = IndustrialOrange,
-                                indicatorColor = Color(0xFFFFDBCC).copy(alpha = 0.5f),
-                                unselectedIconColor = IndustrialCharcoalMedium,
-                                unselectedTextColor = IndustrialCharcoalMedium
+                                selectedIconColor = MaterialTheme.colorScheme.primary,
+                                selectedTextColor = MaterialTheme.colorScheme.primary,
+                                indicatorColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
+                                unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         )
                     }
                 }
             }
         },
-        containerColor = IndustrialBackground
+        containerColor = MaterialTheme.colorScheme.background
     ) { innerPadding ->
         Row(
             modifier = Modifier
@@ -158,10 +154,10 @@ fun MainScreen(
         ) {
             if (shouldUseRail) {
                 NavigationRail(
-                    containerColor = Color.White,
+                    containerColor = MaterialTheme.colorScheme.surface,
                     modifier = Modifier.border(
                         width = 0.5.dp,
-                        color = Color.LightGray.copy(alpha = 0.5f)
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
                     )
                 ) {
                     Spacer(modifier = Modifier.weight(1f))
@@ -184,11 +180,11 @@ fun MainScreen(
                                 )
                             },
                             colors = NavigationRailItemDefaults.colors(
-                                selectedIconColor = IndustrialOrange,
-                                selectedTextColor = IndustrialOrange,
-                                indicatorColor = Color(0xFFFFDBCC).copy(alpha = 0.5f),
-                                unselectedIconColor = IndustrialCharcoalMedium,
-                                unselectedTextColor = IndustrialCharcoalMedium
+                                selectedIconColor = MaterialTheme.colorScheme.primary,
+                                selectedTextColor = MaterialTheme.colorScheme.primary,
+                                indicatorColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
+                                unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         )
                     }
@@ -279,7 +275,7 @@ private fun CatalogPane(
                     columns = 1
                 )
             }
-            VerticalDivider(color = Color.LightGray.copy(alpha = 0.5f))
+            VerticalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
             Box(modifier = Modifier.weight(2.4f).fillMaxHeight()) {
                 when (screen) {
                     Screen.Category -> CatalogDetailPlaceholder()

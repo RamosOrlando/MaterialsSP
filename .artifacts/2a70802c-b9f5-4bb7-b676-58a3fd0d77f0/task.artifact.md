@@ -1,4 +1,7 @@
-- [x] Delete desktop database files (`~/materials.db*`)
-- [x] Add destructive migration to `DatabaseBuilder.kt`
-- [x] Verify files are deleted
-- [x] Create walkthrough
+- [ ] Update `AuthRepository` and `AuthRepositoryImpl`
+- [ ] Add `ForgotPassword` to `Screen.kt`
+- [ ] Create `ForgotPasswordState.kt` and `ForgotPasswordViewModel.kt`
+- [ ] Create `ForgotPasswordScreen.kt`
+- [ ] Update `NavigationRoot.kt` and `LoginScreen.kt`
+- [ ] Register ViewModel in `di.kt`
+- [ ] Create walkthrough

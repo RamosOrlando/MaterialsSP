@@ -102,13 +102,13 @@ fun MaterialScreenContent(
     Scaffold(
         modifier = modifier
             .fillMaxSize(),
-        containerColor = IndustrialBackground,
+        containerColor = MaterialTheme.colorScheme.background,
         floatingActionButton = {
             if (selectedIds.isNotEmpty()) {
                 ExtendedFloatingActionButton(
                     onClick = onProceed,
-                    containerColor = IndustrialOrange,
-                    contentColor = Color.White,
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
                     icon = { Icon(Icons.Default.Check, contentDescription = null) },
                     text = { Text("Continuar (${selectedIds.size})") }
                 )
@@ -137,14 +137,14 @@ fun MaterialScreenContent(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Regresar",
-                            tint = IndustrialCharcoalDark
+                            tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = "Materiales",
                         fontWeight = FontWeight.ExtraBold,
-                        color = IndustrialCharcoalDark,
+                        color = MaterialTheme.colorScheme.onSurface,
                         style = MaterialTheme.typography.headlineMedium.copy(
                             fontSize = 28.sp,
                             letterSpacing = (-0.5).sp
@@ -153,7 +153,7 @@ fun MaterialScreenContent(
                 }
                 Text(
                     text = "Catálogo detallado de materiales industriales.",
-                    color = IndustrialCharcoalMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodyMedium,
                     lineHeight = 20.sp,
                     modifier = Modifier.padding(start = 40.dp)
@@ -176,7 +176,7 @@ fun MaterialScreenContent(
                             modifier = Modifier.fillMaxSize(),
                             contentAlignment = Alignment.Center
                         ) {
-                            CircularProgressIndicator(color = IndustrialOrange)
+                            CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                         }
                     }
 
@@ -187,7 +187,7 @@ fun MaterialScreenContent(
                                     modifier = Modifier.fillMaxSize(),
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    CircularProgressIndicator(color = IndustrialOrange)
+                                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                                 }
                             } else {
                                 EmptyState()
@@ -246,7 +246,7 @@ fun MaterialSearchBar(
         placeholder = {
             Text(
                 text = "Buscar Material",
-                color = IndustrialCharcoalMedium.copy(alpha = 0.8f),
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
                 style = MaterialTheme.typography.bodyLarge
             )
         },
@@ -254,7 +254,7 @@ fun MaterialSearchBar(
             Icon(
                 imageVector = Icons.Default.Search,
                 contentDescription = "Icono buscar",
-                tint = IndustrialCharcoalDark
+                tint = MaterialTheme.colorScheme.onSurface
             )
         },
         trailingIcon = {
@@ -263,7 +263,7 @@ fun MaterialSearchBar(
                     Icon(
                         imageVector = Icons.Default.Clear,
                         contentDescription = "Limpiar",
-                        tint = IndustrialCharcoalMedium
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -279,12 +279,12 @@ fun MaterialSearchBar(
         singleLine = true,
         shape = IndustrialShapes.small,
         colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = IndustrialOrange,
-            unfocusedBorderColor = Color.LightGray,
-            focusedContainerColor = Color.White,
-            unfocusedContainerColor = Color.White,
-            focusedTextColor = IndustrialCharcoalDark,
-            unfocusedTextColor = IndustrialCharcoalDark
+            focusedBorderColor = MaterialTheme.colorScheme.primary,
+            unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+            focusedContainerColor = MaterialTheme.colorScheme.surface,
+            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+            unfocusedTextColor = MaterialTheme.colorScheme.onSurface
         )
     )
 }
@@ -304,11 +304,11 @@ fun MaterialCard(
             .clip(IndustrialShapes.medium)
             .border(
                 width = if (isSelected) 2.dp else 1.dp,
-                color = if (isSelected) IndustrialOrange else Color.LightGray.copy(alpha = 0.3f),
+                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
                 shape = IndustrialShapes.medium
             )
             .clickable { onSelect(material.materialId) },
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = if (isSelected) 4.dp else 1.dp)
     ) {
         Column(
@@ -322,7 +322,7 @@ fun MaterialCard(
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = material.name,
-                            color = IndustrialCharcoalDark,
+                            color = MaterialTheme.colorScheme.onSurface,
                             fontWeight = FontWeight.Bold,
                             style = MaterialTheme.typography.bodyLarge,
                             maxLines = 1,
@@ -338,20 +338,20 @@ fun MaterialCard(
                             Icon(
                                 imageVector = Icons.Default.Edit,
                                 contentDescription = "Editar",
-                                tint = IndustrialCharcoalMedium,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.size(18.dp)
                             )
                         }
                         
                         if (material.unit != null) {
                             Surface(
-                                color = IndustrialOrange.copy(alpha = 0.1f),
+                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
                                 shape = IndustrialShapes.small,
                                 modifier = Modifier.padding(start = 8.dp)
                             ) {
                                 Text(
                                     text = material.unit,
-                                    color = IndustrialOrange,
+                                    color = MaterialTheme.colorScheme.primary,
                                     style = MaterialTheme.typography.labelSmall,
                                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                                     fontWeight = FontWeight.Bold
@@ -370,19 +370,19 @@ fun MaterialCard(
                             if (materialItem.makerName != null) {
                                 Text(
                                     text = materialItem.makerName,
-                                    color = IndustrialCharcoalMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     fontWeight = FontWeight.Medium,
                                     style = MaterialTheme.typography.bodySmall
                                 )
                                 Text(
                                     text = " • ",
-                                    color = IndustrialCharcoalMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     style = MaterialTheme.typography.bodySmall
                                 )
                             }
                             Text(
                                 text = formatDateToDisplay(material.quoteDate),
-                                color = IndustrialCharcoalDark,
+                                color = MaterialTheme.colorScheme.onSurface,
                                 fontWeight = FontWeight.SemiBold,
                                 style = MaterialTheme.typography.bodySmall
                             )
@@ -390,7 +390,7 @@ fun MaterialCard(
 
                         Text(
                             text = if (material.price != null) "Bs. ${material.price}" else "---",
-                            color = IndustrialOrange,
+                            color = MaterialTheme.colorScheme.primary,
                             fontWeight = FontWeight.ExtraBold,
                             style = MaterialTheme.typography.bodyLarge,
                             fontSize = 22.sp,
@@ -427,32 +427,52 @@ fun EditMaterialDialog(
                     value = name,
                     onValueChange = { name = it },
                     label = { Text("Nombre") },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                        unfocusedTextColor = MaterialTheme.colorScheme.onSurface
+                    )
                 )
                 OutlinedTextField(
                     value = unit,
                     onValueChange = { unit = it },
                     label = { Text("Unidad") },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                        unfocusedTextColor = MaterialTheme.colorScheme.onSurface
+                    )
                 )
                 OutlinedTextField(
                     value = specId,
                     onValueChange = { specId = it },
                     label = { Text("Spec ID") },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                        unfocusedTextColor = MaterialTheme.colorScheme.onSurface
+                    )
                 )
                 OutlinedTextField(
                     value = priceStr,
                     onValueChange = { priceStr = it },
                     label = { Text("Precio (Bs.)") },
                     keyboardOptions = KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                        unfocusedTextColor = MaterialTheme.colorScheme.onSurface
+                    )
                 )
                 OutlinedTextField(
                     value = quoteDate,
                     onValueChange = { quoteDate = it },
                     label = { Text("Fecha (e.g. 06-Ene-2026 o 06-01-2026)") },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                        unfocusedTextColor = MaterialTheme.colorScheme.onSurface
+                    )
                 )
             }
         },
@@ -469,17 +489,17 @@ fun EditMaterialDialog(
                         )
                     )
                 },
-                colors = ButtonDefaults.buttonColors(containerColor = IndustrialOrange)
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
             ) {
-                Text("Guardar", color = Color.White)
+                Text("Guardar", color = MaterialTheme.colorScheme.onPrimary)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancelar", color = IndustrialCharcoalMedium)
+                Text("Cancelar", color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         },
-        containerColor = Color.White
+        containerColor = MaterialTheme.colorScheme.surface
     )
 }
 
@@ -493,20 +513,20 @@ private fun EmptyState() {
             Icon(
                 imageVector = Icons.Default.Inventory,
                 contentDescription = null,
-                tint = IndustrialCharcoalMedium,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(64.dp)
             )
             Spacer(modifier = Modifier.height(16.dp))
             Text(
                 text = "No se encontraron materiales",
-                color = IndustrialCharcoalDark,
+                color = MaterialTheme.colorScheme.onSurface,
                 fontWeight = FontWeight.SemiBold,
                 style = MaterialTheme.typography.titleMedium
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = "Intenta ajustar los filtros o la búsqueda",
-                color = IndustrialCharcoalMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.bodyMedium
             )
         }
@@ -520,7 +540,7 @@ private fun ErrorState(message: String, onRetry: () -> Unit) {
         contentAlignment = Alignment.Center
     ) {
         Card(
-            colors = CardDefaults.cardColors(containerColor = Color.White),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
             shape = IndustrialShapes.medium,
             modifier = Modifier.fillMaxWidth().padding(16.dp)
@@ -532,30 +552,30 @@ private fun ErrorState(message: String, onRetry: () -> Unit) {
                 Icon(
                     imageVector = Icons.Default.ErrorOutline,
                     contentDescription = "Error",
-                    tint = Color.Red,
+                    tint = MaterialTheme.colorScheme.error,
                     modifier = Modifier.size(48.dp)
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
                     text = "Error de Conexión",
                     fontWeight = FontWeight.Bold,
-                    color = IndustrialCharcoalDark,
+                    color = MaterialTheme.colorScheme.onSurface,
                     style = MaterialTheme.typography.titleMedium
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = message,
-                    color = IndustrialCharcoalMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.padding(horizontal = 8.dp)
                 )
                 Spacer(modifier = Modifier.height(20.dp))
                 Button(
                     onClick = onRetry,
-                    colors = ButtonDefaults.buttonColors(containerColor = IndustrialOrange),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                     shape = IndustrialShapes.small
                 ) {
-                    Text(text = "Reintentar", color = Color.White)
+                    Text(text = "Reintentar", color = MaterialTheme.colorScheme.onPrimary)
                 }
             }
         }

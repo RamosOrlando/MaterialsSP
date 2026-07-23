@@ -10,8 +10,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.materials.core.presentation.theme.IndustrialCharcoalDark
-import com.materials.core.presentation.theme.IndustrialCharcoalMedium
 
 @Composable
 fun CatalogDetailPlaceholder(
@@ -28,14 +26,14 @@ fun CatalogDetailPlaceholder(
             Icon(
                 imageVector = Icons.Default.Category,
                 contentDescription = null,
-                tint = IndustrialCharcoalMedium.copy(alpha = 0.4f),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
                 modifier = Modifier.size(80.dp)
             )
             Spacer(modifier = Modifier.height(24.dp))
             Text(
                 text = "Seleccione una categoría",
                 style = MaterialTheme.typography.headlineSmall,
-                color = IndustrialCharcoalDark,
+                color = MaterialTheme.colorScheme.onSurface,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center
             )
@@ -43,7 +41,7 @@ fun CatalogDetailPlaceholder(
             Text(
                 text = "Explore los materiales disponibles navegando por las categorías en el panel izquierdo.",
                 style = MaterialTheme.typography.bodyLarge,
-                color = IndustrialCharcoalMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
             )
         }

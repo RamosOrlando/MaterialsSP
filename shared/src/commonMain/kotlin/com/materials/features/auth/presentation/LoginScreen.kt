@@ -55,7 +55,7 @@ fun LoginScreenContent(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(IndustrialBackground),
+            .background(MaterialTheme.colorScheme.background),
         contentAlignment = Alignment.Center
     ) {
         Column(
@@ -78,14 +78,14 @@ fun LoginScreenContent(
             Text(
                 text = "Gestión Industrial de Materiales",
                 style = MaterialTheme.typography.bodyMedium,
-                color = IndustrialCharcoalMedium
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             Spacer(modifier = Modifier.height(48.dp))
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = IndustrialSurface),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 shape = IndustrialShapes.medium,
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
@@ -96,7 +96,7 @@ fun LoginScreenContent(
                     Text(
                         text = "Iniciar Sesión",
                         style = MaterialTheme.typography.titleLarge,
-                        color = IndustrialCharcoalDark
+                        color = MaterialTheme.colorScheme.onSurface
                     )
 
                     OutlinedTextField(
@@ -105,7 +105,7 @@ fun LoginScreenContent(
                         label = { Text("Correo Electrónico") },
                         modifier = Modifier.fillMaxWidth(),
                         leadingIcon = {
-                            Icon(Icons.Default.Email, contentDescription = null, tint = IndustrialSteelBlue)
+                            Icon(Icons.Default.Email, contentDescription = null, tint = MaterialTheme.colorScheme.tertiary)
                         },
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Email,
@@ -114,6 +114,8 @@ fun LoginScreenContent(
                         singleLine = true,
                         shape = IndustrialShapes.small,
                         colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
                             focusedBorderColor = IndustrialOrange,
                             cursorColor = IndustrialOrange,
                             focusedLabelColor = IndustrialOrange
@@ -126,14 +128,14 @@ fun LoginScreenContent(
                         label = { Text("Contraseña") },
                         modifier = Modifier.fillMaxWidth(),
                         leadingIcon = {
-                            Icon(Icons.Default.Lock, contentDescription = null, tint = IndustrialSteelBlue)
+                            Icon(Icons.Default.Lock, contentDescription = null, tint = MaterialTheme.colorScheme.tertiary)
                         },
                         trailingIcon = {
                             IconButton(onClick = { passwordVisible = !passwordVisible }) {
                                 Icon(
                                     imageVector = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
                                     contentDescription = if (passwordVisible) "Ocultar" else "Mostrar",
-                                    tint = IndustrialSteelBlue
+                                    tint = MaterialTheme.colorScheme.tertiary
                                 )
                             }
                         },
@@ -145,6 +147,8 @@ fun LoginScreenContent(
                         singleLine = true,
                         shape = IndustrialShapes.small,
                         colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
                             focusedBorderColor = IndustrialOrange,
                             cursorColor = IndustrialOrange,
                             focusedLabelColor = IndustrialOrange
@@ -184,7 +188,7 @@ fun LoginScreenContent(
                     ) {
                         Text(
                             "¿No tienes cuenta? Regístrate",
-                            color = IndustrialSteelBlue,
+                            color = MaterialTheme.colorScheme.primary,
                             style = MaterialTheme.typography.labelLarge
                         )
                     }
