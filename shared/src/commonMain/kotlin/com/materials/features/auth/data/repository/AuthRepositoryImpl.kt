@@ -42,6 +42,26 @@ class AuthRepositoryImpl(
         }
     }
 
+    override suspend fun resetPassword(email: String): Result<Unit> {
+        return try {
+            supabaseClient.auth.resetPasswordForEmail(email)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun updatePassword(newPassword: String): Result<Unit> {
+        return try {
+            supabaseClient.auth.updateUser {
+                password = newPassword
+            }
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     override suspend fun isUserLoggedIn(): Boolean {
         return supabaseClient.auth.currentAccessTokenOrNull() != null
     }
