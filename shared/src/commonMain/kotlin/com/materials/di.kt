@@ -12,6 +12,7 @@ import com.materials.core.presentation.navigation.NavigationViewModel
 import com.materials.features.auth.data.repository.AuthRepositoryImpl
 import com.materials.features.auth.domain.repository.AuthRepository
 import com.materials.features.auth.presentation.LoginViewModel
+import com.materials.features.auth.presentation.SignUpViewModel
 import com.materials.features.category.data.remote.CategoryRemoteDataSource
 import com.materials.features.category.data.remote.SupabaseCategoryDataSource
 import com.materials.features.category.data.repository.CategoryRepositoryImpl
@@ -118,6 +119,7 @@ val viewModelModule = module {
     viewModelOf(::PriceHistoryViewModel)
     viewModelOf(::ProviderViewModel)
     viewModelOf(::LoginViewModel)
+    viewModelOf(::SignUpViewModel)
     viewModelOf(::NavigationViewModel)
     viewModelOf(::MainViewModel)
     factory { (materialIds: List<String>, initialQuantities: Map<String, Double>?) -> 

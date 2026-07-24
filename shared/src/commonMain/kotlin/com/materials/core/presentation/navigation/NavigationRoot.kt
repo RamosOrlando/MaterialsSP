@@ -9,6 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.ui.NavDisplay
 import com.materials.features.auth.presentation.LoginScreen
+import com.materials.features.auth.presentation.SignUpScreen
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -35,6 +36,17 @@ fun NavigationRoot(
             when (key) {
                 is Screen.Login -> LoginScreen(
                     onLoginSuccess = {
+                        viewModel.onLoginSuccess()
+                        backstack.clear()
+                        backstack.add(Screen.Category)
+                    },
+                    onNavigateToSignUp = {
+                        backstack.add(Screen.SignUp)
+                    }
+                )
+                is Screen.SignUp -> SignUpScreen(
+                    onBackClick = { backstack.removeLast() },
+                    onSignUpSuccess = {
                         viewModel.onLoginSuccess()
                         backstack.clear()
                         backstack.add(Screen.Category)

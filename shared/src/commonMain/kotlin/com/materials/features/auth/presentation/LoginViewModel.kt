@@ -63,7 +63,7 @@ class LoginViewModel(
 
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
-            val result = authRepository.signUpWithEmail(email, password)
+            val result = authRepository.signUpWithEmail(email, password, "")
             result.onSuccess {
                 _uiState.update { it.copy(isLoading = false, isSuccess = true) }
             }.onFailure { e ->

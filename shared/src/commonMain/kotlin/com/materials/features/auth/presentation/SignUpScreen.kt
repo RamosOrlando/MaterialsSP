@@ -2,12 +2,12 @@ package com.materials.features.auth.presentation
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.*
@@ -25,33 +25,34 @@ import com.materials.core.presentation.util.AdaptivePreviews
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
-fun LoginScreen(
-    onLoginSuccess: () -> Unit,
-    onNavigateToSignUp: () -> Unit,
-    viewModel: LoginViewModel = koinViewModel()
+fun SignUpScreen(
+    onBackClick: () -> Unit,
+    onSignUpSuccess: () -> Unit,
+    viewModel: SignUpViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
     LaunchedEffect(uiState.isSuccess) {
         if (uiState.isSuccess) {
-            onLoginSuccess()
+            onSignUpSuccess()
         }
     }
 
-    LoginScreenContent(
+    SignUpScreenContent(
         uiState = uiState,
         onEvent = viewModel::onEvent,
-        onNavigateToSignUp = onNavigateToSignUp
+        onBackClick = onBackClick
     )
 }
 
 @Composable
-fun LoginScreenContent(
-    uiState: LoginUiState,
-    onEvent: (LoginEvent) -> Unit,
-    onNavigateToSignUp: () -> Unit
+fun SignUpScreenContent(
+    uiState: SignUpUiState,
+    onEvent: (SignUpEvent) -> Unit,
+    onBackClick: () -> Unit
 ) {
     var passwordVisible by remember { mutableStateOf(false) }
+    var confirmPasswordVisible by remember { mutableStateOf(false) }
     val adaptiveInfo = currentWindowAdaptiveInfo()
     val isCompact = !adaptiveInfo.windowSizeClass.isWidthAtLeastBreakpoint(600)
 
@@ -65,26 +66,32 @@ fun LoginScreenContent(
             modifier = Modifier
                 .widthIn(max = if (isCompact) 600.dp else 480.dp)
                 .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
                 .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Text(
-                text = "MaterialsSP",
-                style = MaterialTheme.typography.headlineLarge,
-                color = IndustrialOrange,
-                fontWeight = FontWeight.ExtraBold
-            )
-            
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            Text(
-                text = "Gestión Industrial de Materiales",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(onClick = onBackClick) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Regresar",
+                        tint = IndustrialOrange
+                    )
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Crear Cuenta",
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = IndustrialOrange,
+                    fontWeight = FontWeight.ExtraBold
+                )
+            }
 
-            Spacer(modifier = Modifier.height(48.dp))
+            Spacer(modifier = Modifier.height(32.dp))
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -96,15 +103,32 @@ fun LoginScreenContent(
                     modifier = Modifier.padding(24.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    Text(
-                        text = "Iniciar Sesión",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.onSurface
+                    OutlinedTextField(
+                        value = uiState.name,
+                        onValueChange = { onEvent(SignUpEvent.OnNameChanged(it)) },
+                        label = { Text("Nombre Completo") },
+                        modifier = Modifier.fillMaxWidth(),
+                        leadingIcon = {
+                            Icon(Icons.Default.Person, contentDescription = null, tint = MaterialTheme.colorScheme.tertiary)
+                        },
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Text,
+                            imeAction = ImeAction.Next
+                        ),
+                        singleLine = true,
+                        shape = IndustrialShapes.small,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            focusedBorderColor = IndustrialOrange,
+                            cursorColor = IndustrialOrange,
+                            focusedLabelColor = IndustrialOrange
+                        )
                     )
 
                     OutlinedTextField(
                         value = uiState.email,
-                        onValueChange = { onEvent(LoginEvent.OnEmailChanged(it)) },
+                        onValueChange = { onEvent(SignUpEvent.OnEmailChanged(it)) },
                         label = { Text("Correo Electrónico") },
                         modifier = Modifier.fillMaxWidth(),
                         leadingIcon = {
@@ -127,7 +151,7 @@ fun LoginScreenContent(
 
                     OutlinedTextField(
                         value = uiState.password,
-                        onValueChange = { onEvent(LoginEvent.OnPasswordChanged(it)) },
+                        onValueChange = { onEvent(SignUpEvent.OnPasswordChanged(it)) },
                         label = { Text("Contraseña") },
                         modifier = Modifier.fillMaxWidth(),
                         leadingIcon = {
@@ -143,6 +167,39 @@ fun LoginScreenContent(
                             }
                         },
                         visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Password,
+                            imeAction = ImeAction.Next
+                        ),
+                        singleLine = true,
+                        shape = IndustrialShapes.small,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            focusedBorderColor = IndustrialOrange,
+                            cursorColor = IndustrialOrange,
+                            focusedLabelColor = IndustrialOrange
+                        )
+                    )
+
+                    OutlinedTextField(
+                        value = uiState.confirmPassword,
+                        onValueChange = { onEvent(SignUpEvent.OnConfirmPasswordChanged(it)) },
+                        label = { Text("Confirmar Contraseña") },
+                        modifier = Modifier.fillMaxWidth(),
+                        leadingIcon = {
+                            Icon(Icons.Default.Lock, contentDescription = null, tint = MaterialTheme.colorScheme.tertiary)
+                        },
+                        trailingIcon = {
+                            IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
+                                Icon(
+                                    imageVector = if (confirmPasswordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                                    contentDescription = if (confirmPasswordVisible) "Ocultar" else "Mostrar",
+                                    tint = MaterialTheme.colorScheme.tertiary
+                                )
+                            }
+                        },
+                        visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Password,
                             imeAction = ImeAction.Done
@@ -167,7 +224,7 @@ fun LoginScreenContent(
                     }
 
                     Button(
-                        onClick = { onEvent(LoginEvent.OnSignInClicked) },
+                        onClick = { onEvent(SignUpEvent.OnSignUpClicked) },
                         modifier = Modifier.fillMaxWidth().height(50.dp),
                         shape = IndustrialShapes.small,
                         colors = ButtonDefaults.buttonColors(containerColor = IndustrialOrange),
@@ -180,20 +237,8 @@ fun LoginScreenContent(
                                 strokeWidth = 2.dp
                             )
                         } else {
-                            Text("ENTRAR", fontWeight = FontWeight.Bold)
+                            Text("REGISTRARSE", fontWeight = FontWeight.Bold)
                         }
-                    }
-
-                    TextButton(
-                        onClick = onNavigateToSignUp,
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = !uiState.isLoading
-                    ) {
-                        Text(
-                            "¿No tienes cuenta? Regístrate",
-                            color = MaterialTheme.colorScheme.primary,
-                            style = MaterialTheme.typography.labelLarge
-                        )
                     }
                 }
             }
@@ -203,29 +248,15 @@ fun LoginScreenContent(
 
 @AdaptivePreviews
 @Composable
-private fun LoginScreenPreview() {
+private fun SignUpScreenPreview() {
     IndustrialTheme {
-        LoginScreenContent(
-            uiState = LoginUiState(
-                email = "industrial@material.com",
-                password = "password123"
+        SignUpScreenContent(
+            uiState = SignUpUiState(
+                name = "John Doe",
+                email = "john@example.com"
             ),
             onEvent = {},
-            onNavigateToSignUp = {}
-        )
-    }
-}
-
-@AdaptivePreviews
-@Composable
-private fun LoginScreenLoadingPreview() {
-    IndustrialTheme {
-        LoginScreenContent(
-            uiState = LoginUiState(
-                isLoading = true
-            ),
-            onEvent = {},
-            onNavigateToSignUp = {}
+            onBackClick = {}
         )
     }
 }

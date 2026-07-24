@@ -1,24 +1,38 @@
-# Implementation Plan - Persistent Login Session
+# Implementation Plan - New Registration Screen
 
-Ensure the user remains logged in after closing and reopening the app by properly waiting for session restoration from local storage.
+Create a dedicated "Sign Up" screen to collect user details (Name, Email, Password) for registration, improving the onboarding flow.
 
 ## User Review Required
 > [!IMPORTANT]
-> This change ensures that the app correctly identifies an existing session during startup. The "Splash" or initial loading state might last a few milliseconds longer while Supabase reads from storage, but it prevents the app from incorrectly redirecting to the Login screen.
+> The new registration screen will include validation for password confirmation and name. The `AuthRepository` will be updated to store the user's name in Supabase Auth metadata.
 
 ## Proposed Changes
 
 ### Auth Feature
-#### [MODIFY] [AuthRepositoryImpl.kt](file:///Users/orly/AndroidStudioProjects/MaterialsSP/shared/src/commonMain/kotlin/com/materials/features/auth/data/repository/AuthRepositoryImpl.kt)
-- Update `isUserLoggedIn()` to use `supabaseClient.auth.awaitInitialization()`.
-- Use `supabaseClient.auth.currentSessionOrNull()` for a more complete check than just the access token.
+#### [MODIFY] [AuthRepository.kt](file:///Users/orly/AndroidStudioProjects/MaterialsSP/shared/src/commonMain/kotlin/com/materials/features/auth/domain/repository/AuthRepository.kt)
+- Update `signUpWithEmail` signature to include `name: String`.
 
-#### [MODIFY] [SupabaseClient.kt](file:///Users/orly/AndroidStudioProjects/MaterialsSP/shared/src/commonMain/kotlin/com/materials/core/data/remote/SupabaseClient.kt)
-- Ensure `SettingsSessionManager` is correctly initialized. (Already present, but will verify imports and configuration).
+#### [MODIFY] [AuthRepositoryImpl.kt](file:///Users/orly/AndroidStudioProjects/MaterialsSP/shared/src/commonMain/kotlin/com/materials/features/auth/data/repository/AuthRepositoryImpl.kt)
+- Update `signUpWithEmail` to pass the name as user metadata using `data = buildJsonObject { put("full_name", name) }`.
+
+#### [NEW] [SignUpViewModel.kt](file:///Users/orly/AndroidStudioProjects/MaterialsSP/shared/src/commonMain/kotlin/com/materials/features/auth/presentation/SignUpViewModel.kt)
+- Create a new ViewModel to handle the registration state and logic.
+
+#### [NEW] [SignUpScreen.kt](file:///Users/orly/AndroidStudioProjects/MaterialsSP/shared/src/commonMain/kotlin/com/materials/features/auth/presentation/SignUpScreen.kt)
+- Create a new Composable screen with fields for Name, Email, Password, and Confirm Password.
+
+#### [MODIFY] [LoginScreen.kt](file:///Users/orly/AndroidStudioProjects/MaterialsSP/shared/src/commonMain/kotlin/com/materials/features/auth/presentation/LoginScreen.kt)
+- Update the "Regístrate" button to trigger navigation to the new screen instead of the current ViewModel action.
 
 ### Core Navigation
-#### [MODIFY] [NavigationViewModel.kt](file:///Users/orly/AndroidStudioProjects/MaterialsSP/shared/src/commonMain/kotlin/com/materials/core/presentation/navigation/NavigationViewModel.kt)
-- No functional changes needed here as it already calls `isUserLoggedIn()`, which will now correctly wait for initialization.
+#### [MODIFY] [Screen.kt](file:///Users/orly/AndroidStudioProjects/MaterialsSP/shared/src/commonMain/kotlin/com/materials/core/presentation/navigation/Screen.kt)
+- Add `SignUp` to the `Screen` sealed interface.
+
+#### [MODIFY] [NavigationRoot.kt](file:///Users/orly/AndroidStudioProjects/MaterialsSP/shared/src/commonMain/kotlin/com/materials/core/presentation/navigation/NavigationRoot.kt)
+- Handle navigation to `Screen.SignUp`.
+
+#### [MODIFY] [di.kt](file:///Users/orly/AndroidStudioProjects/MaterialsSP/shared/src/commonMain/kotlin/com/materials/di.kt)
+- Register `SignUpViewModel` in Koin.
 
 ## Verification Plan
 
@@ -26,8 +40,10 @@ Ensure the user remains logged in after closing and reopening the app by properl
 - Build the project to ensure no compilation errors.
 
 ### Manual Verification
-1. Open the app and log in with email/password.
-2. Once logged in, close the app completely (kill the task).
-3. Reopen the app.
-4. Verify that it navigates directly to the `Category` screen (or current screen) instead of the `Login` screen.
-5. Repeat the process to ensure it's consistent.
+1. Open the app and go to the Login screen.
+2. Click on the "Regístrate" text.
+3. Verify that the new Sign Up screen appears.
+4. Fill in the name, email, and passwords.
+5. Click "Registrarse".
+6. Verify that the account is created (or an error is shown if the email exists).
+7. Verify that upon success, it navigates to the main app (Category screen).

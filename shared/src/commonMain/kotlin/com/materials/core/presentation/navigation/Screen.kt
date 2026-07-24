@@ -8,6 +8,9 @@ sealed interface Screen {
     data object Login : Screen
 
     @Serializable
+    data object SignUp : Screen
+
+    @Serializable
     data object Category : Screen
     
     @Serializable

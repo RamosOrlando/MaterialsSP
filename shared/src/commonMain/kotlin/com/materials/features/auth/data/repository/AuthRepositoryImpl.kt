@@ -4,6 +4,8 @@ import com.materials.features.auth.domain.repository.AuthRepository
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.providers.builtin.Email
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 
 class AuthRepositoryImpl(
     private val supabaseClient: SupabaseClient
@@ -21,11 +23,14 @@ class AuthRepositoryImpl(
         }
     }
 
-    override suspend fun signUpWithEmail(email: String, password: String): Result<Unit> {
+    override suspend fun signUpWithEmail(email: String, password: String, name: String): Result<Unit> {
         return try {
             supabaseClient.auth.signUpWith(Email) {
                 this.email = email
                 this.password = password
+                data = buildJsonObject {
+                    put("full_name", name)
+                }
             }
             Result.success(Unit)
         } catch (e: Exception) {
