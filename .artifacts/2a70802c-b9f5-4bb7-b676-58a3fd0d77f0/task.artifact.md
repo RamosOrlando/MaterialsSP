@@ -1,7 +1,6 @@
-- [ ] Update `AuthRepository` and `AuthRepositoryImpl`
-- [ ] Add `ForgotPassword` to `Screen.kt`
-- [ ] Create `ForgotPasswordState.kt` and `ForgotPasswordViewModel.kt`
-- [ ] Create `ForgotPasswordScreen.kt`
-- [ ] Update `NavigationRoot.kt` and `LoginScreen.kt`
-- [ ] Register ViewModel in `di.kt`
-- [ ] Create walkthrough
+# Tasks - Persistent Login Session
+
+- [x] Update `AuthRepositoryImpl.kt`
+    - [x] Update `isUserLoggedIn` to use `awaitInitialization()`
+- [x] Verify `SupabaseClient.kt`
+- [x] Verify build

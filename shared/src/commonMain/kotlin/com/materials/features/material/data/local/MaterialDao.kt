@@ -30,6 +30,12 @@ interface MaterialDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertMaterial(material: MaterialEntity)
 
+    @Query("SELECT COUNT(*) FROM Material WHERE sectionId = :sectionId")
+    suspend fun getMaterialCount(sectionId: String): Int
+
+    @Query("SELECT COUNT(*) FROM Material WHERE sectionId = :sectionId")
+    fun getMaterialCountFlow(sectionId: String): Flow<Int>
+
     @Query("DELETE FROM Material")
     suspend fun clearAll()
 }

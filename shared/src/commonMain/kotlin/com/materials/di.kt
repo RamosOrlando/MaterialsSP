@@ -4,6 +4,9 @@ import com.materials.core.data.local.AppDatabase
 import com.materials.core.data.local.getRoomDatabase
 import com.materials.core.data.remote.SupabaseClient
 import com.materials.core.domain.RealtimeSyncManager
+import com.materials.core.domain.repository.SyncRepository
+import com.materials.core.data.repository.SyncRepositoryImpl
+import com.materials.core.domain.use_case.PerformFullSyncUseCase
 import com.materials.core.presentation.navigation.MainViewModel
 import com.materials.core.presentation.navigation.NavigationViewModel
 import com.materials.features.auth.data.repository.AuthRepositoryImpl
@@ -82,9 +85,7 @@ val dataModule = module {
             priceHistoryDao = get(),
             makerDao = get(),
             remoteDataSource = get(),
-            priceHistoryRemoteDataSource = get(),
-            makerRemoteDataSource = get(),
-            providerRemoteDataSource = get()
+            priceHistoryRemoteDataSource = get()
         )
     }
     single<PriceHistoryRepository> { PriceHistoryRepositoryImpl(get(), get(), get(), get()) }
@@ -93,8 +94,10 @@ val dataModule = module {
     single<ProviderRepository> { ProviderRepositoryImpl(get(), get()) }
     
     single<AuthRepository> { AuthRepositoryImpl(get()) }
+
+    single<SyncRepository> { SyncRepositoryImpl(get(), get(), get(), get(), get(), get()) }
     
-    single { RealtimeSyncManager(get(), get(), get(), get(), get(), get()) }
+    single { RealtimeSyncManager(get(), get(), get(), get(), get(), get(), get()) }
 }
 
 val domainModule = module {
@@ -104,6 +107,7 @@ val domainModule = module {
     factory { GetMaterialsUseCase(get()) }
     factory { GetPriceHistoryUseCase(get()) }
     factory { GetProvidersUseCase(get()) }
+    factory { PerformFullSyncUseCase(get()) }
 }
 
 val viewModelModule = module {
@@ -124,11 +128,8 @@ val viewModelModule = module {
 expect val platformModule: Module
 
 fun initKoin(config: KoinAppDeclaration? = null) {
-    val koinApp = startKoin {
+    startKoin {
         config?.invoke(this)
         modules(dataModule, domainModule, viewModelModule, platformModule)
     }
-    
-    // Start Realtime Sync
-    koinApp.koin.get<RealtimeSyncManager>().startSyncing()
 }

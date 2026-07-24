@@ -38,30 +38,15 @@ class MaterialRepositoryImpl(
     private val priceHistoryDao: PriceHistoryDao,
     private val makerDao: MakerDao,
     private val remoteDataSource: MaterialRemoteDataSource,
-    private val priceHistoryRemoteDataSource: PriceHistoryRemoteDataSource,
-    private val makerRemoteDataSource: MakerRemoteDataSource,
-    private val providerRemoteDataSource: ProviderRemoteDataSource
+    private val priceHistoryRemoteDataSource: PriceHistoryRemoteDataSource
 ) : MaterialRepository {
 
     override suspend fun refreshMaterials(): Resource<Unit> = withContext(Dispatchers.IO) {
         try {
             println("Starting refreshMaterials...")
-            // Fetch everything in order to satisfy Foreign Key constraints
-            val remoteMakers = makerRemoteDataSource.getMakers()
-            println("Fetched ${remoteMakers.size} makers")
-            makerDao.insertMakers(remoteMakers.map { it.toEntity() })
-
-            val remoteProviders = providerRemoteDataSource.getProviders()
-            println("Fetched ${remoteProviders.size} providers")
-            providerDao.insertProviders(remoteProviders.map { it.toEntity() })
-            
             val remoteMaterials = remoteDataSource.getMaterials()
             println("Fetched ${remoteMaterials.size} materials")
             materialDao.insertMaterials(remoteMaterials.map { it.toEntity() })
-            
-            val remotePrices = priceHistoryRemoteDataSource.getPriceHistories()
-            println("Fetched ${remotePrices.size} prices")
-            priceHistoryDao.insertPriceHistories(remotePrices.map { it.toEntity() })
             
             println("refreshMaterials finished successfully")
             Resource.Success(Unit)
@@ -125,6 +110,14 @@ class MaterialRepositoryImpl(
         } catch (e: Exception) {
             Resource.Error(e.message ?: "Error al actualizar material")
         }
+    }
+
+    override suspend fun getMaterialCount(sectionId: String): Int = withContext(Dispatchers.IO) {
+        materialDao.getMaterialCount(sectionId)
+    }
+
+    override fun getMaterialCountFlow(sectionId: String): Flow<Int> {
+        return materialDao.getMaterialCountFlow(sectionId)
     }
 
     override fun listenToRealtimeChanges(): Flow<Unit> = combine(

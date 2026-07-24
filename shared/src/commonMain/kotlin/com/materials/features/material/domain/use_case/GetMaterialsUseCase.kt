@@ -23,4 +23,12 @@ class GetMaterialsUseCase(
     suspend fun updateMaterial(material: Material): Resource<Unit> {
         return repository.updateMaterial(material)
     }
+
+    suspend fun getNextIndex(sectionId: String): Int {
+        return repository.getMaterialCount(sectionId) + 1
+    }
+
+    fun getNextIndexFlow(sectionId: String): Flow<Int> {
+        return repository.getMaterialCountFlow(sectionId).map { it + 1 }
+    }
 }

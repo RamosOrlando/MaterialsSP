@@ -35,6 +35,7 @@ fun NavigationRoot(
             when (key) {
                 is Screen.Login -> LoginScreen(
                     onLoginSuccess = {
+                        viewModel.onLoginSuccess()
                         backstack.clear()
                         backstack.add(Screen.Category)
                     }

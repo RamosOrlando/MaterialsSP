@@ -6,6 +6,7 @@ import com.materials.features.maker.domain.repository.MakerRepository
 import com.materials.features.material.domain.repository.MaterialRepository
 import com.materials.features.price_history.domain.repository.PriceHistoryRepository
 import com.materials.features.provider.domain.repository.ProviderRepository
+import com.materials.core.domain.use_case.PerformFullSyncUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -18,7 +19,8 @@ class RealtimeSyncManager(
     private val makerRepository: MakerRepository,
     private val materialRepository: MaterialRepository,
     private val providerRepository: ProviderRepository,
-    private val priceHistoryRepository: PriceHistoryRepository
+    private val priceHistoryRepository: PriceHistoryRepository,
+    private val performFullSyncUseCase: PerformFullSyncUseCase
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
@@ -36,26 +38,8 @@ class RealtimeSyncManager(
     }
 
     private suspend fun initialSync() {
-        println("Starting initialSync...")
-        // Fetch in order to satisfy foreign keys
-        val catResult = categoryRepository.refreshCategories()
-        println("Category refresh: $catResult")
-        
-        val secResult = sectionRepository.refreshSections()
-        println("Section refresh: $secResult")
-        
-        val makResult = makerRepository.refreshMakers()
-        println("Maker refresh: $makResult")
-        
-        val proResult = providerRepository.refreshProviders()
-        println("Provider refresh: $proResult")
-        
-        val matResult = materialRepository.refreshMaterials()
-        println("Material refresh: $matResult")
-        
-        val priResult = priceHistoryRepository.refreshPriceHistory()
-        println("PriceHistory refresh: $priResult")
-        
-        println("initialSync finished")
+        println("RealtimeSyncManager: Starting initialSync...")
+        val result = performFullSyncUseCase.execute()
+        println("RealtimeSyncManager: initialSync result: $result")
     }
 }

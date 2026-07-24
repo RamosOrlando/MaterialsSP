@@ -31,11 +31,7 @@ class SupabaseMaterialDataSource(
 
     override suspend fun updateMaterial(material: Material): Unit = withContext(Dispatchers.IO) {
         supabaseClient.postgrest["Material"]
-            .update(material) {
-                filter {
-                    Material::materialId eq material.materialId
-                }
-            }
+            .upsert(material)
         Unit
     }
 

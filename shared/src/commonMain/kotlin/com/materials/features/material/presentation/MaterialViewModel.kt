@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -51,6 +52,18 @@ class MaterialViewModel(
 
     private val _sectionId = MutableStateFlow<String?>(null)
 
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    val nextIndex: StateFlow<Int> = _sectionId
+        .flatMapLatest { id ->
+            if (id != null) getMaterialsUseCase.getNextIndexFlow(id)
+            else emptyFlow()
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = 1
+        )
+
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
 
@@ -87,10 +100,6 @@ class MaterialViewModel(
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = MaterialUiState.Loading
     )
-
-    init {
-        onEvent(MaterialEvent.Refresh)
-    }
 
     fun onEvent(event: MaterialEvent) {
         when (event) {

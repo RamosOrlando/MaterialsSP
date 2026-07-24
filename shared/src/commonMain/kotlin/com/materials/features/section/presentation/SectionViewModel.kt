@@ -55,10 +55,6 @@ class SectionViewModel(
         initialValue = SectionUiState.Loading
     )
 
-    init {
-        onEvent(SectionEvent.Refresh)
-    }
-
     fun onEvent(event: SectionEvent) {
         when (event) {
             is SectionEvent.OnSearchQueryChanged -> {

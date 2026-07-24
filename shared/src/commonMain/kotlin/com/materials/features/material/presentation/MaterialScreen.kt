@@ -7,8 +7,10 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
@@ -18,8 +20,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.sp
 import com.materials.core.presentation.theme.*
 import com.materials.features.material.domain.model.Material
 import com.materials.core.util.date.formatDateToDisplay
+import com.materials.core.util.randomUUID
 import androidx.compose.ui.tooling.preview.Preview
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -49,6 +50,7 @@ fun MaterialScreen(
     val searchQuery by viewModel.searchQuery.collectAsState()
     val selectedIds by viewModel.selectedMaterialIds.collectAsState()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
+    val nextIndex by viewModel.nextIndex.collectAsState()
     
     var editingMaterial by remember { mutableStateOf<Material?>(null) }
 
@@ -61,13 +63,32 @@ fun MaterialScreen(
         onBackClick = onBackClick,
         onProceed = { onMaterialsSelected(selectedIds.toList()) },
         onEditMaterial = { editingMaterial = it },
+        onCreateMaterial = {
+            editingMaterial = Material(
+                materialId = "", // Will be generated in the dialog
+                name = "",
+                sectionId = sectionId ?: "",
+                unit = null,
+                makerId = null,
+                specId = null,
+                price = null,
+                quoteDate = null
+            )
+        },
         columns = columns,
         modifier = modifier
     )
     
     editingMaterial?.let { material ->
+        val isNew = uiState.let { state ->
+            if (state is MaterialUiState.Success) {
+                state.materials.none { it.material.materialId == material.materialId }
+            } else true
+        }
         EditMaterialDialog(
             material = material,
+            isNew = isNew,
+            nextIndex = nextIndex,
             onDismiss = { editingMaterial = null },
             onConfirm = { updatedMaterial ->
                 viewModel.onEvent(MaterialEvent.UpdateMaterial(updatedMaterial))
@@ -87,6 +108,7 @@ fun MaterialScreenContent(
     onBackClick: () -> Unit = {},
     onProceed: () -> Unit = {},
     onEditMaterial: (Material) -> Unit = {},
+    onCreateMaterial: () -> Unit = {},
     columns: Int? = null,
     modifier: Modifier = Modifier
 ) {
@@ -112,6 +134,14 @@ fun MaterialScreenContent(
                     icon = { Icon(Icons.Default.Check, contentDescription = null) },
                     text = { Text("Continuar (${selectedIds.size})") }
                 )
+            } else {
+                FloatingActionButton(
+                    onClick = onCreateMaterial,
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = "Nuevo Material")
+                }
             }
         }
     ) { paddingValues ->
@@ -406,23 +436,44 @@ fun MaterialCard(
 @Composable
 fun EditMaterialDialog(
     material: Material,
+    isNew: Boolean = false,
+    nextIndex: Int = 1,
     onDismiss: () -> Unit,
     onConfirm: (Material) -> Unit
 ) {
     var name by remember { mutableStateOf(material.name) }
     var unit by remember { mutableStateOf(material.unit ?: "") }
+    var makerId by remember { mutableStateOf(material.makerId ?: "") }
     var specId by remember { mutableStateOf(material.specId ?: "") }
     var priceStr by remember { mutableStateOf(material.price?.toString() ?: "") }
     var quoteDate by remember { mutableStateOf(material.quoteDate ?: "") }
 
+    val materialId = remember(isNew, makerId, nextIndex, material.sectionId) {
+        if (isNew) {
+            val formattedIndex = nextIndex.toString().padStart(3, '0')
+            "${material.sectionId}-$formattedIndex-$makerId"
+        } else {
+            material.materialId
+        }
+    }
+
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Editar Material", fontWeight = FontWeight.Bold) },
+        title = { Text(if (isNew) "Nuevo Material" else "Editar Material", fontWeight = FontWeight.Bold) },
         text = {
             Column(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                if (isNew || materialId.isNotEmpty()) {
+                    Text(
+                        text = "ID: $materialId",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                }
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
@@ -437,6 +488,16 @@ fun EditMaterialDialog(
                     value = unit,
                     onValueChange = { unit = it },
                     label = { Text("Unidad") },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                        unfocusedTextColor = MaterialTheme.colorScheme.onSurface
+                    )
+                )
+                OutlinedTextField(
+                    value = makerId,
+                    onValueChange = { makerId = it },
+                    label = { Text("ID Fabricante (Maker ID)") },
                     modifier = Modifier.fillMaxWidth(),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedTextColor = MaterialTheme.colorScheme.onSurface,
@@ -481,8 +542,10 @@ fun EditMaterialDialog(
                 onClick = {
                     onConfirm(
                         material.copy(
+                            materialId = materialId,
                             name = name,
                             unit = unit.ifBlank { null },
+                            makerId = makerId.ifBlank { null },
                             specId = specId.ifBlank { null },
                             price = priceStr.toDoubleOrNull(),
                             quoteDate = quoteDate.ifBlank { null }

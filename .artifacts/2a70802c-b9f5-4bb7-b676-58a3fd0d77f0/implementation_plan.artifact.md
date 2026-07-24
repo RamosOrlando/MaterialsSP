@@ -1,49 +1,33 @@
-# Plan: Pantalla de Recuperación y Cambio de Contraseña
+# Implementation Plan - Persistent Login Session
 
-Este plan detalla la creación de una nueva pantalla para que los usuarios puedan recuperar su contraseña (enviando un correo de restablecimiento) o cambiarla directamente usando Supabase, siguiendo una arquitectura limpia y un diseño adaptativo.
+Ensure the user remains logged in after closing and reopening the app by properly waiting for session restoration from local storage.
 
 ## User Review Required
-
 > [!IMPORTANT]
-> El flujo de recuperación de contraseña en Supabase requiere que el usuario haga clic en un enlace enviado a su correo. Para que esto funcione de forma óptima en dispositivos móviles, se requeriría configurar "Deep Links". Por ahora, implementaremos la lógica del lado de la aplicación (enviar correo y actualizar contraseña) y el usuario podrá usar el sitio web de Supabase o volver a la app si se maneja el enlace de redirección.
+> This change ensures that the app correctly identifies an existing session during startup. The "Splash" or initial loading state might last a few milliseconds longer while Supabase reads from storage, but it prevents the app from incorrectly redirecting to the Login screen.
 
 ## Proposed Changes
 
-### [Core: Navegación y Repositorio]
-
-#### [MODIFY] [AuthRepository.kt](file:///Users/orly/AndroidStudioProjects/MaterialsSP/shared/src/commonMain/kotlin/com/materials/features/auth/domain/repository/AuthRepository.kt)
-- Agregar `suspend fun resetPassword(email: String): Result<Unit>`
-- Agregar `suspend fun updatePassword(newPassword: String): Result<Unit>`
-
+### Auth Feature
 #### [MODIFY] [AuthRepositoryImpl.kt](file:///Users/orly/AndroidStudioProjects/MaterialsSP/shared/src/commonMain/kotlin/com/materials/features/auth/data/repository/AuthRepositoryImpl.kt)
-- Implementar los nuevos métodos usando `supabaseClient.auth`.
+- Update `isUserLoggedIn()` to use `supabaseClient.auth.awaitInitialization()`.
+- Use `supabaseClient.auth.currentSessionOrNull()` for a more complete check than just the access token.
 
-#### [MODIFY] [Screen.kt](file:///Users/orly/AndroidStudioProjects/MaterialsSP/shared/src/commonMain/kotlin/com/materials/core/presentation/navigation/Screen.kt)
-- Agregar `data object ForgotPassword : Screen`
+#### [MODIFY] [SupabaseClient.kt](file:///Users/orly/AndroidStudioProjects/MaterialsSP/shared/src/commonMain/kotlin/com/materials/core/data/remote/SupabaseClient.kt)
+- Ensure `SettingsSessionManager` is correctly initialized. (Already present, but will verify imports and configuration).
 
-#### [MODIFY] [NavigationRoot.kt](file:///Users/orly/AndroidStudioProjects/MaterialsSP/shared/src/commonMain/kotlin/com/materials/core/presentation/navigation/NavigationRoot.kt)
-- Manejar la navegación hacia `ForgotPasswordScreen`.
-
-### [Feature: Auth - Recuperación de Contraseña]
-
-#### [NEW] [ForgotPasswordState.kt](file:///Users/orly/AndroidStudioProjects/MaterialsSP/shared/src/commonMain/kotlin/com/materials/features/auth/presentation/ForgotPasswordState.kt)
-- Definir el estado de la UI (email, nueva contraseña, cargando, error, éxito).
-
-#### [NEW] [ForgotPasswordViewModel.kt](file:///Users/orly/AndroidStudioProjects/MaterialsSP/shared/src/commonMain/kotlin/com/materials/features/auth/presentation/ForgotPasswordViewModel.kt)
-- Lógica para enviar el correo de recuperación y actualizar la contraseña.
-
-#### [NEW] [ForgotPasswordScreen.kt](file:///Users/orly/AndroidStudioProjects/MaterialsSP/shared/src/commonMain/kotlin/com/materials/features/auth/presentation/ForgotPasswordScreen.kt)
-- Pantalla adaptativa con campos para email y cambio de contraseña, manteniendo el estilo industrial.
-
-#### [MODIFY] [LoginScreen.kt](file:///Users/orly/AndroidStudioProjects/MaterialsSP/shared/src/commonMain/kotlin/com/materials/features/auth/presentation/LoginScreen.kt)
-- Agregar un botón "¿Olvidaste tu contraseña?" que navegue a la nueva pantalla.
-
-#### [MODIFY] [di.kt](file:///Users/orly/AndroidStudioProjects/MaterialsSP/shared/src/commonMain/kotlin/com/materials/di.kt)
-- Registrar `ForgotPasswordViewModel` en el módulo de Koin.
+### Core Navigation
+#### [MODIFY] [NavigationViewModel.kt](file:///Users/orly/AndroidStudioProjects/MaterialsSP/shared/src/commonMain/kotlin/com/materials/core/presentation/navigation/NavigationViewModel.kt)
+- No functional changes needed here as it already calls `isUserLoggedIn()`, which will now correctly wait for initialization.
 
 ## Verification Plan
 
+### Automated Tests
+- Build the project to ensure no compilation errors.
+
 ### Manual Verification
-- Verificar que el botón en `LoginScreen` navega correctamente.
-- Probar el envío de correo de recuperación (requiere configuración de SMTP en el proyecto de Supabase).
-- Verificar que la UI se adapta correctamente a temas claro/oscuro y a diferentes tamaños de pantalla (Desktop/Mobile).
+1. Open the app and log in with email/password.
+2. Once logged in, close the app completely (kill the task).
+3. Reopen the app.
+4. Verify that it navigates directly to the `Category` screen (or current screen) instead of the `Login` screen.
+5. Repeat the process to ensure it's consistent.

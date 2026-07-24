@@ -63,7 +63,8 @@ class AuthRepositoryImpl(
     }
 
     override suspend fun isUserLoggedIn(): Boolean {
-        return supabaseClient.auth.currentAccessTokenOrNull() != null
+        supabaseClient.auth.awaitInitialization()
+        return supabaseClient.auth.currentSessionOrNull() != null
     }
 
     override fun getCurrentUserEmail(): String? {
