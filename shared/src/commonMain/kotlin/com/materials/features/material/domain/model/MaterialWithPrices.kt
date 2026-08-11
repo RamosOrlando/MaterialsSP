@@ -8,7 +8,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class MaterialWithPrices(
     val material: Material,
-    val maker: Maker? = null,
+    val maker: Maker,
     val prices: List<PriceWithProvider>
 )
 

@@ -21,7 +21,7 @@ class GetPriceHistoryUseCase(
                 // Sort by latest quote date (descending), then by material name (ascending)
                 val sorted = filtered.sortedWith(
                     compareByDescending<MaterialWithPrices> { 
-                        it.prices.maxByOrNull { p -> p.priceHistory.quoteDate ?: "" }?.priceHistory?.quoteDate ?: ""
+                        it.prices.maxByOrNull { p -> p.priceHistory.quoteDate }?.priceHistory?.quoteDate ?: ""
                     }.thenBy { it.material.name }
                 )
 

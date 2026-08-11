@@ -230,11 +230,11 @@ fun PriceHistoryItem(
         materialWithPrices.prices
             .groupBy { it.provider?.providerId }
             .mapValues { entry ->
-                entry.value.maxByOrNull { it.priceHistory.quoteDate ?: "" }
+                entry.value.maxByOrNull { it.priceHistory.quoteDate }
             }
             .values
             .filterNotNull()
-            .sortedByDescending { it.priceHistory.quoteDate ?: "" }
+            .sortedByDescending { it.priceHistory.quoteDate }
     }
 
     Card(
@@ -256,7 +256,7 @@ fun PriceHistoryItem(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
-            
+
             materialWithPrices.maker?.let { maker ->
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
@@ -368,7 +368,8 @@ fun PriceHistoryScreenSuccessPreview() {
                             name = "Cemento Holcim Fuerte",
                             unit = "Bulto 50kg",
                             makerId = "MAKER-1",
-                            sectionId = "1"
+                            sectionId = "1",
+                            quoteDate = "2024-05-16"
                         ),
                         maker = Maker("MAKER-1", "Holcim"),
                         prices = listOf(

@@ -7,8 +7,8 @@ import kotlinx.serialization.Serializable
 data class Material(
     @SerialName("materialId") val materialId: String,
     @SerialName("name") val name: String,
-    @SerialName("unit") val unit: String? = null,
-    @SerialName("makerId") val makerId: String? = null,
+    @SerialName("unit") val unit: String,
+    @SerialName("makerId") val makerId: String,
     @SerialName("sectionId") val sectionId: String,
     @SerialName("specId") val specId: String? = null,
     @SerialName("price") val price: Double? = null,

@@ -32,8 +32,8 @@ import com.materials.features.material.domain.model.Material
 data class MaterialEntity(
     @PrimaryKey val materialId: String,
     val name: String,
-    val unit: String?,
-    val makerId: String?,
+    val unit: String,
+    val makerId: String,
     val sectionId: String,
     val specId: String?,
     val price: Double?,

@@ -20,13 +20,13 @@ import com.materials.features.provider.data.local.ProviderEntity
             entity = MaterialEntity::class,
             parentColumns = ["materialId"],
             childColumns = ["materialId"],
-            onDelete = ForeignKey.CASCADE
+            onDelete = ForeignKey.NO_ACTION
         ),
         ForeignKey(
             entity = ProviderEntity::class,
             parentColumns = ["providerId"],
             childColumns = ["providerId"],
-            onDelete = ForeignKey.CASCADE
+            onDelete = ForeignKey.NO_ACTION
         )
     ]
 )
@@ -41,7 +41,7 @@ data class PriceHistoryEntity(
     @ColumnInfo(name = "price")
     val price: Double,
     @ColumnInfo(name = "quoteDate")
-    val quoteDate: String?,
+    val quoteDate: String,
     @ColumnInfo(name = "username")
     val username: String
 )

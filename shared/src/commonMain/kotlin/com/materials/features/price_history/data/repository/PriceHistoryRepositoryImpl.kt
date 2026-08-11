@@ -42,9 +42,9 @@ class PriceHistoryRepositoryImpl(
 
     override fun getPriceHistoryDetailFlow(): Flow<Resource<List<PriceHistoryDetail>>> {
         return combine(
-            materialDao.getMaterials().onStart { emit(emptyList()) },
-            providerDao.getProviders().onStart { emit(emptyList()) },
-            priceHistoryDao.getAllPriceHistory().onStart { emit(emptyList()) }
+            materialDao.getMaterials(),
+            providerDao.getProviders(),
+            priceHistoryDao.getAllPriceHistory()
         ) { materials, providers, prices ->
             prices.map { priceEntity ->
                 val material = materials.find { it.materialId == priceEntity.materialId }
@@ -54,7 +54,7 @@ class PriceHistoryRepositoryImpl(
                     materialName = material?.name ?: "Desconocido",
                     providerName = provider?.name ?: "Desconocido",
                     price = priceEntity.price,
-                    quoteDate = priceEntity.quoteDate ?: "Desconocido",
+                    quoteDate = priceEntity.quoteDate,
                     unit = material?.unit
                 )
             }.sortedByDescending { it.quoteDate }

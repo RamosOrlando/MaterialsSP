@@ -85,8 +85,7 @@ val dataModule = module {
             providerDao = get(),
             priceHistoryDao = get(),
             makerDao = get(),
-            remoteDataSource = get(),
-            priceHistoryRemoteDataSource = get()
+            remoteDataSource = get()
         )
     }
     single<PriceHistoryRepository> { PriceHistoryRepositoryImpl(get(), get(), get(), get()) }

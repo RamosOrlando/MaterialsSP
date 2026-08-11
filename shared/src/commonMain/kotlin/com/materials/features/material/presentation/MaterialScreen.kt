@@ -68,8 +68,8 @@ fun MaterialScreen(
                 materialId = "", // Will be generated in the dialog
                 name = "",
                 sectionId = sectionId ?: "",
-                unit = null,
-                makerId = null,
+                unit = "",
+                makerId = "",
                 specId = null,
                 price = null,
                 quoteDate = null
@@ -442,8 +442,8 @@ fun EditMaterialDialog(
     onConfirm: (Material) -> Unit
 ) {
     var name by remember { mutableStateOf(material.name) }
-    var unit by remember { mutableStateOf(material.unit ?: "") }
-    var makerId by remember { mutableStateOf(material.makerId ?: "") }
+    var unit by remember { mutableStateOf(material.unit) }
+    var makerId by remember { mutableStateOf(material.makerId) }
     var specId by remember { mutableStateOf(material.specId ?: "") }
     var priceStr by remember { mutableStateOf(material.price?.toString() ?: "") }
     var quoteDate by remember { mutableStateOf(material.quoteDate ?: "") }
@@ -544,8 +544,8 @@ fun EditMaterialDialog(
                         material.copy(
                             materialId = materialId,
                             name = name,
-                            unit = unit.ifBlank { null },
-                            makerId = makerId.ifBlank { null },
+                            unit = unit,
+                            makerId = makerId,
                             specId = specId.ifBlank { null },
                             price = priceStr.toDoubleOrNull(),
                             quoteDate = quoteDate.ifBlank { null }

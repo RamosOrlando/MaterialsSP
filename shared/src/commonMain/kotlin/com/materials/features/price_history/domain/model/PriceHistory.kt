@@ -9,6 +9,6 @@ data class PriceHistory(
     @SerialName("materialId") val materialId: String,
     @SerialName("providerId") val providerId: String,
     @SerialName("price") val price: Double,
-    @SerialName("quoteDate") val quoteDate: String? = null,
+    @SerialName("quoteDate") val quoteDate: String,
     @SerialName("username") val username: String
 )

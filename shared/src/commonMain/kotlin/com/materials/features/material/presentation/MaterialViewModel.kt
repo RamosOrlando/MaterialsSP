@@ -21,7 +21,7 @@ import kotlin.time.Duration.Companion.milliseconds
 
 data class MaterialItem(
     val material: Material,
-    val makerName: String?
+    val makerName: String
 )
 
 sealed interface MaterialUiState {
@@ -88,7 +88,7 @@ class MaterialViewModel(
                 val materialItems = materialsResource.data.map { material ->
                     MaterialItem(
                         material = material,
-                        makerName = makersMap[material.makerId]?.name
+                        makerName = makersMap[material.makerId]?.name ?: "Desconocido"
                     )
                 }
                 MaterialUiState.Success(materialItems)

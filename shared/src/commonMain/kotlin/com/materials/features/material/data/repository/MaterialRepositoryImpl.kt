@@ -21,6 +21,7 @@ import com.materials.features.maker.data.local.toDomain
 import com.materials.features.maker.data.local.toEntity
 import com.materials.features.provider.data.local.toDomain
 import com.materials.features.provider.data.local.toEntity
+import com.materials.features.maker.domain.model.Maker
 import com.materials.features.material.domain.model.Material
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -37,8 +38,7 @@ class MaterialRepositoryImpl(
     private val providerDao: ProviderDao,
     private val priceHistoryDao: PriceHistoryDao,
     private val makerDao: MakerDao,
-    private val remoteDataSource: MaterialRemoteDataSource,
-    private val priceHistoryRemoteDataSource: PriceHistoryRemoteDataSource
+    private val remoteDataSource: MaterialRemoteDataSource
 ) : MaterialRepository {
 
     override suspend fun refreshMaterials(): Resource<Unit> = withContext(Dispatchers.IO) {
@@ -59,10 +59,10 @@ class MaterialRepositoryImpl(
 
     override fun getMaterialsFlow(query: String, sectionId: String?): Flow<Resource<List<MaterialWithPrices>>> {
         return combine(
-            materialDao.getMaterialsFiltered(query, sectionId).onStart { emit(emptyList()) },
-            providerDao.getProviders().onStart { emit(emptyList()) },
-            priceHistoryDao.getAllPriceHistory().onStart { emit(emptyList()) },
-            makerDao.getMakers().onStart { emit(emptyList()) }
+            materialDao.getMaterialsFiltered(query, sectionId),
+            providerDao.getProviders(),
+            priceHistoryDao.getAllPriceHistory(),
+            makerDao.getMakers()
         ) { materials, providers, prices, makers ->
             val pricesByMaterialId = prices.groupBy { it.materialId }
             val providersById = providers.associateBy { it.providerId }
@@ -78,7 +78,8 @@ class MaterialRepositoryImpl(
 
                 MaterialWithPrices(
                     material = materialEntity.toDomain(),
-                    maker = makersById[materialEntity.makerId]?.toDomain(),
+                    maker = makersById[materialEntity.makerId]?.toDomain() 
+                        ?: Maker(materialEntity.makerId, "Desconocido"),
                     prices = materialPrices
                 )
             }
@@ -120,10 +121,7 @@ class MaterialRepositoryImpl(
         return materialDao.getMaterialCountFlow(sectionId)
     }
 
-    override fun listenToRealtimeChanges(): Flow<Unit> = combine(
-        remoteDataSource.observeMaterials(),
-        priceHistoryRemoteDataSource.observePriceHistories()
-    ) { _, _ -> }.map {
+    override fun listenToRealtimeChanges(): Flow<Unit> = remoteDataSource.observeMaterials().map {
         refreshMaterials()
         Unit
     }
