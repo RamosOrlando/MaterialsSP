@@ -24,9 +24,13 @@ class SupabaseProviderDataSource(
 ) : ProviderRemoteDataSource {
 
     override suspend fun getProviders(): List<Provider> = withContext(Dispatchers.IO) {
-        supabaseClient.postgrest["Provider"]
-            .select()
-            .decodeList<Provider>()
+        try {
+            supabaseClient.postgrest["Provider"]
+                .select()
+                .decodeList<Provider>()
+        } catch (e: Exception) {
+            throw Exception("Error fetching from 'provider' table: ${e.message}")
+        }
     }
 
     override fun observeProviders(): Flow<Unit> = callbackFlow {

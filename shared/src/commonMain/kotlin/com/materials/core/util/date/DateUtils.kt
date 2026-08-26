@@ -11,7 +11,7 @@ fun getCurrentDateStr(): String {
     val day = localDateTime.day.toString().padStart(2, '0')
     val month = localDateTime.month.number.toString().padStart(2, '0')
     val year = localDateTime.year
-    return "$day-$month-$year"
+    return "$day/$month/$year"
 }
 
 fun formatDateToDisplay(dateStr: String?): String {

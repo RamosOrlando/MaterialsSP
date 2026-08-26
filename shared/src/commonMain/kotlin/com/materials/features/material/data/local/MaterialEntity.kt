@@ -36,6 +36,8 @@ data class MaterialEntity(
     val makerId: String,
     val sectionId: String,
     val specId: String?,
+    val historyId: String?,
+    val providerId: String?,
     val price: Double?,
     val quoteDate: String?
 )
@@ -47,6 +49,8 @@ fun MaterialEntity.toDomain() = Material(
     makerId = makerId,
     sectionId = sectionId,
     specId = specId,
+    historyId = historyId,
+    providerId = providerId,
     price = price,
     quoteDate = quoteDate
 )
@@ -58,6 +62,8 @@ fun Material.toEntity() = MaterialEntity(
     makerId = makerId,
     sectionId = sectionId,
     specId = specId,
+    historyId = historyId,
+    providerId = providerId,
     price = price,
     quoteDate = quoteDate
 )

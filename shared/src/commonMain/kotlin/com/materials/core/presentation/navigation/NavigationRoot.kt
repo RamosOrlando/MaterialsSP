@@ -18,6 +18,7 @@ fun NavigationRoot(
     viewModel: NavigationViewModel = koinViewModel()
 ) {
     val initialScreen by viewModel.initialScreen.collectAsState()
+    val userRole by viewModel.userRole.collectAsState()
 
     if (initialScreen == null) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -54,10 +55,10 @@ fun NavigationRoot(
                 )
                 else -> MainScreen(
                     onLogout = {
-                        backstack.clear()
                         backstack.add(Screen.Login)
                     },
                     initialScreen = key,
+                    userRole = userRole,
                     modifier = modifier
                 )
             }

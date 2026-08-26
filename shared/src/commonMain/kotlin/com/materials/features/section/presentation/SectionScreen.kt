@@ -35,7 +35,7 @@ import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun SectionScreen(
-    categoryId: String? = null,
+    categoryId: String,
     onSectionClick: (String) -> Unit = {},
     onBackClick: () -> Unit = {},
     modifier: Modifier = Modifier,

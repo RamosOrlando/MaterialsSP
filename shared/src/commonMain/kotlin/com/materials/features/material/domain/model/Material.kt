@@ -11,6 +11,8 @@ data class Material(
     @SerialName("makerId") val makerId: String,
     @SerialName("sectionId") val sectionId: String,
     @SerialName("specId") val specId: String? = null,
+    @SerialName("historyId") val historyId: String? = null,
+    @SerialName("providerId") val providerId: String? = null,
     @SerialName("price") val price: Double? = null,
     @SerialName("quoteDate") val quoteDate: String? = null
 )

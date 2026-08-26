@@ -1,0 +1,8 @@
+- [x] Update platform-specific `getCurrentDate` formats to `dd/MM/yyyy`
+    - [x] `RandomUUID.android.kt`
+    - [x] `RandomUUID.ios.kt`
+    - [x] `RandomUUID.jvm.kt`
+- [x] Update `DateUtils.kt`'s `getCurrentDateStr` to `dd/MM/yyyy`
+- [x] Improve `MaterialViewModel.kt`'s `UpdateMaterial` logic and error handling
+- [x] Update UI in `MaterialScreen.kt` to show transient errors via Snackbar
+- [ ] Verify fix by attempting to create a price in the app

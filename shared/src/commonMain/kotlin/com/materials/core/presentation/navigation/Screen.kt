@@ -20,7 +20,7 @@ sealed interface Screen {
     data object Provider : Screen
     
     @Serializable
-    data class Section(val categoryId: String? = null) : Screen
+    data class Section(val categoryId: String) : Screen
     
     @Serializable
     data class Material(val sectionId: String? = null) : Screen

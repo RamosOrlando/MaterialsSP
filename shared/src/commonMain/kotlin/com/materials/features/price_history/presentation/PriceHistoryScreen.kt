@@ -226,15 +226,14 @@ fun PriceHistoryItem(
     materialWithPrices: MaterialWithPrices,
     modifier: Modifier = Modifier
 ) {
-    val latestPricesByProvider = remember(materialWithPrices) {
+    val pricesByProvider = remember(materialWithPrices) {
         materialWithPrices.prices
             .groupBy { it.provider?.providerId }
-            .mapValues { entry ->
-                entry.value.maxByOrNull { it.priceHistory.quoteDate }
-            }
             .values
-            .filterNotNull()
-            .sortedByDescending { it.priceHistory.quoteDate }
+            .map { quotes ->
+                quotes.sortedByDescending { it.priceHistory.quoteDate }
+            }
+            .sortedBy { it.firstOrNull()?.provider?.name ?: "Proveedor desconocido" }
     }
 
     Card(
@@ -271,53 +270,61 @@ fun PriceHistoryItem(
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f))
             Spacer(modifier = Modifier.height(12.dp))
 
-            if (latestPricesByProvider.isEmpty()) {
+            if (pricesByProvider.isEmpty()) {
                 Text(
                     text = "No hay cotizaciones disponibles",
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodySmall
                 )
             } else {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    latestPricesByProvider.forEach { priceWithProvider ->
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.Top
-                        ) {
-                            Column(
-                                modifier = Modifier.weight(1f)
-                            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    pricesByProvider.forEach { providerQuotes ->
+                        val firstQuote = providerQuotes.first()
+                        Column {
+                            // Provider Header
+                            Text(
+                                text = firstQuote.provider?.name ?: "Proveedor desconocido",
+                                color = MaterialTheme.colorScheme.onSurface,
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            firstQuote.provider?.address?.let { address ->
                                 Text(
-                                    text = priceWithProvider.provider?.name ?: "Proveedor desconocido",
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                    style = MaterialTheme.typography.bodyMedium,
+                                    text = address,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    style = MaterialTheme.typography.labelSmall,
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis
                                 )
-                                priceWithProvider.provider?.address?.let { address ->
+                            }
+                            
+                            Spacer(modifier = Modifier.height(8.dp))
+                            
+                            // All quotes for this provider
+                            providerQuotes.forEach { quote ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 4.dp, horizontal = 8.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
                                     Text(
-                                        text = address,
+                                        text = "📅 ${quote.priceHistory.quoteDate}",
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        style = MaterialTheme.typography.labelSmall,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                    Text(
+                                        text = "Bs. ${quote.priceHistory.price}",
+                                        color = MaterialTheme.colorScheme.primary,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        style = MaterialTheme.typography.bodyMedium
                                     )
                                 }
                             }
-                            
-                            Text(
-                                text = "$${priceWithProvider.priceHistory.price}",
-                                color = MaterialTheme.colorScheme.primary,
-                                fontWeight = FontWeight.ExtraBold,
-                                style = MaterialTheme.typography.bodyLarge
-                            )
                         }
-                        Text(
-                            text = "Fecha: ${priceWithProvider.priceHistory.quoteDate}",
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            style = MaterialTheme.typography.labelSmall
-                        )
                     }
                 }
             }
@@ -369,6 +376,9 @@ fun PriceHistoryScreenSuccessPreview() {
                             unit = "Bulto 50kg",
                             makerId = "MAKER-1",
                             sectionId = "1",
+                            specId = null,
+                            historyId = null,
+                            providerId = null,
                             quoteDate = "2024-05-16"
                         ),
                         maker = Maker("MAKER-1", "Holcim"),

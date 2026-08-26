@@ -14,6 +14,9 @@ interface PriceHistoryDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertPriceHistories(histories: List<PriceHistoryEntity>)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertPriceHistory(history: PriceHistoryEntity)
+
     @Query("DELETE FROM PriceHistory")
     suspend fun clearAll()
 }

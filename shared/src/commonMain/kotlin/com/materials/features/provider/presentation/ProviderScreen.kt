@@ -1,8 +1,11 @@
 package com.materials.features.provider.presentation
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -125,11 +128,9 @@ fun ProviderScreenContent(
                     if (state.providers.isEmpty()) {
                         EmptyState()
                     } else {
-                        LazyVerticalGrid(
-                            columns = GridCells.Fixed(1),
-                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                            verticalArrangement = Arrangement.spacedBy(16.dp),
-                            horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        LazyColumn(
+                            contentPadding = PaddingValues(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
                             modifier = Modifier.fillMaxSize()
                         ) {
                             items(state.providers, key = { it.providerId }) { provider ->
@@ -210,49 +211,76 @@ fun ProviderCard(
     provider: Provider,
     modifier: Modifier = Modifier
 ) {
-    Box(
+    Card(
         modifier = modifier
             .fillMaxWidth()
             .clip(IndustrialShapes.medium)
-            .background(MaterialTheme.colorScheme.surface)
-            .clickable { /* Ver detalles del proveedor */ }
+            .clickable { /* Ver detalles del proveedor */ },
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
     ) {
-
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .align(Alignment.BottomCenter)
-                .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.9f))
-                .padding(vertical = 4.dp, horizontal = 8.dp)
+                .padding(16.dp)
         ) {
-            Text(
-                text = provider.name,
-                color = MaterialTheme.colorScheme.onSurface,
-                fontWeight = FontWeight.Bold,
-                style = MaterialTheme.typography.titleSmall.copy(
-                    fontSize = 14.sp
-                ),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.align(Alignment.Start)
-            )
-            // Construimos la ubicación uniendo los campos de forma segura
-            val locationText = remember(provider.address, provider.city) {
-                listOfNotNull(provider.address, provider.city)
-                    .joinToString(separator = " - ")
-            }
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = provider.name,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        fontWeight = FontWeight.ExtraBold,
+                        style = MaterialTheme.typography.titleMedium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    
+                    val locationText = remember(provider.address, provider.city) {
+                        listOfNotNull(provider.address, provider.city)
+                            .filter { it.isNotBlank() }
+                            .joinToString(separator = " - ")
+                    }
 
-            if (locationText.isNotEmpty()) {
-                Text(
-                    text = locationText,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        fontSize = 10.sp
-                    ),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.align(Alignment.Start)
-                )
+                    if (locationText.isNotEmpty()) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(top = 4.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.LocationOn,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = locationText,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                style = MaterialTheme.typography.bodySmall,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
+                }
+                
+                Surface(
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                    shape = IndustrialShapes.small
+                ) {
+                    Text(
+                        text = "ID: ${provider.providerId}",
+                        color = MaterialTheme.colorScheme.primary,
+                        style = MaterialTheme.typography.labelSmall,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
         }
     }

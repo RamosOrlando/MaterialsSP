@@ -66,6 +66,7 @@ val dataModule = module {
     single { get<AppDatabase>().materialDao() }
     single { get<AppDatabase>().providerDao() }
     single { get<AppDatabase>().priceHistoryDao() }
+    single { get<AppDatabase>().profileDao() }
     
     factory<CategoryRemoteDataSource> { SupabaseCategoryDataSource(get()) }
     single<CategoryRepository> { CategoryRepositoryImpl(get(), get()) }
@@ -93,7 +94,7 @@ val dataModule = module {
     factory<ProviderRemoteDataSource> { SupabaseProviderDataSource(get()) }
     single<ProviderRepository> { ProviderRepositoryImpl(get(), get()) }
     
-    single<AuthRepository> { AuthRepositoryImpl(get()) }
+    single<AuthRepository> { AuthRepositoryImpl(get(), get()) }
 
     single<SyncRepository> { SyncRepositoryImpl(get(), get(), get(), get(), get(), get()) }
     
@@ -114,7 +115,15 @@ val viewModelModule = module {
     viewModelOf(::CategoryViewModel)
     viewModelOf(::SectionViewModel)
     viewModelOf(::MakerViewModel)
-    viewModelOf(::MaterialViewModel)
+    single { 
+        MaterialViewModel(
+            getMaterialsUseCase = get(),
+            getMakersUseCase = get(),
+            getProvidersUseCase = get(),
+            priceHistoryRepository = get(),
+            authRepository = get()
+        )
+    }
     viewModelOf(::PriceHistoryViewModel)
     viewModelOf(::ProviderViewModel)
     viewModelOf(::LoginViewModel)

@@ -1,10 +1,9 @@
-# Tasks - Make Maker non-nullable in MaterialWithPrices
+# Tasks - Fix Provider List and UI
 
-- [x] Domain Layer
-    - [x] Update `MaterialWithPrices.kt`
-- [x] Data Layer
-    - [x] Update `MaterialRepositoryImpl.kt` (Join logic fallback)
-- [x] Presentation Layer
-    - [x] Update `MaterialViewModel.kt` (`MaterialItem` and mapping)
-    - [x] Update `PriceHistoryScreen.kt` (Previews)
-- [x] Verify Build
+- [ ] Database (Manual Action Required)
+    - [ ] Add SQL policy for `provider` table in Supabase
+- [x] UI Refactor
+    - [x] Update `ProviderCard` to use Material3 `Card`
+    - [x] Add location icons and better styling to `ProviderScreen.kt`
+- [x] Verification
+    - [x] Verify Build

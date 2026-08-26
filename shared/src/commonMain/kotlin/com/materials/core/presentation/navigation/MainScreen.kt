@@ -17,6 +17,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.ui.NavDisplay
+import com.materials.features.auth.domain.model.UserRole
 import com.materials.core.presentation.navigation.components.CatalogDetailPlaceholder
 import com.materials.features.category.presentation.CategoryScreen
 import com.materials.features.section.presentation.SectionScreen
@@ -33,6 +34,7 @@ import org.koin.compose.viewmodel.koinViewModel
 fun MainScreen(
     onLogout: () -> Unit = {},
     initialScreen: Screen = Screen.Category,
+    userRole: UserRole? = null,
     modifier: Modifier = Modifier,
     viewModel: MainViewModel = koinViewModel()
 ) {
@@ -203,6 +205,7 @@ fun MainScreen(
                             CatalogPane(
                                 screen = key,
                                 shouldUseDualPane = shouldUseRail,
+                                userRole = userRole,
                                 backstack = backstack,
                                 onLogout = onLogout
                             )
@@ -249,6 +252,7 @@ fun MainScreen(
 private fun CatalogPane(
     screen: Screen,
     shouldUseDualPane: Boolean,
+    userRole: UserRole?,
     backstack: SnapshotStateList<Screen>,
     onLogout: () -> Unit
 ) {
@@ -288,11 +292,11 @@ private fun CatalogPane(
                     )
                     is Screen.Material -> MaterialScreen(
                         sectionId = screen.sectionId,
+                        userRole = userRole,
                         onBackClick = { backstack.removeAt(backstack.size - 1) },
                         onMaterialsSelected = { ids ->
                             backstack.add(element = Screen.MaterialsSelected(ids))
-                        },
-                        columns = 1
+                        }
                     )
                     else -> {}
                 }
@@ -312,9 +316,10 @@ private fun CatalogPane(
             )
             is Screen.Material -> MaterialScreen(
                 sectionId = screen.sectionId,
+                userRole = userRole,
                 onBackClick = { backstack.removeLast() },
                 onMaterialsSelected = { ids ->
-                    backstack.add(Screen.MaterialsSelected(ids))
+                    backstack.add(element = Screen.MaterialsSelected(ids))
                 }
             )
             else -> {}

@@ -5,5 +5,6 @@ import kotlinx.coroutines.flow.Flow
 
 interface PriceHistoryRemoteDataSource {
     suspend fun getPriceHistories(): List<PriceHistory>
+    suspend fun upsertPriceHistory(priceHistory: PriceHistory)
     fun observePriceHistories(): Flow<Unit>
 }

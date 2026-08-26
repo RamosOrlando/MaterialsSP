@@ -24,9 +24,19 @@ class SupabasePriceHistoryDataSource(
 ) : PriceHistoryRemoteDataSource {
 
     override suspend fun getPriceHistories(): List<PriceHistory> = withContext(Dispatchers.IO) {
+        try {
+            supabaseClient.postgrest["PriceHistory"]
+                .select()
+                .decodeList<PriceHistory>()
+        } catch (e: Exception) {
+            throw Exception("Error fetching from 'PriceHistory' table: ${e.message}")
+        }
+    }
+
+    override suspend fun upsertPriceHistory(priceHistory: PriceHistory): Unit = withContext(Dispatchers.IO) {
         supabaseClient.postgrest["PriceHistory"]
-            .select()
-            .decodeList<PriceHistory>()
+            .upsert(priceHistory)
+        Unit
     }
 
     override fun observePriceHistories(): Flow<Unit> = callbackFlow {

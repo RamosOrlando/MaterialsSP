@@ -4,9 +4,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -23,6 +25,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -30,6 +33,8 @@ import com.materials.core.presentation.theme.*
 import com.materials.features.material.domain.model.Material
 import com.materials.core.util.date.formatDateToDisplay
 import com.materials.core.util.randomUUID
+import com.materials.core.util.getCurrentDate
+import com.materials.features.auth.domain.model.UserRole
 import androidx.compose.ui.tooling.preview.Preview
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -38,7 +43,7 @@ fun MaterialScreen(
     sectionId: String? = null,
     onBackClick: () -> Unit = {},
     onMaterialsSelected: (List<String>) -> Unit = {},
-    columns: Int? = null,
+    userRole: UserRole? = null,
     modifier: Modifier = Modifier,
     viewModel: MaterialViewModel = koinViewModel()
 ) {
@@ -51,48 +56,83 @@ fun MaterialScreen(
     val selectedIds by viewModel.selectedMaterialIds.collectAsState()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
     val nextIndex by viewModel.nextIndex.collectAsState()
+    val userEmail = viewModel.userEmail
     
     var editingMaterial by remember { mutableStateOf<Material?>(null) }
+    var editingProviderName by remember { mutableStateOf<String?>(null) }
+    var bulkEditingMaterials by remember { mutableStateOf<List<Material>?>(null) }
+
+    val snackbarHostState = remember { SnackbarHostState() }
+    
+    LaunchedEffect(uiState) {
+        (uiState as? MaterialUiState.Success)?.errorMessage?.let { error ->
+            snackbarHostState.showSnackbar(
+                message = error,
+                actionLabel = "OK",
+                duration = SnackbarDuration.Long
+            )
+            viewModel.onEvent(MaterialEvent.ClearError)
+        }
+    }
 
     MaterialScreenContent(
         uiState = uiState,
         searchQuery = searchQuery,
         selectedIds = selectedIds,
         isRefreshing = isRefreshing,
+        snackbarHostState = snackbarHostState,
         onEvent = { viewModel.onEvent(it) },
         onBackClick = onBackClick,
         onProceed = { onMaterialsSelected(selectedIds.toList()) },
-        onEditMaterial = { editingMaterial = it },
-        onCreateMaterial = {
-            editingMaterial = Material(
-                materialId = "", // Will be generated in the dialog
-                name = "",
-                sectionId = sectionId ?: "",
-                unit = "",
-                makerId = "",
-                specId = null,
-                price = null,
-                quoteDate = null
-            )
+        onEditMaterial = { item -> 
+            editingMaterial = item.material
+            editingProviderName = item.providerName
         },
-        columns = columns,
+        onBulkEdit = { bulkEditingMaterials = it },
+        userRole = userRole,
         modifier = modifier
     )
     
     editingMaterial?.let { material ->
-        val isNew = uiState.let { state ->
-            if (state is MaterialUiState.Success) {
-                state.materials.none { it.material.materialId == material.materialId }
-            } else true
-        }
+        val providers = (uiState as? MaterialUiState.Success)?.providers ?: emptyList()
         EditMaterialDialog(
             material = material,
-            isNew = isNew,
+            providers = providers,
+            userEmail = userEmail,
             nextIndex = nextIndex,
-            onDismiss = { editingMaterial = null },
+            onDismiss = { 
+                editingMaterial = null
+                editingProviderName = null
+            },
             onConfirm = { updatedMaterial ->
                 viewModel.onEvent(MaterialEvent.UpdateMaterial(updatedMaterial))
                 editingMaterial = null
+                editingProviderName = null
+            }
+        )
+    }
+
+    bulkEditingMaterials?.let { materials ->
+        val first = materials.firstOrNull() ?: return@let
+        BulkEditMaterialDialog(
+            name = first.name,
+            unit = first.unit,
+            specId = first.specId,
+            onDismiss = { bulkEditingMaterials = null },
+            onConfirm = { newName, newUnit, newSpecId ->
+                val trimmedName = newName.trim()
+                val trimmedUnit = newUnit.trim()
+                val trimmedSpecId = newSpecId?.trim()?.ifBlank { null }
+                
+                val updatedList = materials.map { 
+                    it.copy(
+                        name = trimmedName, 
+                        unit = trimmedUnit,
+                        specId = trimmedSpecId
+                    ) 
+                }
+                viewModel.onEvent(MaterialEvent.BulkUpdateMaterials(updatedList))
+                bulkEditingMaterials = null
             }
         )
     }
@@ -104,27 +144,20 @@ fun MaterialScreenContent(
     searchQuery: String,
     selectedIds: Set<String> = emptySet(),
     isRefreshing: Boolean = false,
+    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
     onEvent: (MaterialEvent) -> Unit,
     onBackClick: () -> Unit = {},
     onProceed: () -> Unit = {},
-    onEditMaterial: (Material) -> Unit = {},
-    onCreateMaterial: () -> Unit = {},
-    columns: Int? = null,
+    onEditMaterial: (MaterialItem) -> Unit = {},
+    onBulkEdit: (List<Material>) -> Unit = {},
+    userRole: UserRole? = null,
     modifier: Modifier = Modifier
 ) {
-    val adaptiveInfo = currentWindowAdaptiveInfo()
-    val finalColumns = columns ?: with(adaptiveInfo.windowSizeClass) {
-        when {
-            isWidthAtLeastBreakpoint(840) -> 3
-            isWidthAtLeastBreakpoint(600) -> 2
-            else -> 1
-        }
-    }
-
     Scaffold(
         modifier = modifier
             .fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.background,
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
             if (selectedIds.isNotEmpty()) {
                 ExtendedFloatingActionButton(
@@ -134,14 +167,6 @@ fun MaterialScreenContent(
                     icon = { Icon(Icons.Default.Check, contentDescription = null) },
                     text = { Text("Continuar (${selectedIds.size})") }
                 )
-            } else {
-                FloatingActionButton(
-                    onClick = onCreateMaterial,
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = "Nuevo Material")
-                }
             }
         }
     ) { paddingValues ->
@@ -223,27 +248,44 @@ fun MaterialScreenContent(
                                 EmptyState()
                             }
                         } else {
-                            LazyVerticalGrid(
-                                columns = GridCells.Fixed(finalColumns),
+                            val groupedMaterials = remember(state.materials) {
+                                state.materials.groupBy { it.material.name + it.material.unit }
+                            }
+
+                            LazyColumn(
                                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                                 verticalArrangement = Arrangement.spacedBy(16.dp),
-                                horizontalArrangement = Arrangement.spacedBy(16.dp),
                                 modifier = Modifier.fillMaxSize()
                             ) {
-                                items(state.materials, key = { it.material.materialId }) { materialItem ->
-                                    val isSelected = selectedIds.contains(materialItem.material.materialId)
-                                    MaterialCard(
-                                        materialItem = materialItem,
-                                        isSelected = isSelected,
-                                        onSelect = {
-                                            onEvent(
-                                                MaterialEvent.ToggleMaterialSelection(
-                                                    it
+                                groupedMaterials.forEach { (key, items) ->
+                                    val firstItem = items.first()
+                                    
+                                    item(key = "header_$key") {
+                                        MaterialHeaderCard(
+                                            name = firstItem.material.name,
+                                            unit = firstItem.material.unit,
+                                            canEdit = userRole != UserRole.CLIENT,
+                                            onEditClick = { onBulkEdit(items.map { it.material }) }
+                                        )
+                                    }
+
+                                    items(items, key = { it.material.materialId }) { materialItem ->
+                                        val isSelected = selectedIds.contains(materialItem.material.materialId)
+                                        MakerCard(
+                                            materialItem = materialItem,
+                                            isSelected = isSelected,
+                                            canEdit = userRole != UserRole.CLIENT,
+                                            onSelect = {
+                                                onEvent(
+                                                    MaterialEvent.ToggleMaterialSelection(
+                                                        it
+                                                    )
                                                 )
-                                            )
-                                        },
-                                        onEdit = { onEditMaterial(materialItem.material) }
-                                    )
+                                            },
+                                            onEdit = { onEditMaterial(materialItem) },
+                                            modifier = Modifier.padding(start = 16.dp)
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -320,9 +362,70 @@ fun MaterialSearchBar(
 }
 
 @Composable
-fun MaterialCard(
+fun MaterialHeaderCard(
+    name: String,
+    unit: String,
+    canEdit: Boolean = false,
+    onEditClick: () -> Unit = {},
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+        ),
+        shape = IndustrialShapes.medium
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = name,
+                color = MaterialTheme.colorScheme.onSurface,
+                fontWeight = FontWeight.ExtraBold,
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.weight(1f)
+            )
+            
+            if (unit.isNotEmpty()) {
+                Surface(
+                    color = MaterialTheme.colorScheme.primary,
+                    shape = IndustrialShapes.small,
+                    modifier = Modifier.padding(horizontal = 8.dp)
+                ) {
+                    Text(
+                        text = unit,
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        style = MaterialTheme.typography.labelSmall,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+
+            if (canEdit) {
+                IconButton(
+                    onClick = onEditClick,
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = "Editar Material",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun MakerCard(
     materialItem: MaterialItem,
     isSelected: Boolean = false,
+    canEdit: Boolean = true,
     onSelect: (String) -> Unit = {},
     onEdit: () -> Unit = {},
     modifier: Modifier = Modifier
@@ -342,25 +445,56 @@ fun MaterialCard(
         elevation = CardDefaults.cardElevation(defaultElevation = if (isSelected) 4.dp else 1.dp)
     ) {
         Column(
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier.padding(12.dp)
         ) {
-            Column {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = materialItem.makerName,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.bodyMedium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    
+                    Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
-                            text = material.name,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            fontWeight = FontWeight.Bold,
-                            style = MaterialTheme.typography.bodyLarge,
+                            text = "📅 ${formatDateToDisplay(material.quoteDate)}",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                        Text(
+                            text = " • ",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                        Text(
+                            text = materialItem.providerName ?: "---",
+                            color = MaterialTheme.colorScheme.secondary,
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Medium,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
                     }
+                }
 
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = if (material.price != null) "Bs. ${material.price}" else "---",
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.ExtraBold,
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontSize = 18.sp,
+                        modifier = Modifier.padding(end = 8.dp)
+                    )
+
+                    if (canEdit) {
                         IconButton(
                             onClick = { onEdit() },
                             modifier = Modifier.size(32.dp)
@@ -372,60 +506,7 @@ fun MaterialCard(
                                 modifier = Modifier.size(18.dp)
                             )
                         }
-                        
-                        if (material.unit != null) {
-                            Surface(
-                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                                shape = IndustrialShapes.small,
-                                modifier = Modifier.padding(start = 8.dp)
-                            ) {
-                                Text(
-                                    text = material.unit,
-                                    color = MaterialTheme.colorScheme.primary,
-                                    style = MaterialTheme.typography.labelSmall,
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-                        }
-
                     }
-                }
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            if (materialItem.makerName != null) {
-                                Text(
-                                    text = materialItem.makerName,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    fontWeight = FontWeight.Medium,
-                                    style = MaterialTheme.typography.bodySmall
-                                )
-                                Text(
-                                    text = " • ",
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    style = MaterialTheme.typography.bodySmall
-                                )
-                            }
-                            Text(
-                                text = formatDateToDisplay(material.quoteDate),
-                                color = MaterialTheme.colorScheme.onSurface,
-                                fontWeight = FontWeight.SemiBold,
-                                style = MaterialTheme.typography.bodySmall
-                            )
-                        }
-
-                        Text(
-                            text = if (material.price != null) "Bs. ${material.price}" else "---",
-                            color = MaterialTheme.colorScheme.primary,
-                            fontWeight = FontWeight.ExtraBold,
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontSize = 22.sp,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                        )
                 }
             }
         }
@@ -436,133 +517,212 @@ fun MaterialCard(
 @Composable
 fun EditMaterialDialog(
     material: Material,
-    isNew: Boolean = false,
+    providers: List<com.materials.features.provider.domain.model.Provider> = emptyList(),
+    userEmail: String? = null,
     nextIndex: Int = 1,
     onDismiss: () -> Unit,
     onConfirm: (Material) -> Unit
 ) {
-    var name by remember { mutableStateOf(material.name) }
-    var unit by remember { mutableStateOf(material.unit) }
-    var makerId by remember { mutableStateOf(material.makerId) }
-    var specId by remember { mutableStateOf(material.specId ?: "") }
-    var priceStr by remember { mutableStateOf(material.price?.toString() ?: "") }
-    var quoteDate by remember { mutableStateOf(material.quoteDate ?: "") }
+    val isPriceCreation = material.historyId == null
+    val isPriceUpdate = material.historyId != null
 
-    val materialId = remember(isNew, makerId, nextIndex, material.sectionId) {
-        if (isNew) {
-            val formattedIndex = nextIndex.toString().padStart(3, '0')
-            "${material.sectionId}-$formattedIndex-$makerId"
-        } else {
-            material.materialId
-        }
+    var providerId by remember { mutableStateOf(material.providerId ?: "") }
+    var priceStr by remember { mutableStateOf(material.price?.toString() ?: "") }
+    
+    var priceError by remember { mutableStateOf<String?>(null) }
+    var providerError by remember { mutableStateOf<String?>(null) }
+    
+    val quoteDate = remember(material.historyId) {
+        getCurrentDate() // Siempre usamos la fecha actual al guardar un precio
     }
+    
+    val historyId = remember(material.historyId) {
+        if (isPriceCreation) randomUUID() else material.historyId
+    }
+
+    val dialogTitle = if (isPriceCreation) "Crear Precio" else "Actualizar Precio"
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(if (isNew) "Nuevo Material" else "Editar Material", fontWeight = FontWeight.Bold) },
+        title = { Text(dialogTitle, fontWeight = FontWeight.Bold) },
         text = {
             Column(
                 modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                if (isNew || materialId.isNotEmpty()) {
-                    Text(
-                        text = "ID: $materialId",
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(bottom = 8.dp)
+                // Info Section
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)),
+                    shape = IndustrialShapes.small,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(modifier = Modifier.padding(8.dp)) {
+                        Text(
+                            text = "Material: ${material.name}",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "ID: ${material.materialId}",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        if (historyId != null) {
+                            Text(
+                                text = "Historial ID: $historyId",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        if (userEmail != null) {
+                            Text(
+                                text = "Usuario: $userEmail",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        Text(
+                            text = "Fecha: ${formatDateToDisplay(quoteDate)}",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Medium,
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
+                    }
+                }
+
+                if (isPriceCreation) {
+                    OutlinedTextField(
+                        value = providerId,
+                        onValueChange = { 
+                            providerId = it
+                            providerError = null
+                        },
+                        label = { Text("ID Proveedor") },
+                        isError = providerError != null,
+                        supportingText = {
+                            if (providerError != null) {
+                                Text(text = providerError!!, color = MaterialTheme.colorScheme.error)
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth()
                     )
                 }
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    label = { Text("Nombre") },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                        unfocusedTextColor = MaterialTheme.colorScheme.onSurface
-                    )
-                )
-                OutlinedTextField(
-                    value = unit,
-                    onValueChange = { unit = it },
-                    label = { Text("Unidad") },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                        unfocusedTextColor = MaterialTheme.colorScheme.onSurface
-                    )
-                )
-                OutlinedTextField(
-                    value = makerId,
-                    onValueChange = { makerId = it },
-                    label = { Text("ID Fabricante (Maker ID)") },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                        unfocusedTextColor = MaterialTheme.colorScheme.onSurface
-                    )
-                )
-                OutlinedTextField(
-                    value = specId,
-                    onValueChange = { specId = it },
-                    label = { Text("Spec ID") },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                        unfocusedTextColor = MaterialTheme.colorScheme.onSurface
-                    )
-                )
+
                 OutlinedTextField(
                     value = priceStr,
-                    onValueChange = { priceStr = it },
+                    onValueChange = { 
+                        priceStr = it
+                        priceError = null 
+                    },
                     label = { Text("Precio (Bs.)") },
-                    keyboardOptions = KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number),
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                        unfocusedTextColor = MaterialTheme.colorScheme.onSurface
-                    )
-                )
-                OutlinedTextField(
-                    value = quoteDate,
-                    onValueChange = { quoteDate = it },
-                    label = { Text("Fecha (e.g. 06-Ene-2026 o 06-01-2026)") },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                        unfocusedTextColor = MaterialTheme.colorScheme.onSurface
-                    )
+                    isError = priceError != null,
+                    supportingText = {
+                        if (priceError != null) {
+                            Text(text = priceError!!, color = MaterialTheme.colorScheme.error)
+                        }
+                    },
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Decimal,
+                        imeAction = ImeAction.Done
+                    ),
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
         },
         confirmButton = {
             Button(
                 onClick = {
-                    onConfirm(
-                        material.copy(
-                            materialId = materialId,
-                            name = name,
-                            unit = unit,
-                            makerId = makerId,
-                            specId = specId.ifBlank { null },
-                            price = priceStr.toDoubleOrNull(),
-                            quoteDate = quoteDate.ifBlank { null }
+                    val cleanPriceStr = priceStr.trim()
+                    val parsedPrice = cleanPriceStr.toDoubleOrNull()
+                    
+                    val providerExists = providers.any { it.providerId == providerId.trim() }
+                    
+                    if (parsedPrice == null) {
+                        priceError = "Introduce un número válido"
+                    } else if (isPriceCreation && !providerExists) {
+                        providerError = "El ID de proveedor no existe"
+                    } else {
+                        onConfirm(
+                            material.copy(
+                                historyId = historyId,
+                                providerId = providerId.trim().ifBlank { null },
+                                price = parsedPrice,
+                                quoteDate = quoteDate
+                            )
                         )
-                    )
-                },
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                    }
+                }
             ) {
-                Text("Guardar", color = MaterialTheme.colorScheme.onPrimary)
+                Text("Guardar")
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancelar", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("Cancelar")
+            }
+        }
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun BulkEditMaterialDialog(
+    name: String,
+    unit: String,
+    specId: String?,
+    onDismiss: () -> Unit,
+    onConfirm: (String, String, String?) -> Unit
+) {
+    var newName by remember { mutableStateOf(name) }
+    var newUnit by remember { mutableStateOf(unit) }
+    var newSpecId by remember { mutableStateOf(specId ?: "") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Editar Material (Grupal)", fontWeight = FontWeight.Bold) },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    "Esta acción cambiará el nombre, unidad y Spec ID de todos los registros de este material.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                OutlinedTextField(
+                    value = newName,
+                    onValueChange = { newName = it },
+                    label = { Text("Nombre") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = newUnit,
+                    onValueChange = { newUnit = it },
+                    label = { Text("Unidad") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = newSpecId,
+                    onValueChange = { newSpecId = it },
+                    label = { Text("Spec ID") },
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
         },
-        containerColor = MaterialTheme.colorScheme.surface
+        confirmButton = {
+            Button(
+                onClick = { onConfirm(newName, newUnit, newSpecId) }
+            ) {
+                Text("Actualizar Todo")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancelar")
+            }
+        }
     )
 }
 
@@ -659,10 +819,14 @@ fun MaterialScreenSuccessPreview() {
                             unit = "Barra",
                             makerId = "MAKER-01",
                             sectionId = "1",
+                            specId = null,
+                            historyId = null,
+                            providerId = null,
                             price = 12.5,
                             quoteDate = "12-06-2026"
                         ),
-                        makerName = "Mexichem Amanco"
+                        makerName = "Mexichem Amanco",
+                        providerName = "Ferretería Central"
                     ),
                     MaterialItem(
                         material = Material(
@@ -671,10 +835,14 @@ fun MaterialScreenSuccessPreview() {
                             unit = "Unidad",
                             makerId = "MAKER-02",
                             sectionId = "1",
+                            specId = null,
+                            historyId = null,
+                            providerId = null,
                             price = 3.75,
                             quoteDate = "25-11-2026"
                         ),
-                        makerName = "Pavco Wavin"
+                        makerName = "Pavco Wavin",
+                        providerName = "Materiales del Norte"
                     )
                 )
             ),

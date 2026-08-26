@@ -14,7 +14,7 @@ fun CategoryEntity.toDomain(): Category {
 
 fun Category.toEntity(): CategoryEntity {
     return CategoryEntity(
-        categoryId = categoryId ?: "",
+        categoryId = categoryId,
         name = name,
         description = description,
         imagePath = imagePath

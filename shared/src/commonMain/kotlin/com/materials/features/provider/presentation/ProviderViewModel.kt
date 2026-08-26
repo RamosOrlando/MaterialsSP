@@ -9,10 +9,13 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
 sealed interface ProviderUiState {
     object Loading : ProviderUiState
@@ -34,22 +37,25 @@ class ProviderViewModel(
 
     private val _refreshError = MutableStateFlow<String?>(null)
 
-    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
-    val uiState: StateFlow<ProviderUiState> = _searchQuery
-        .flatMapLatest { query ->
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class, kotlinx.coroutines.FlowPreview::class)
+    val uiState: StateFlow<ProviderUiState> = combine(
+        _searchQuery.debounce(300.milliseconds).flatMapLatest { query ->
             getProvidersUseCase.executeFlow(query)
+        },
+        _refreshError
+    ) { resource, refreshError ->
+        when {
+            refreshError != null -> ProviderUiState.Error(refreshError)
+            resource is Resource.Loading -> ProviderUiState.Loading
+            resource is Resource.Error -> ProviderUiState.Error(resource.message)
+            resource is Resource.Success -> ProviderUiState.Success(resource.data)
+            else -> ProviderUiState.Loading
         }
-        .map { resource ->
-            when (resource) {
-                is Resource.Loading -> ProviderUiState.Loading
-                is Resource.Error -> ProviderUiState.Error(resource.message)
-                is Resource.Success<List<Provider>> -> ProviderUiState.Success(resource.data)
-            }
-        }.stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = ProviderUiState.Loading
-        )
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = ProviderUiState.Loading
+    )
 
     init {
         onEvent(ProviderEvent.Refresh)

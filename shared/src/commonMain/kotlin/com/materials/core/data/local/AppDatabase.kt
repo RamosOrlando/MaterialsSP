@@ -15,10 +15,12 @@ import com.materials.features.price_history.data.local.PriceHistoryDao
 import com.materials.features.price_history.data.local.PriceHistoryEntity
 import com.materials.features.provider.data.local.ProviderDao
 import com.materials.features.provider.data.local.ProviderEntity
+import com.materials.features.auth.data.local.ProfileDao
+import com.materials.features.auth.data.local.ProfileEntity
 
 @Database(entities = [CategoryEntity::class, SectionEntity::class,
     MakerEntity::class, MaterialEntity::class, ProviderEntity::class,
-    PriceHistoryEntity::class], version = 1)
+    PriceHistoryEntity::class, ProfileEntity::class], version = 15)
 @ConstructedBy(AppDatabaseConstructor::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun categoryDao(): CategoryDao
@@ -27,6 +29,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun materialDao(): MaterialDao
     abstract fun providerDao(): ProviderDao
     abstract fun priceHistoryDao(): PriceHistoryDao
+    abstract fun profileDao(): ProfileDao
 }
 
 // Expect object for the database builder that will be implemented in each platform

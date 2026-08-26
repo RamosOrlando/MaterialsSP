@@ -22,7 +22,7 @@ import com.materials.features.section.domain.model.Section
 data class SectionEntity(
     @PrimaryKey val sectionId: String,
     val name: String,
-    val categoryId: String?,
+    val categoryId: String,
     val imagePath: String?
 )
 

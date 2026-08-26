@@ -282,6 +282,9 @@ fun MaterialsSelectedScreenPreview() {
                         unit = "Metro",
                         makerId = "MAKER-01",
                         sectionId = "1",
+                        specId = null,
+                        historyId = null,
+                        providerId = null,
                         price = 12.5,
                         quoteDate = "2024-05-16"
                     ),
@@ -291,6 +294,9 @@ fun MaterialsSelectedScreenPreview() {
                         unit = "Unidad",
                         makerId = "MAKER-02",
                         sectionId = "1",
+                        specId = null,
+                        historyId = null,
+                        providerId = null,
                         price = 3.75,
                         quoteDate = "2024-05-15"
                     )

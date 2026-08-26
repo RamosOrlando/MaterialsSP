@@ -165,7 +165,7 @@ fun CategoryScreenContent(
                             horizontalArrangement = Arrangement.spacedBy(16.dp),
                             modifier = Modifier.fillMaxSize()
                         ) {
-                            items(state.categories, key = { it.categoryId!! }) { category ->
+                            items(state.categories, key = { it.categoryId }) { category ->
                                 CategoryCard(
                                     category = category,
                                     onCategoryClick = onCategoryClick,
@@ -302,7 +302,7 @@ fun CategoryCard(
                 if (isSelected) Modifier.border(4.dp, MaterialTheme.colorScheme.primary, IndustrialShapes.medium)
                 else Modifier
             )
-            .clickable { category.categoryId?.let { onCategoryClick(it) } }
+            .clickable { onCategoryClick(category.categoryId) }
     ) {
         SubcomposeAsyncImage(
             model = category.imagePath,

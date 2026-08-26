@@ -26,22 +26,34 @@ class SyncRepositoryImpl(
             println("SyncRepository: Starting full sync...")
             
             // 1. Categories
-            categoryRepository.refreshCategories().also { if (it is Resource.Error) return@withContext it }
+            categoryRepository.refreshCategories().also { 
+                if (it is Resource.Error) return@withContext Resource.Error("Sync Categories: ${it.message}") 
+            }
             
             // 2. Sections
-            sectionRepository.refreshSections().also { if (it is Resource.Error) return@withContext it }
+            sectionRepository.refreshSections().also { 
+                if (it is Resource.Error) return@withContext Resource.Error("Sync Sections: ${it.message}") 
+            }
             
             // 3. Makers
-            makerRepository.refreshMakers().also { if (it is Resource.Error) return@withContext it }
+            makerRepository.refreshMakers().also { 
+                if (it is Resource.Error) return@withContext Resource.Error("Sync Makers: ${it.message}") 
+            }
             
             // 4. Providers
-            providerRepository.refreshProviders().also { if (it is Resource.Error) return@withContext it }
+            providerRepository.refreshProviders().also { 
+                if (it is Resource.Error) return@withContext Resource.Error("Sync Providers: ${it.message}") 
+            }
             
             // 5. Materials
-            materialRepository.refreshMaterials().also { if (it is Resource.Error) return@withContext it }
+            materialRepository.refreshMaterials().also { 
+                if (it is Resource.Error) return@withContext Resource.Error("Sync Materials: ${it.message}") 
+            }
             
             // 6. PriceHistory
-            priceHistoryRepository.refreshPriceHistory().also { if (it is Resource.Error) return@withContext it }
+            priceHistoryRepository.refreshPriceHistory().also { 
+                if (it is Resource.Error) return@withContext Resource.Error("Sync PriceHistory: ${it.message}") 
+            }
             
             println("SyncRepository: Full sync finished successfully")
             Resource.Success(Unit)

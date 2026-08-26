@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.materials.core.domain.RealtimeSyncManager
 import com.materials.features.auth.domain.repository.AuthRepository
+import com.materials.features.auth.domain.model.UserRole
+import com.materials.features.auth.domain.model.UserProfile
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -16,6 +18,9 @@ class NavigationViewModel(
     private val _initialScreen = MutableStateFlow<Screen?>(null)
     val initialScreen = _initialScreen.asStateFlow()
 
+    private val _userRole = MutableStateFlow<UserRole?>(null)
+    val userRole = _userRole.asStateFlow()
+
     init {
         checkAuth()
     }
@@ -23,6 +28,7 @@ class NavigationViewModel(
     private fun checkAuth() {
         viewModelScope.launch {
             if (authRepository.isUserLoggedIn()) {
+                fetchProfile()
                 syncManager.startSyncing()
                 _initialScreen.value = Screen.Category
             } else {
@@ -31,7 +37,16 @@ class NavigationViewModel(
         }
     }
 
+    private suspend fun fetchProfile() {
+        authRepository.getCurrentProfile().onSuccess { profile ->
+            _userRole.value = profile?.role
+        }
+    }
+
     fun onLoginSuccess() {
-        syncManager.startSyncing()
+        viewModelScope.launch {
+            fetchProfile()
+            syncManager.startSyncing()
+        }
     }
 }

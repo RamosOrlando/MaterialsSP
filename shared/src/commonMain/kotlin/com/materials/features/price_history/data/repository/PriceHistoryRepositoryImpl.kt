@@ -6,6 +6,7 @@ import com.materials.features.price_history.data.local.PriceHistoryDao
 import com.materials.features.price_history.data.local.toDomain
 import com.materials.features.price_history.data.local.toEntity
 import com.materials.features.price_history.data.remote.PriceHistoryRemoteDataSource
+import com.materials.features.price_history.domain.model.PriceHistory
 import com.materials.features.price_history.domain.model.PriceHistoryDetail
 import com.materials.features.price_history.domain.repository.PriceHistoryRepository
 import com.materials.features.provider.data.local.ProviderDao
@@ -37,6 +38,16 @@ class PriceHistoryRepositoryImpl(
             println("Error refreshing price history: ${e.message}")
             e.printStackTrace()
             Resource.Error(e.message ?: "Unknown error")
+        }
+    }
+
+    override suspend fun upsertPriceHistory(priceHistory: PriceHistory): Resource<Unit> = withContext(Dispatchers.IO) {
+        try {
+            remoteDataSource.upsertPriceHistory(priceHistory)
+            priceHistoryDao.insertPriceHistory(priceHistory.toEntity())
+            Resource.Success(Unit)
+        } catch (e: Exception) {
+            Resource.Error(e.message ?: "Error al guardar historial de precios")
         }
     }
 
