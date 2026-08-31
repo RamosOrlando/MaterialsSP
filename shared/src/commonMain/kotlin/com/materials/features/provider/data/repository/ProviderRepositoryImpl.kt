@@ -52,4 +52,14 @@ class ProviderRepositoryImpl(
             emit(Unit)
         }
     }
+
+    override suspend fun saveProvider(provider: Provider): Resource<Unit> = withContext(Dispatchers.IO) {
+        try {
+            remoteDataSource.saveProvider(provider)
+            providerDao.insertProviders(listOf(provider.toEntity()))
+            Resource.Success(Unit)
+        } catch (e: Exception) {
+            Resource.Error(e.message ?: "Unknown error")
+        }
+    }
 }

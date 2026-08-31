@@ -8,4 +8,5 @@ interface ProviderRepository {
     suspend fun refreshProviders(): Resource<Unit>
     fun getProvidersFlow(): Flow<Resource<List<Provider>>>
     fun listenToRealtimeChanges(): Flow<Unit>
+    suspend fun saveProvider(provider: Provider): Resource<Unit>
 }

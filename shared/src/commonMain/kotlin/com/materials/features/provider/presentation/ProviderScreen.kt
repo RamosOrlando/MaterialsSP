@@ -9,8 +9,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
@@ -42,10 +44,12 @@ fun ProviderScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
+    val createProviderState by viewModel.createProviderState.collectAsState()
 
     ProviderScreenContent(
         uiState = uiState,
         searchQuery = searchQuery,
+        createProviderState = createProviderState,
         onEvent = { viewModel.onEvent(it) },
         onBackClick = onBackClick,
         modifier = modifier
@@ -56,94 +60,122 @@ fun ProviderScreen(
 fun ProviderScreenContent(
     uiState: ProviderUiState,
     searchQuery: String,
+    createProviderState: CreateProviderUiState,
     onEvent: (ProviderEvent) -> Unit,
     onBackClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-    ) {
-        // Header Content
+    Scaffold(
+        modifier = modifier.fillMaxSize(),
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = { onEvent(ProviderEvent.OnShowAddDialog) },
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+                shape = IndustrialShapes.medium
+            ) {
+                Icon(imageVector = Icons.Default.Add, contentDescription = "Agregar Proveedor")
+            }
+        }
+    ) { padding ->
         Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp)
+                .fillMaxSize()
+                .padding(padding)
+                .background(MaterialTheme.colorScheme.background)
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(bottom = 8.dp)
+            // Header Content
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
             ) {
-                IconButton(
-                    onClick = onBackClick,
-                    modifier = Modifier.size(32.dp)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(bottom = 8.dp)
                 ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Regresar",
-                        tint = MaterialTheme.colorScheme.onSurface
+                    IconButton(
+                        onClick = onBackClick,
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Regresar",
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Proveedores",
+                        fontWeight = FontWeight.ExtraBold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        style = MaterialTheme.typography.headlineMedium.copy(
+                            fontSize = 28.sp,
+                            letterSpacing = (-0.5).sp
+                        )
                     )
                 }
-                Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "Proveedores",
-                    fontWeight = FontWeight.ExtraBold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    style = MaterialTheme.typography.headlineMedium.copy(
-                        fontSize = 28.sp,
-                        letterSpacing = (-0.5).sp
-                    )
+                    text = "Gestione sus proveedores de materiales.",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodyMedium,
+                    lineHeight = 20.sp,
+                    modifier = Modifier.padding(start = 40.dp)
                 )
             }
-            Text(
-                text = "Gestione sus proveedores de materiales.",
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                style = MaterialTheme.typography.bodyMedium,
-                lineHeight = 20.sp,
-                modifier = Modifier.padding(start = 40.dp)
+
+            // Search Bar
+            ProviderSearchBar(
+                query = searchQuery,
+                onQueryChange = { onEvent(ProviderEvent.OnSearchQueryChanged(it)) }
             )
-        }
 
-        // Search Bar
-        ProviderSearchBar(
-            query = searchQuery,
-            onQueryChange = { onEvent(ProviderEvent.OnSearchQueryChanged(it)) }
-        )
+            Spacer(modifier = Modifier.height(8.dp))
 
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // Body Area
-        Box(modifier = Modifier.fillMaxSize().weight(1f)) {
-            when (val state = uiState) {
-                is ProviderUiState.Loading -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
-                    }
-                }
-                is ProviderUiState.Success -> {
-                    if (state.providers.isEmpty()) {
-                        EmptyState()
-                    } else {
-                        LazyColumn(
-                            contentPadding = PaddingValues(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(12.dp),
-                            modifier = Modifier.fillMaxSize()
+            // Body Area
+            Box(modifier = Modifier.fillMaxSize().weight(1f)) {
+                when (val state = uiState) {
+                    is ProviderUiState.Loading -> {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
                         ) {
-                            items(state.providers, key = { it.providerId }) { provider ->
-                                ProviderCard(provider = provider)
+                            CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                        }
+                    }
+                    is ProviderUiState.Success -> {
+                        if (state.providers.isEmpty()) {
+                            EmptyState()
+                        } else {
+                            LazyColumn(
+                                contentPadding = PaddingValues(16.dp),
+                                verticalArrangement = Arrangement.spacedBy(12.dp),
+                                modifier = Modifier.fillMaxSize()
+                            ) {
+                                items(state.providers, key = { it.providerId }) { provider ->
+                                    ProviderCard(provider = provider)
+                                }
                             }
                         }
                     }
-                }
-                is ProviderUiState.Error -> {
-                    ErrorState(message = state.message, onRetry = { onEvent(ProviderEvent.Refresh) })
+                    is ProviderUiState.Error -> {
+                        ErrorState(message = state.message, onRetry = { onEvent(ProviderEvent.Refresh) })
+                    }
                 }
             }
         }
+    }
+
+    if (createProviderState.showAddDialog) {
+        val nextId = if (uiState is ProviderUiState.Success) {
+            (uiState.providers.mapNotNull { it.providerId.toIntOrNull() }.maxOrNull() ?: 0) + 1
+        } else 1
+
+        AddProviderDialog(
+            nextId = nextId.toString(),
+            state = createProviderState,
+            onEvent = onEvent
+        )
     }
 }
 
@@ -226,7 +258,7 @@ fun ProviderCard(
                 .padding(16.dp)
         ) {
             Row(
-                verticalAlignment = Alignment.CenterVertically,
+                verticalAlignment = Alignment.Top,
                 horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -240,30 +272,46 @@ fun ProviderCard(
                         overflow = TextOverflow.Ellipsis
                     )
                     
-                    val locationText = remember(provider.address, provider.city) {
-                        listOfNotNull(provider.address, provider.city)
-                            .filter { it.isNotBlank() }
-                            .joinToString(separator = " - ")
+                    if (!provider.address.isNullOrBlank()) {
+                        Text(
+                            text = provider.address,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(top = 2.dp),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
                     }
 
-                    if (locationText.isNotEmpty()) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.padding(top = 4.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.LocationOn,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(14.dp)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 10.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        if (!provider.city.isNullOrBlank()) {
+                            ProviderTag(
+                                text = provider.city,
+                                icon = Icons.Default.LocationOn,
+                                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
                             )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = locationText,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                style = MaterialTheme.typography.bodySmall,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
+                        }
+                        if (provider.telephone != null) {
+                            ProviderTag(
+                                text = provider.telephone.toString(),
+                                icon = Icons.Default.Phone,
+                                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                                contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+                            )
+                        }
+                        if (!provider.email.isNullOrBlank()) {
+                            ProviderTag(
+                                text = provider.email,
+                                icon = Icons.Default.Email,
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                contentColor = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
@@ -271,7 +319,8 @@ fun ProviderCard(
                 
                 Surface(
                     color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                    shape = IndustrialShapes.small
+                    shape = IndustrialShapes.small,
+                    modifier = Modifier.padding(start = 8.dp)
                 ) {
                     Text(
                         text = "ID: ${provider.providerId}",
@@ -282,6 +331,39 @@ fun ProviderCard(
                     )
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun ProviderTag(
+    text: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    containerColor: Color,
+    contentColor: Color
+) {
+    Surface(
+        color = containerColor,
+        shape = IndustrialShapes.small,
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = contentColor,
+                modifier = Modifier.size(12.dp)
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(
+                text = text,
+                color = contentColor,
+                style = MaterialTheme.typography.labelSmall,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
         }
     }
 }
@@ -365,6 +447,142 @@ private fun ErrorState(message: String, onRetry: () -> Unit) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AddProviderDialog(
+    nextId: String,
+    state: CreateProviderUiState,
+    onEvent: (ProviderEvent) -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = { onEvent(ProviderEvent.OnDismissAddDialog) },
+        title = {
+            Text(
+                text = "Nuevo Proveedor",
+                fontWeight = FontWeight.ExtraBold,
+                color = IndustrialOrange
+            )
+        },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                OutlinedTextField(
+                    value = nextId,
+                    onValueChange = {},
+                    label = { Text("ID Proveedor (Auto)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    readOnly = true,
+                    enabled = false,
+                    shape = IndustrialShapes.small,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        disabledBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                        disabledTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                )
+
+                OutlinedTextField(
+                    value = state.name,
+                    onValueChange = { onEvent(ProviderEvent.OnNameChanged(it)) },
+                    label = { Text("Nombre") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    shape = IndustrialShapes.small,
+                    isError = state.error?.contains("nombre", ignoreCase = true) == true
+                )
+
+                OutlinedTextField(
+                    value = state.address,
+                    onValueChange = { onEvent(ProviderEvent.OnAddressChanged(it)) },
+                    label = { Text("Dirección") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    shape = IndustrialShapes.small
+                )
+
+                OutlinedTextField(
+                    value = state.telephone,
+                    onValueChange = { onEvent(ProviderEvent.OnTelephoneChanged(it)) },
+                    label = { Text("Teléfono") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    shape = IndustrialShapes.small,
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
+                    )
+                )
+
+                OutlinedTextField(
+                    value = state.city,
+                    onValueChange = { onEvent(ProviderEvent.OnCityChanged(it)) },
+                    label = { Text("Ciudad") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    shape = IndustrialShapes.small,
+                    isError = state.error?.contains("ciudad", ignoreCase = true) == true
+                )
+
+                OutlinedTextField(
+                    value = state.email,
+                    onValueChange = { onEvent(ProviderEvent.OnEmailChanged(it)) },
+                    label = { Text("Email") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    shape = IndustrialShapes.small,
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = androidx.compose.ui.text.input.KeyboardType.Email
+                    )
+                )
+
+                OutlinedTextField(
+                    value = state.imagePath,
+                    onValueChange = { onEvent(ProviderEvent.OnImagePathChanged(it)) },
+                    label = { Text("URL de la Imagen (Opcional)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    shape = IndustrialShapes.small
+                )
+
+                if (state.error != null) {
+                    Text(
+                        text = state.error,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = { onEvent(ProviderEvent.OnSaveProvider) },
+                enabled = !state.isLoading,
+                colors = ButtonDefaults.buttonColors(containerColor = IndustrialOrange)
+            ) {
+                if (state.isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        color = Color.White,
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text("Guardar")
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = { onEvent(ProviderEvent.OnDismissAddDialog) },
+                enabled = !state.isLoading
+            ) {
+                Text("Cancelar", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+    )
+}
+
 @Preview(showBackground = true, name = "Success")
 @Composable
 fun ProviderScreenSuccessPreview() {
@@ -377,6 +595,8 @@ fun ProviderScreenSuccessPreview() {
                         name = "Suministros Industriales",
                         address = "Calle Montesinos No. 200",
                         city = "Madrid",
+                        telephone = 34912345678L,
+                        email = "contacto@suministros.es",
                         imagePath = ""
                     ),
                     Provider(
@@ -384,11 +604,14 @@ fun ProviderScreenSuccessPreview() {
                         name = "Ferretería Central",
                         address = "Av. Brasil, entre Santa Barbara",
                         city = "Barcelona",
+                        telephone = 34934567890L,
+                        email = "info@ferreteriacentral.com",
                         imagePath = ""
                     )
                 )
             ),
             searchQuery = "",
+            createProviderState = CreateProviderUiState(),
             onEvent = {}
         )
     }

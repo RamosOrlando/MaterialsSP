@@ -29,7 +29,14 @@ class LoginViewModel(
             LoginEvent.OnSignUpClicked -> {
                 signUp()
             }
+            LoginEvent.ClearSuccess -> {
+                _uiState.update { LoginUiState() }
+            }
         }
+    }
+
+    fun resetState() {
+        _uiState.update { LoginUiState() }
     }
 
     private fun signIn() {

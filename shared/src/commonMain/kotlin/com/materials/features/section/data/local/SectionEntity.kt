@@ -14,7 +14,8 @@ import com.materials.features.section.domain.model.Section
             entity = CategoryEntity::class,
             parentColumns = ["categoryId"],
             childColumns = ["categoryId"],
-            onDelete = ForeignKey.SET_NULL
+            onDelete = ForeignKey.RESTRICT,
+            onUpdate = ForeignKey.CASCADE
         )
     ],
     indices = [Index(value = ["categoryId"])]

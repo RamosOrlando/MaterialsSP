@@ -5,17 +5,22 @@ import androidx.lifecycle.viewModelScope
 import com.materials.core.domain.util.Resource
 import com.materials.features.provider.domain.model.Provider
 import com.materials.features.provider.domain.use_case.GetProvidersUseCase
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
+import com.materials.features.provider.domain.use_case.SaveProviderUseCase
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
+
+data class CreateProviderUiState(
+    val showAddDialog: Boolean = false,
+    val name: String = "",
+    val address: String = "",
+    val telephone: String = "",
+    val city: String = "Oruro",
+    val email: String = "",
+    val imagePath: String = "",
+    val error: String? = null,
+    val isLoading: Boolean = false
+)
 
 sealed interface ProviderUiState {
     object Loading : ProviderUiState
@@ -26,14 +31,27 @@ sealed interface ProviderUiState {
 sealed interface ProviderEvent {
     data class OnSearchQueryChanged(val query: String) : ProviderEvent
     object Refresh : ProviderEvent
+    object OnShowAddDialog : ProviderEvent
+    object OnDismissAddDialog : ProviderEvent
+    data class OnNameChanged(val name: String) : ProviderEvent
+    data class OnAddressChanged(val address: String) : ProviderEvent
+    data class OnTelephoneChanged(val telephone: String) : ProviderEvent
+    data class OnCityChanged(val city: String) : ProviderEvent
+    data class OnEmailChanged(val email: String) : ProviderEvent
+    data class OnImagePathChanged(val path: String) : ProviderEvent
+    object OnSaveProvider : ProviderEvent
 }
 
 class ProviderViewModel(
-    private val getProvidersUseCase: GetProvidersUseCase
+    private val getProvidersUseCase: GetProvidersUseCase,
+    private val saveProviderUseCase: SaveProviderUseCase
 ) : ViewModel() {
 
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+
+    private val _createProviderState = MutableStateFlow(CreateProviderUiState())
+    val createProviderState = _createProviderState.asStateFlow()
 
     private val _refreshError = MutableStateFlow<String?>(null)
 
@@ -74,6 +92,86 @@ class ProviderViewModel(
                         _refreshError.value = result.message
                     }
                 }
+            }
+            ProviderEvent.OnShowAddDialog -> {
+                _createProviderState.update { it.copy(showAddDialog = true, error = null) }
+            }
+            ProviderEvent.OnDismissAddDialog -> {
+                _createProviderState.update { CreateProviderUiState() }
+            }
+            is ProviderEvent.OnNameChanged -> {
+                _createProviderState.update { it.copy(name = event.name, error = null) }
+            }
+            is ProviderEvent.OnAddressChanged -> {
+                _createProviderState.update { it.copy(address = event.address, error = null) }
+            }
+            is ProviderEvent.OnTelephoneChanged -> {
+                _createProviderState.update { it.copy(telephone = event.telephone, error = null) }
+            }
+            is ProviderEvent.OnCityChanged -> {
+                _createProviderState.update { it.copy(city = event.city, error = null) }
+            }
+            is ProviderEvent.OnEmailChanged -> {
+                _createProviderState.update { it.copy(email = event.email, error = null) }
+            }
+            is ProviderEvent.OnImagePathChanged -> {
+                _createProviderState.update { it.copy(imagePath = event.path, error = null) }
+            }
+            ProviderEvent.OnSaveProvider -> {
+                saveProvider()
+            }
+        }
+    }
+
+    private fun saveProvider() {
+        val state = createProviderState.value
+        val name = state.name.trim()
+        val address = state.address.trim()
+        val telephone = state.telephone.trim()
+        val city = state.city.trim()
+        val email = state.email.trim()
+        val imagePath = state.imagePath.trim()
+
+        if (name.isEmpty()) {
+            _createProviderState.update { it.copy(error = "El nombre no puede estar vacío") }
+            return
+        }
+
+        // Check for duplicates (name + city)
+        val currentProviders = (uiState.value as? ProviderUiState.Success)?.providers ?: emptyList()
+        if (currentProviders.any { 
+                it.name.trim().equals(name, ignoreCase = true) && 
+                it.city?.trim().equals(city, ignoreCase = true) 
+            }) {
+            _createProviderState.update { it.copy(error = "El proveedor ya existe en esta ciudad") }
+            return
+        }
+
+        viewModelScope.launch {
+            _createProviderState.update { it.copy(isLoading = true) }
+            
+            // Calculate next correlative ID
+            val nextId = (currentProviders.mapNotNull { it.providerId.toIntOrNull() }.maxOrNull() ?: 0) + 1
+            
+            val newProvider = Provider(
+                providerId = nextId.toString(),
+                name = name,
+                address = if (address.isEmpty()) null else address,
+                telephone = telephone.toLongOrNull(),
+                city = if (city.isEmpty()) null else city,
+                email = if (email.isEmpty()) null else email,
+                imagePath = if (imagePath.isEmpty()) null else imagePath
+            )
+
+            val result = saveProviderUseCase.execute(newProvider)
+            when (result) {
+                is Resource.Success -> {
+                    _createProviderState.update { CreateProviderUiState() }
+                }
+                is Resource.Error -> {
+                    _createProviderState.update { it.copy(isLoading = false, error = result.message) }
+                }
+                else -> {}
             }
         }
     }

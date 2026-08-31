@@ -24,17 +24,25 @@ class RealtimeSyncManager(
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
+    private var syncJob: kotlinx.coroutines.Job? = null
+
     fun startSyncing() {
-        scope.launch {
+        stopSyncing()
+        syncJob = scope.launch {
             initialSync()
             
-            categoryRepository.listenToRealtimeChanges().launchIn(scope)
-            sectionRepository.listenToRealtimeChanges().launchIn(scope)
-            makerRepository.listenToRealtimeChanges().launchIn(scope)
-            materialRepository.listenToRealtimeChanges().launchIn(scope)
-            providerRepository.listenToRealtimeChanges().launchIn(scope)
-            priceHistoryRepository.listenToRealtimeChanges().launchIn(scope)
+            categoryRepository.listenToRealtimeChanges().launchIn(this)
+            sectionRepository.listenToRealtimeChanges().launchIn(this)
+            makerRepository.listenToRealtimeChanges().launchIn(this)
+            materialRepository.listenToRealtimeChanges().launchIn(this)
+            providerRepository.listenToRealtimeChanges().launchIn(this)
+            priceHistoryRepository.listenToRealtimeChanges().launchIn(this)
         }
+    }
+
+    fun stopSyncing() {
+        syncJob?.cancel()
+        syncJob = null
     }
 
     private suspend fun initialSync() {

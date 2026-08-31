@@ -22,17 +22,26 @@ class NavigationViewModel(
     val userRole = _userRole.asStateFlow()
 
     init {
-        checkAuth()
+        observeAuthState()
     }
 
-    private fun checkAuth() {
+    private fun observeAuthState() {
         viewModelScope.launch {
-            if (authRepository.isUserLoggedIn()) {
-                fetchProfile()
-                syncManager.startSyncing()
-                _initialScreen.value = Screen.Category
-            } else {
-                _initialScreen.value = Screen.Login
+            authRepository.awaitInitialization()
+            authRepository.getUserIdFlow().collect { userId ->
+                if (userId != null) {
+                    fetchProfile()
+                    syncManager.startSyncing()
+                    if (_initialScreen.value != Screen.Category) {
+                        _initialScreen.value = Screen.Category
+                    }
+                } else {
+                    syncManager.stopSyncing()
+                    _userRole.value = null
+                    if (_initialScreen.value != Screen.Login) {
+                        _initialScreen.value = Screen.Login
+                    }
+                }
             }
         }
     }
@@ -46,7 +55,12 @@ class NavigationViewModel(
     fun onLoginSuccess() {
         viewModelScope.launch {
             fetchProfile()
-            syncManager.startSyncing()
+        }
+    }
+
+    fun onLogout() {
+        viewModelScope.launch {
+            authRepository.signOut()
         }
     }
 }

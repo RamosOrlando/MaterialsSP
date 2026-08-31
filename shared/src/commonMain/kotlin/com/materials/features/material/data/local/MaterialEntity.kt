@@ -15,13 +15,15 @@ import com.materials.features.material.domain.model.Material
             entity = MakerEntity::class,
             parentColumns = ["makerId"],
             childColumns = ["makerId"],
-            onDelete = ForeignKey.SET_NULL
+            onDelete = ForeignKey.RESTRICT,
+            onUpdate = ForeignKey.CASCADE
         ),
         ForeignKey(
             entity = SectionEntity::class,
             parentColumns = ["sectionId"],
             childColumns = ["sectionId"],
-            onDelete = ForeignKey.CASCADE
+            onDelete = ForeignKey.RESTRICT,
+            onUpdate = ForeignKey.CASCADE
         )
     ],
     indices = [

@@ -13,4 +13,5 @@ sealed interface LoginEvent {
     data class OnPasswordChanged(val password: String) : LoginEvent
     data object OnSignInClicked : LoginEvent
     data object OnSignUpClicked : LoginEvent
+    data object ClearSuccess : LoginEvent
 }

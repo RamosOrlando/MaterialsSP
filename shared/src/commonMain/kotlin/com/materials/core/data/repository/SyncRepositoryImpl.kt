@@ -8,6 +8,7 @@ import com.materials.features.material.domain.repository.MaterialRepository
 import com.materials.features.price_history.domain.repository.PriceHistoryRepository
 import com.materials.features.provider.domain.repository.ProviderRepository
 import com.materials.features.section.domain.repository.SectionRepository
+import com.materials.features.user.domain.repository.UserRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.withContext
@@ -18,7 +19,8 @@ class SyncRepositoryImpl(
     private val makerRepository: MakerRepository,
     private val providerRepository: ProviderRepository,
     private val materialRepository: MaterialRepository,
-    private val priceHistoryRepository: PriceHistoryRepository
+    private val priceHistoryRepository: PriceHistoryRepository,
+    private val userRepository: UserRepository
 ) : SyncRepository {
 
     override suspend fun performFullSync(): Resource<Unit> = withContext(Dispatchers.IO) {
@@ -53,6 +55,11 @@ class SyncRepositoryImpl(
             // 6. PriceHistory
             priceHistoryRepository.refreshPriceHistory().also { 
                 if (it is Resource.Error) return@withContext Resource.Error("Sync PriceHistory: ${it.message}") 
+            }
+
+            // 7. User Metadata (Roles, Professions, Plans)
+            userRepository.refreshMetadata().also {
+                if (it is Resource.Error) return@withContext Resource.Error("Sync User Metadata: ${it.message}")
             }
             
             println("SyncRepository: Full sync finished successfully")

@@ -8,6 +8,7 @@ import io.github.jan.supabase.realtime.PostgresAction
 import io.github.jan.supabase.realtime.channel
 import io.github.jan.supabase.realtime.postgresChangeFlow
 import io.github.jan.supabase.realtime.realtime
+import kotlin.random.Random
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.channels.awaitClose
@@ -33,6 +34,10 @@ class SupabaseProviderDataSource(
         }
     }
 
+    override suspend fun saveProvider(provider: Provider): Unit = withContext(Dispatchers.IO) {
+        supabaseClient.postgrest["Provider"].upsert(provider)
+    }
+
     override fun observeProviders(): Flow<Unit> = callbackFlow {
         // Wait for auth to be initialized to avoid invalid access token error
         supabaseClient.auth.sessionStatus.first { it !is SessionStatus.Initializing }
@@ -40,7 +45,7 @@ class SupabaseProviderDataSource(
         // Explicitly connect to realtime to ensure the token is used correctly
         supabaseClient.realtime.connect()
 
-        val channel = supabaseClient.realtime.channel("provider_changes")
+        val channel = supabaseClient.realtime.channel("provider_changes_${Random.nextLong()}")
         val flow = channel.postgresChangeFlow<PostgresAction>(schema = "public") {
             table = "Provider"
         }
@@ -55,6 +60,7 @@ class SupabaseProviderDataSource(
             job.cancel()
             launch {
                 channel.unsubscribe()
+                supabaseClient.realtime.removeChannel(channel)
             }
         }
     }

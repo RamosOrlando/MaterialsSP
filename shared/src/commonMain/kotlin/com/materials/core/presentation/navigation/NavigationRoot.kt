@@ -20,14 +20,33 @@ fun NavigationRoot(
     val initialScreen by viewModel.initialScreen.collectAsState()
     val userRole by viewModel.userRole.collectAsState()
 
-    if (initialScreen == null) {
+    val backstack = remember { mutableStateListOf<Screen>() }
+
+    LaunchedEffect(initialScreen) {
+        initialScreen?.let { screen ->
+            val currentScreen = backstack.lastOrNull()
+            
+            if (backstack.isEmpty()) {
+                backstack.add(screen)
+            } else {
+                val isAtAuthScreen = currentScreen is Screen.Login || currentScreen is Screen.SignUp
+                val isTargetAuthScreen = screen is Screen.Login || screen is Screen.SignUp
+                
+                // Si pasamos de una pantalla de auth (Login/SignUp) a una de contenido (Category, etc) o viceversa
+                if (isAtAuthScreen != isTargetAuthScreen) {
+                    backstack.clear()
+                    backstack.add(screen)
+                }
+            }
+        }
+    }
+
+    if (backstack.isEmpty()) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator()
         }
         return
     }
-
-    val backstack = remember { mutableStateListOf<Screen>(initialScreen!!) }
 
     NavDisplay(
         backStack = backstack,
@@ -55,6 +74,8 @@ fun NavigationRoot(
                 )
                 else -> MainScreen(
                     onLogout = {
+                        viewModel.onLogout()
+                        backstack.clear()
                         backstack.add(Screen.Login)
                     },
                     initialScreen = key,

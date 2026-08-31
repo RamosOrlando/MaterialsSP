@@ -34,6 +34,7 @@ sealed interface MaterialUiState {
     data class Success(
         val materials: List<MaterialItem>,
         val providers: List<com.materials.features.provider.domain.model.Provider> = emptyList(),
+        val makers: List<com.materials.features.maker.domain.model.Maker> = emptyList(),
         val errorMessage: String? = null
     ) : MaterialUiState
     data class Error(val message: String) : MaterialUiState
@@ -44,6 +45,7 @@ sealed interface MaterialEvent {
     data class SetSection(val sectionId: String?) : MaterialEvent
     data class ToggleMaterialSelection(val materialId: String) : MaterialEvent
     data class UpdateMaterial(val material: Material) : MaterialEvent
+    data class CreateMaterial(val material: Material) : MaterialEvent
     data class BulkUpdateMaterials(val updatedMaterials: List<Material>) : MaterialEvent
     object ClearError : MaterialEvent
     object ClearSelection : MaterialEvent
@@ -115,6 +117,7 @@ class MaterialViewModel(
                 MaterialUiState.Success(
                     materials = materialItems, 
                     providers = providersResource.data,
+                    makers = makersResource.data,
                     errorMessage = refreshError
                 )
             }
@@ -178,6 +181,17 @@ class MaterialViewModel(
                     } finally {
                         _isRefreshing.value = false
                     }
+                }
+            }
+            is MaterialEvent.CreateMaterial -> {
+                viewModelScope.launch {
+                    _isRefreshing.value = true
+                    _refreshError.value = null
+                    val result = getMaterialsUseCase.updateMaterial(event.material)
+                    if (result is Resource.Error) {
+                        _refreshError.value = result.message
+                    }
+                    _isRefreshing.value = false
                 }
             }
             is MaterialEvent.BulkUpdateMaterials -> {

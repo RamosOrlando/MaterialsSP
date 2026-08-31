@@ -14,6 +14,10 @@ fun getCurrentDateStr(): String {
     return "$day/$month/$year"
 }
 
+fun getCurrentIsoDate(): String {
+    return Clock.System.now().toString()
+}
+
 fun formatDateToDisplay(dateStr: String?): String {
     if (dateStr == null) return "---"
     

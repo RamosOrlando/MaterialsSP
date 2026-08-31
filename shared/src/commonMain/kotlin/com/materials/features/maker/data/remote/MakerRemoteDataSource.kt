@@ -6,4 +6,5 @@ import kotlinx.coroutines.flow.Flow
 interface MakerRemoteDataSource {
     suspend fun getMakers(): List<Maker>
     fun observeMakers(): Flow<Unit>
+    suspend fun saveMaker(maker: Maker)
 }

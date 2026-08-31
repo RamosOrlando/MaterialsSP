@@ -1,9 +1,8 @@
 package com.materials.features.material.data.local
 
 import androidx.room.Dao
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -24,16 +23,16 @@ interface MaterialDao {
     """)
     fun getMaterialsFiltered(query: String, sectionId: String?): Flow<List<MaterialEntity>>
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Upsert
     suspend fun insertMaterials(materials: List<MaterialEntity>)
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Upsert
     suspend fun insertMaterial(material: MaterialEntity)
 
-    @Query("SELECT COUNT(*) FROM Material WHERE sectionId = :sectionId")
+    @Query("SELECT COUNT(DISTINCT SUBSTR(materialId, 1, LENGTH(:sectionId) + 4)) FROM Material WHERE sectionId = :sectionId")
     suspend fun getMaterialCount(sectionId: String): Int
 
-    @Query("SELECT COUNT(*) FROM Material WHERE sectionId = :sectionId")
+    @Query("SELECT COUNT(DISTINCT SUBSTR(materialId, 1, LENGTH(:sectionId) + 4)) FROM Material WHERE sectionId = :sectionId")
     fun getMaterialCountFlow(sectionId: String): Flow<Int>
 
     @Query("DELETE FROM Material")

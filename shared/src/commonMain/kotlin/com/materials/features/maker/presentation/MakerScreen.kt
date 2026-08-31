@@ -39,10 +39,12 @@ fun MakerScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
+    val createMakerState by viewModel.createMakerState.collectAsState()
 
     MakerScreenContent(
         uiState = uiState,
         searchQuery = searchQuery,
+        createMakerState = createMakerState,
         onEvent = { viewModel.onEvent(it) },
         onBackClick = onBackClick,
         modifier = modifier
@@ -53,16 +55,31 @@ fun MakerScreen(
 fun MakerScreenContent(
     uiState: MakerUiState,
     searchQuery: String,
+    createMakerState: CreateMakerUiState,
     onEvent: (MakerEvent) -> Unit,
     onBackClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-    ) {
-        // Header Content
+    Scaffold(
+        modifier = modifier.fillMaxSize(),
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = { onEvent(MakerEvent.OnShowAddDialog) },
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+                shape = IndustrialShapes.medium
+            ) {
+                Icon(imageVector = Icons.Default.Add, contentDescription = "Agregar Fabricante")
+            }
+        }
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .background(MaterialTheme.colorScheme.background)
+        ) {
+            // Header Content
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -143,6 +160,19 @@ fun MakerScreenContent(
                 }
             }
         }
+    }
+}
+
+    if (createMakerState.showAddDialog) {
+        val nextId = if (uiState is MakerUiState.Success) {
+            (uiState.makers.mapNotNull { it.makerId.toIntOrNull() }.maxOrNull() ?: 0) + 1
+        } else 1
+
+        AddMakerDialog(
+            nextId = nextId.toString(),
+            state = createMakerState,
+            onEvent = onEvent
+        )
     }
 }
 
@@ -265,17 +295,37 @@ fun MakerCard(
                 .background(Color.White.copy(alpha = 0.9f))
                 .padding(vertical = 4.dp, horizontal = 8.dp)
         ) {
-            Text(
-                text = maker.name,
-                color = IndustrialCharcoalDark, // Mantener oscuro sobre fondo blanco
-                fontWeight = FontWeight.Bold,
-                style = MaterialTheme.typography.titleSmall.copy(
-                    fontSize = 14.sp
-                ),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.align(Alignment.CenterHorizontally)
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Surface(
+                    color = MaterialTheme.colorScheme.secondaryContainer,
+                    shape = IndustrialShapes.small,
+                    modifier = Modifier.padding(end = 6.dp)
+                ) {
+                    Text(
+                        text = maker.makerId,
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 10.sp
+                        ),
+                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                    )
+                }
+                Text(
+                    text = maker.name,
+                    color = IndustrialCharcoalDark, // Mantener oscuro sobre fondo blanco
+                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.titleSmall.copy(
+                        fontSize = 14.sp
+                    ),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
         }
     }
 }
@@ -359,6 +409,96 @@ private fun ErrorState(message: String, onRetry: () -> Unit) {
     }
 }
 
+@Composable
+fun AddMakerDialog(
+    nextId: String,
+    state: CreateMakerUiState,
+    onEvent: (MakerEvent) -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = { onEvent(MakerEvent.OnDismissAddDialog) },
+        title = {
+            Text(
+                text = "Nuevo Fabricante",
+                fontWeight = FontWeight.ExtraBold,
+                color = IndustrialOrange
+            )
+        },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                OutlinedTextField(
+                    value = nextId,
+                    onValueChange = {},
+                    label = { Text("ID Fabricante (Auto)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    readOnly = true,
+                    enabled = false,
+                    shape = IndustrialShapes.small,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        disabledBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                        disabledTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                )
+
+                OutlinedTextField(
+                    value = state.newName,
+                    onValueChange = { onEvent(MakerEvent.OnNewNameChanged(it)) },
+                    label = { Text("Nombre del Fabricante") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    shape = IndustrialShapes.small,
+                    isError = state.error != null && state.error.contains("nombre", ignoreCase = true)
+                )
+
+                OutlinedTextField(
+                    value = state.newImagePath,
+                    onValueChange = { onEvent(MakerEvent.OnNewImagePathChanged(it)) },
+                    label = { Text("URL de la Imagen (Opcional)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    shape = IndustrialShapes.small
+                )
+
+                if (state.error != null) {
+                    Text(
+                        text = state.error,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = { onEvent(MakerEvent.OnSaveMaker) },
+                enabled = !state.isLoading,
+                colors = ButtonDefaults.buttonColors(containerColor = IndustrialOrange)
+            ) {
+                if (state.isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        color = Color.White,
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text("Guardar")
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = { onEvent(MakerEvent.OnDismissAddDialog) },
+                enabled = !state.isLoading
+            ) {
+                Text("Cancelar", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+    )
+}
+
 @Preview(showBackground = true, name = "Success")
 @Composable
 fun MakerScreenSuccessPreview() {
@@ -379,6 +519,7 @@ fun MakerScreenSuccessPreview() {
                 )
             ),
             searchQuery = "",
+            createMakerState = CreateMakerUiState(),
             onEvent = {}
         )
     }

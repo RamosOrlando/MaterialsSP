@@ -28,6 +28,8 @@ import com.materials.features.material.presentation.PrintPreviewScreen
 import com.materials.features.price_history.presentation.PriceHistoryScreen
 import com.materials.features.provider.presentation.ProviderScreen
 import org.koin.compose.viewmodel.koinViewModel
+import androidx.compose.ui.tooling.preview.Preview
+import com.materials.core.presentation.theme.IndustrialTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,9 +40,28 @@ fun MainScreen(
     modifier: Modifier = Modifier,
     viewModel: MainViewModel = koinViewModel()
 ) {
+    val headerState by viewModel.userHeaderState.collectAsState()
+
+    MainScreenContent(
+        headerState = headerState,
+        onLogout = onLogout,
+        initialScreen = initialScreen,
+        userRole = userRole,
+        modifier = modifier
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun MainScreenContent(
+    headerState: UserHeaderState,
+    onLogout: () -> Unit = {},
+    initialScreen: Screen = Screen.Category,
+    userRole: UserRole? = null,
+    modifier: Modifier = Modifier
+) {
     val backstack = remember { mutableStateListOf<Screen>(initialScreen) }
-    val currentScreen = backstack.last()
-    val userEmail = viewModel.userEmail
+    val currentScreen = backstack.lastOrNull() ?: initialScreen
 
     val adaptiveInfo = currentWindowAdaptiveInfo()
     val shouldUseRail = adaptiveInfo.windowSizeClass.isWidthAtLeastBreakpoint(600)
@@ -59,19 +80,69 @@ fun MainScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Column {
+                    Column(modifier = Modifier.padding(vertical = 4.dp)) {
                         Text(
                             text = "Catálogo Industrial",
                             color = MaterialTheme.colorScheme.primary,
-                            fontWeight = FontWeight.Bold,
-                            style = MaterialTheme.typography.titleLarge
+                            fontWeight = FontWeight.ExtraBold,
+                            style = MaterialTheme.typography.titleMedium
                         )
-                        if (userEmail.isNotEmpty()) {
+                        Row(
+                            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
                             Text(
-                                text = userEmail,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                style = MaterialTheme.typography.labelSmall
+                                text = headerState.fullName.ifEmpty { "Usuario" },
+                                color = MaterialTheme.colorScheme.onSurface,
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Bold
                             )
+                            
+                            if (headerState.roleName.isNotEmpty()) {
+                                Surface(
+                                    color = MaterialTheme.colorScheme.secondaryContainer,
+                                    shape = com.materials.core.presentation.theme.IndustrialShapes.small
+                                ) {
+                                    Text(
+                                        text = headerState.roleName,
+                                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                            
+                            if (headerState.planName.isNotEmpty()) {
+                                Surface(
+                                    color = MaterialTheme.colorScheme.tertiaryContainer,
+                                    shape = com.materials.core.presentation.theme.IndustrialShapes.small
+                                ) {
+                                    Text(
+                                        text = headerState.planName,
+                                        color = MaterialTheme.colorScheme.onTertiaryContainer,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                            
+                            val timeStatus = when {
+                                headerState.daysRemaining == -999 -> ""
+                                headerState.daysRemaining > 0 -> "${headerState.daysRemaining} días restantes"
+                                headerState.daysRemaining == 0 -> "Expira hoy"
+                                else -> "Expirado"
+                            }
+
+                            if (timeStatus.isNotEmpty()) {
+                                Text(
+                                    text = timeStatus,
+                                    color = if (headerState.daysRemaining <= 5) Color.Red else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
                         }
                     }
                 },
@@ -145,6 +216,11 @@ fun MainScreen(
                         )
                     }
                 }
+            } else {
+                // Ensure the bottomBar lambda emits a layout node when not in use.
+                // In some versions of M3 Scaffold, providing an empty lambda for bottomBar
+                // can cause a NoSuchElementException during measurement.
+                Spacer(Modifier.size(0.dp))
             }
         },
         containerColor = MaterialTheme.colorScheme.background
@@ -194,58 +270,67 @@ fun MainScreen(
                 }
             }
 
-            NavDisplay(
-                backStack = backstack,
-                modifier = Modifier.weight(1f),
-                onBack = { if (backstack.size > 1) backstack.removeLast() }
-            ) { key ->
-                NavEntry(key) {
-                    when (key) {
-                        Screen.Category, is Screen.Section, is Screen.Material -> {
-                            CatalogPane(
-                                screen = key,
-                                shouldUseDualPane = shouldUseRail,
-                                userRole = userRole,
-                                backstack = backstack,
-                                onLogout = onLogout
+            if (backstack.isNotEmpty()) {
+                NavDisplay(
+                    backStack = backstack,
+                    modifier = Modifier.weight(1f),
+                    onBack = { if (backstack.size > 1) backstack.removeLast() }
+                ) { key ->
+                    NavEntry(key) {
+                        when (key) {
+                            Screen.Category, is Screen.Section, is Screen.Material -> {
+                                CatalogPane(
+                                    screen = key,
+                                    shouldUseDualPane = shouldUseRail,
+                                    userRole = userRole,
+                                    backstack = backstack,
+                                    onLogout = onLogout
+                                )
+                            }
+                            is Screen.MaterialsSelected -> MaterialsSelectedScreen(
+                                materialIds = key.materialIds,
+                                onBackClick = { backstack.removeLast() },
+                                onPrintPreview = { ids, quantities ->
+                                    backstack.add(Screen.PrintPreview(ids, quantities))
+                                }
                             )
+                            is Screen.PrintPreview -> PrintPreviewScreen(
+                                materialIds = key.materialIds,
+                                quantities = key.quantities,
+                                onBackClick = { backstack.removeLast() }
+                            )
+                            Screen.Maker -> MakerScreen(
+                                onBackClick = {
+                                    backstack.clear()
+                                    backstack.add(Screen.Category)
+                                }
+                            )
+                            Screen.Provider -> ProviderScreen(
+                                onBackClick = {
+                                    backstack.clear()
+                                    backstack.add(Screen.Category)
+                                }
+                            )
+                            Screen.PriceHistory -> PriceHistoryScreen(
+                                onBackClick = {
+                                    backstack.clear()
+                                    backstack.add(Screen.Category)
+                                }
+                            )
+                            else -> {
+                                // Fallback to ensure NavEntry is not empty
+                                Spacer(Modifier.size(0.dp))
+                            }
                         }
-                        is Screen.MaterialsSelected -> MaterialsSelectedScreen(
-                            materialIds = key.materialIds,
-                            onBackClick = { backstack.removeLast() },
-                            onPrintPreview = { ids, quantities ->
-                                backstack.add(Screen.PrintPreview(ids, quantities))
-                            }
-                        )
-                        is Screen.PrintPreview -> PrintPreviewScreen(
-                            materialIds = key.materialIds,
-                            quantities = key.quantities,
-                            onBackClick = { backstack.removeLast() }
-                        )
-                        Screen.Maker -> MakerScreen(
-                            onBackClick = {
-                                backstack.clear()
-                                backstack.add(Screen.Category)
-                            }
-                        )
-                        Screen.Provider -> ProviderScreen(
-                            onBackClick = {
-                                backstack.clear()
-                                backstack.add(Screen.Category)
-                            }
-                        )
-                        Screen.PriceHistory -> PriceHistoryScreen(
-                            onBackClick = {
-                                backstack.clear()
-                                backstack.add(Screen.Category)
-                            }
-                        )
-                        else -> {}
                     }
                 }
+            } else {
+                // If backstack is somehow empty, provide a placeholder to avoid Scaffold content crash
+                Box(modifier = Modifier.weight(1f))
             }
         }
     }
+
 }
 
 @Composable
@@ -298,7 +383,9 @@ private fun CatalogPane(
                             backstack.add(element = Screen.MaterialsSelected(ids))
                         }
                     )
-                    else -> {}
+                    else -> {
+                        Spacer(Modifier.size(0.dp))
+                    }
                 }
             }
         }
@@ -322,10 +409,13 @@ private fun CatalogPane(
                     backstack.add(element = Screen.MaterialsSelected(ids))
                 }
             )
-            else -> {}
+            else -> {
+                Spacer(Modifier.size(0.dp))
+            }
         }
     }
 }
+
 
 private data class NavigationItem(
     val label: String,
@@ -348,5 +438,21 @@ private fun handleNavClick(targetScreen: Screen, currentScreen: Screen, backstac
     if (!isSelected || (targetScreen is Screen.Category && (currentScreen is Screen.Section || currentScreen is Screen.Material))) {
         backstack.clear()
         backstack.add(targetScreen)
+    }
+}
+
+@Preview
+@Composable
+fun MainScreenPreview() {
+    IndustrialTheme {
+        MainScreenContent(
+            headerState = UserHeaderState(
+                fullName = "Juan Pérez",
+                roleName = "Administrador",
+                planName = "Plan Premium",
+                daysRemaining = 15
+            ),
+            userRole = UserRole.ADMIN
+        )
     }
 }

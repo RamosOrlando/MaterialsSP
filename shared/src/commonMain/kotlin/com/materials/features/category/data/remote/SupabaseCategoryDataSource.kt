@@ -8,6 +8,7 @@ import io.github.jan.supabase.realtime.PostgresAction
 import io.github.jan.supabase.realtime.channel
 import io.github.jan.supabase.realtime.postgresChangeFlow
 import io.github.jan.supabase.realtime.realtime
+import kotlin.random.Random
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.channels.awaitClose
@@ -36,7 +37,7 @@ class SupabaseCategoryDataSource(
         // Explicitly connect to realtime to ensure the token is used correctly
         supabaseClient.realtime.connect()
 
-        val channel = supabaseClient.realtime.channel("category_changes")
+        val channel = supabaseClient.realtime.channel("category_changes_${Random.nextLong()}")
         val flow = channel.postgresChangeFlow<PostgresAction>(schema = "public") {
             table = "Category"
         }
@@ -51,6 +52,7 @@ class SupabaseCategoryDataSource(
             job.cancel()
             launch {
                 channel.unsubscribe()
+                supabaseClient.realtime.removeChannel(channel)
             }
         }
     }

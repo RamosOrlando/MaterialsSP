@@ -30,6 +30,7 @@ import com.materials.features.maker.data.remote.SupabaseMakerDataSource
 import com.materials.features.maker.data.repository.MakerRepositoryImpl
 import com.materials.features.maker.domain.repository.MakerRepository
 import com.materials.features.maker.domain.use_case.GetMakersUseCase
+import com.materials.features.maker.domain.use_case.SaveMakerUseCase
 import com.materials.features.maker.presentation.MakerViewModel
 import com.materials.features.material.data.remote.MaterialRemoteDataSource
 import com.materials.features.material.data.remote.SupabaseMaterialDataSource
@@ -50,7 +51,13 @@ import com.materials.features.provider.data.remote.SupabaseProviderDataSource
 import com.materials.features.provider.data.repository.ProviderRepositoryImpl
 import com.materials.features.provider.domain.repository.ProviderRepository
 import com.materials.features.provider.domain.use_case.GetProvidersUseCase
+import com.materials.features.provider.domain.use_case.SaveProviderUseCase
 import com.materials.features.provider.presentation.ProviderViewModel
+import com.materials.features.user.data.local.UserDao
+import com.materials.features.user.data.remote.SupabaseUserDataSource
+import com.materials.features.user.data.remote.UserRemoteDataSource
+import com.materials.features.user.data.repository.UserRepositoryImpl
+import com.materials.features.user.domain.repository.UserRepository
 import org.koin.core.context.startKoin
 import org.koin.core.module.Module
 import org.koin.dsl.KoinAppDeclaration
@@ -67,6 +74,7 @@ val dataModule = module {
     single { get<AppDatabase>().providerDao() }
     single { get<AppDatabase>().priceHistoryDao() }
     single { get<AppDatabase>().profileDao() }
+    single { get<AppDatabase>().userDao() }
     
     factory<CategoryRemoteDataSource> { SupabaseCategoryDataSource(get()) }
     single<CategoryRepository> { CategoryRepositoryImpl(get(), get()) }
@@ -94,9 +102,12 @@ val dataModule = module {
     factory<ProviderRemoteDataSource> { SupabaseProviderDataSource(get()) }
     single<ProviderRepository> { ProviderRepositoryImpl(get(), get()) }
     
+    factory<UserRemoteDataSource> { SupabaseUserDataSource(get()) }
+    single<UserRepository> { UserRepositoryImpl(get(), get()) }
+    
     single<AuthRepository> { AuthRepositoryImpl(get(), get()) }
 
-    single<SyncRepository> { SyncRepositoryImpl(get(), get(), get(), get(), get(), get()) }
+    single<SyncRepository> { SyncRepositoryImpl(get(), get(), get(), get(), get(), get(), get()) }
     
     single { RealtimeSyncManager(get(), get(), get(), get(), get(), get(), get()) }
 }
@@ -105,9 +116,11 @@ val domainModule = module {
     factory { GetCategoriesUseCase(get()) }
     factory { GetSectionsUseCase(get()) }
     factory { GetMakersUseCase(get()) }
+    factory { SaveMakerUseCase(get()) }
     factory { GetMaterialsUseCase(get()) }
     factory { GetPriceHistoryUseCase(get()) }
     factory { GetProvidersUseCase(get()) }
+    factory { SaveProviderUseCase(get()) }
     factory { PerformFullSyncUseCase(get()) }
 }
 
@@ -115,15 +128,7 @@ val viewModelModule = module {
     viewModelOf(::CategoryViewModel)
     viewModelOf(::SectionViewModel)
     viewModelOf(::MakerViewModel)
-    single { 
-        MaterialViewModel(
-            getMaterialsUseCase = get(),
-            getMakersUseCase = get(),
-            getProvidersUseCase = get(),
-            priceHistoryRepository = get(),
-            authRepository = get()
-        )
-    }
+    viewModelOf(::MaterialViewModel)
     viewModelOf(::PriceHistoryViewModel)
     viewModelOf(::ProviderViewModel)
     viewModelOf(::LoginViewModel)

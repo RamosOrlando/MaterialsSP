@@ -6,4 +6,5 @@ import kotlinx.coroutines.flow.Flow
 interface ProviderRemoteDataSource {
     suspend fun getProviders(): List<Provider>
     fun observeProviders(): Flow<Unit>
+    suspend fun saveProvider(provider: Provider)
 }

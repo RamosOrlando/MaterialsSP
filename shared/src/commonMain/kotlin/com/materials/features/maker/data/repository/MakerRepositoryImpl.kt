@@ -52,4 +52,14 @@ class MakerRepositoryImpl(
             emit(Unit)
         }
     }
+
+    override suspend fun saveMaker(maker: Maker): Resource<Unit> = withContext(Dispatchers.IO) {
+        try {
+            remoteDataSource.saveMaker(maker)
+            makerDao.insertMakers(listOf(maker.toEntity()))
+            Resource.Success(Unit)
+        } catch (e: Exception) {
+            Resource.Error(e.message ?: "Unknown error")
+        }
+    }
 }

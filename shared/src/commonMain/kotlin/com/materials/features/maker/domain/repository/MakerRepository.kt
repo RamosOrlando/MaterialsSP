@@ -8,4 +8,5 @@ interface MakerRepository {
     suspend fun refreshMakers(): Resource<Unit>
     fun getMakersFlow(): Flow<Resource<List<Maker>>>
     fun listenToRealtimeChanges(): Flow<Unit>
+    suspend fun saveMaker(maker: Maker): Resource<Unit>
 }
