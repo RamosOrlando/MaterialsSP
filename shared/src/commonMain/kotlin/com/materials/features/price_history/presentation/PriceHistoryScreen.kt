@@ -256,7 +256,7 @@ fun PriceHistoryItem(
                 overflow = TextOverflow.Ellipsis
             )
 
-            materialWithPrices.maker?.let { maker ->
+            materialWithPrices.maker.let { maker ->
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = maker.name,

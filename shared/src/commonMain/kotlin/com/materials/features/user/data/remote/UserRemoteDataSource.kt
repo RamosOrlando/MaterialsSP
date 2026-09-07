@@ -8,6 +8,7 @@ interface UserRemoteDataSource {
     suspend fun getActivePlans(): List<UserPlan>
     
     suspend fun getUser(userId: String): User?
+    suspend fun getUserByEmail(email: String): User?
     suspend fun upsertUser(user: User)
     
     suspend fun getSubscriptionHistory(userId: String): List<SubscriptionHistory>

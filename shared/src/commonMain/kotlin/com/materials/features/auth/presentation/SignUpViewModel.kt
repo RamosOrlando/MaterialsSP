@@ -8,14 +8,16 @@ import com.materials.features.user.domain.model.User
 import com.materials.features.user.domain.model.UserProfession
 import com.materials.features.user.domain.model.UserRole
 import com.materials.features.user.domain.model.UserPlan
+import com.materials.features.user.domain.model.SubscriptionHistory
 import com.materials.features.user.domain.repository.UserRepository
 import com.materials.core.util.date.getCurrentIsoDate
-import kotlin.time.Clock
+import com.materials.core.util.randomUUID
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.plus
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlin.time.Clock
 
 data class SignUpUiState(
     val name: String = "",
@@ -24,13 +26,17 @@ data class SignUpUiState(
     val cellphone: String = "",
     val password: String = "",
     val confirmPassword: String = "",
+    val otpToken: String = "",
     val roleId: Int? = null,
     val professionId: Int? = null,
     val roles: List<UserRole> = emptyList(),
     val professions: List<UserProfession> = emptyList(),
     val activePlans: List<UserPlan> = emptyList(),
     val selectedPlanId: Int? = null,
-    val showSubscriptionDialog: Boolean = false,
+    val existingSubscription: SubscriptionHistory? = null,
+    val existingPlanName: String? = null,
+    val showUserExistsDialog: Boolean = false,
+    val waitingForEmailConfirmation: Boolean = false,
     val isLoading: Boolean = false,
     val isSuccess: Boolean = false,
     val isCancelled: Boolean = false,
@@ -44,12 +50,14 @@ sealed interface SignUpEvent {
     data class OnCellphoneChanged(val cellphone: String) : SignUpEvent
     data class OnPasswordChanged(val password: String) : SignUpEvent
     data class OnConfirmPasswordChanged(val confirmPassword: String) : SignUpEvent
+    data class OnOtpTokenChanged(val token: String) : SignUpEvent
     data class OnRoleSelected(val roleId: Int) : SignUpEvent
     data class OnProfessionSelected(val professionId: Int) : SignUpEvent
     data class OnPlanSelected(val planId: Int) : SignUpEvent
-    object OnConfirmPlan : SignUpEvent
     object OnCancelSignUp : SignUpEvent
     object OnSignUpClicked : SignUpEvent
+    object OnVerifyOtpClicked : SignUpEvent
+    object OnDismissUserExistsDialog : SignUpEvent
     object ClearSuccess : SignUpEvent
 }
 
@@ -64,10 +72,6 @@ class SignUpViewModel(
     private var registeredUserId: String? = null
 
     init {
-        loadMetadata()
-    }
-
-    private fun loadMetadata() {
         // Observar Roles
         userRepository.getRolesFlow()
             .onEach { res ->
@@ -108,7 +112,7 @@ class SignUpViewModel(
         viewModelScope.launch {
             val result = userRepository.refreshMetadata()
             if (result is Resource.Error) {
-                _uiState.update { it.copy(error = "Error al cargar catálogos: ${result.message}") }
+                _uiState.update { it.copy(error = "Error de sincronización: ${result.message}") }
             }
         }
     }
@@ -133,6 +137,9 @@ class SignUpViewModel(
             is SignUpEvent.OnConfirmPasswordChanged -> {
                 _uiState.update { it.copy(confirmPassword = event.confirmPassword, error = null) }
             }
+            is SignUpEvent.OnOtpTokenChanged -> {
+                _uiState.update { it.copy(otpToken = event.token, error = null) }
+            }
             is SignUpEvent.OnRoleSelected -> {
                 _uiState.update { it.copy(roleId = event.roleId, error = null) }
             }
@@ -140,16 +147,19 @@ class SignUpViewModel(
                 _uiState.update { it.copy(professionId = event.professionId, error = null) }
             }
             is SignUpEvent.OnPlanSelected -> {
-                _uiState.update { it.copy(selectedPlanId = event.planId) }
-            }
-            SignUpEvent.OnConfirmPlan -> {
-                uiState.value.selectedPlanId?.let { subscribeToPlan(it) }
+                _uiState.update { it.copy(selectedPlanId = event.planId, error = null) }
             }
             SignUpEvent.OnCancelSignUp -> {
-                _uiState.update { it.copy(showSubscriptionDialog = false, isCancelled = true) }
+                _uiState.update { it.copy(isCancelled = true) }
             }
             SignUpEvent.OnSignUpClicked -> {
                 signUp()
+            }
+            SignUpEvent.OnVerifyOtpClicked -> {
+                verifyOtp()
+            }
+            SignUpEvent.OnDismissUserExistsDialog -> {
+                _uiState.update { it.copy(showUserExistsDialog = false) }
             }
             SignUpEvent.ClearSuccess -> {
                 _uiState.update { 
@@ -171,11 +181,11 @@ class SignUpViewModel(
         val trimmedName = state.name.trim()
         val trimmedLastName = state.lastName.trim()
         val trimmedEmail = state.email.trim()
-        val trimmedCellphone = state.cellphone.trim()
 
         if (trimmedName.isEmpty() || trimmedLastName.isEmpty() || trimmedEmail.isEmpty() || 
-            state.password.isEmpty() || state.roleId == null || state.professionId == null) {
-            _uiState.update { it.copy(error = "Por favor completa todos los campos obligatorios") }
+            state.password.isEmpty() || state.roleId == null || state.professionId == null ||
+            state.selectedPlanId == null) {
+            _uiState.update { it.copy(error = "Por favor completa todos los campos obligatorios, incluido el plan") }
             return
         }
 
@@ -187,39 +197,83 @@ class SignUpViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
             
+            // 0. Check if user already exists in public.User table
+            val existingUserResult = userRepository.getUserByEmail(trimmedEmail)
+            
+            if (existingUserResult is Resource.Success && existingUserResult.data != null) {
+                val existingUser = existingUserResult.data
+                val userId = existingUser.userId
+                
+                // Try to fetch subscription history for the existing user
+                userRepository.refreshSubscriptionHistory(userId)
+                val historyResult = userRepository.getSubscriptionHistoryFlow(userId)
+                    .filter { it !is Resource.Loading }
+                    .first()
+                
+                var latestSub: SubscriptionHistory? = null
+                var planName: String? = null
+                
+                if (historyResult is Resource.Success && historyResult.data.isNotEmpty()) {
+                    latestSub = historyResult.data.maxByOrNull { it.startDate }
+                    planName = state.activePlans.find { it.planId == latestSub?.planId }?.name
+                }
+                
+                _uiState.update { 
+                    it.copy(
+                        isLoading = false,
+                        showUserExistsDialog = true,
+                        existingSubscription = latestSub,
+                        existingPlanName = planName
+                    )
+                }
+                return@launch // Stop sign up process
+            }
+
             // 1. Create Auth User
             val authResult = authRepository.signUpWithEmail(trimmedEmail, state.password, trimmedName)
             
             authResult.onSuccess { userId ->
                 registeredUserId = userId
-                // 2. Create Public User Profile
-                val newUser = User(
-                    userId = userId,
-                    name = trimmedName,
-                    lastName = trimmedLastName,
-                    email = trimmedEmail,
-                    roleId = state.roleId,
-                    professionId = state.professionId,
-                    createdAt = getCurrentIsoDate(),
-                    cellphone = trimmedCellphone.toIntOrNull()
-                )
-                
-                val userResult = userRepository.saveUser(newUser)
-                
-                if (userResult is Resource.Success<*>) {
-                    _uiState.update { it.copy(isLoading = false, showSubscriptionDialog = true) }
-                } else if (userResult is Resource.Error) {
-                    _uiState.update { it.copy(isLoading = false, error = userResult.message) }
-                }
+                _uiState.update { it.copy(isLoading = false, waitingForEmailConfirmation = true) }
             }.onFailure { e ->
                 _uiState.update { it.copy(isLoading = false, error = e.message ?: "Error al registrarse") }
             }
         }
     }
 
+    private fun verifyOtp() {
+        val state = uiState.value
+        if (state.otpToken.length != 8) {
+            _uiState.update { it.copy(error = "El código debe ser de 8 dígitos") }
+            return
+        }
+
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, error = null) }
+            val result = authRepository.verifyEmailOtp(state.email, state.otpToken)
+            result.onSuccess {
+                // Now authenticated, create the profile
+                val newUser = User(
+                    userId = authRepository.getCurrentUserId()!!,
+                    name = state.name,
+                    lastName = state.lastName,
+                    email = state.email,
+                    roleId = state.roleId!!,
+                    professionId = state.professionId!!,
+                    createdAt = getCurrentIsoDate(),
+                    cellphone = state.cellphone.toIntOrNull()
+                )
+                userRepository.saveUser(newUser)
+                subscribeToPlan(state.selectedPlanId!!)
+            }.onFailure { e ->
+                _uiState.update { it.copy(isLoading = false, error = e.message ?: "Código inválido") }
+            }
+        }
+    }
+
     private fun subscribeToPlan(planId: Int) {
-        val userId = registeredUserId ?: return
         val plan = uiState.value.activePlans.find { it.planId == planId } ?: return
+        val userId = authRepository.getCurrentUserId() ?: return
 
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
@@ -229,8 +283,8 @@ class SignUpViewModel(
             val timeZone = TimeZone.currentSystemDefault()
             val endDate = now.plus(plan.durationDays, DateTimeUnit.DAY, timeZone)
 
-            val history = com.materials.features.user.domain.model.SubscriptionHistory(
-                subHistoryId = com.materials.core.util.randomUUID(),
+            val history = SubscriptionHistory(
+                subHistoryId = randomUUID(),
                 userId = userId,
                 planId = planId,
                 startDate = now.toString(),
@@ -242,7 +296,7 @@ class SignUpViewModel(
 
             val result = userRepository.saveSubscriptionHistory(history)
             if (result is Resource.Success<*>) {
-                _uiState.update { it.copy(isLoading = false, showSubscriptionDialog = false, isSuccess = true) }
+                _uiState.update { it.copy(isLoading = false, isSuccess = true) }
             } else {
                 _uiState.update { it.copy(isLoading = false, error = "Error al suscribirse: ${(result as Resource.Error).message}") }
             }

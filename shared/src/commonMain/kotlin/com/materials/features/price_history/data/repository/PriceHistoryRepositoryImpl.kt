@@ -77,6 +77,5 @@ class PriceHistoryRepositoryImpl(
 
     override fun listenToRealtimeChanges(): Flow<Unit> = remoteDataSource.observePriceHistories().map {
         refreshPriceHistory()
-        Unit
     }
 }

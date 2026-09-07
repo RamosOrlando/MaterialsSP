@@ -93,10 +93,10 @@ kotlin {
             implementation(libs.androidx.room.runtime)
             implementation(libs.androidx.sqlite.bundled)
             // Supabase Core SDK via BOM
-            implementation(project.dependencies.platform(libs.supabase.bom))
-            implementation(libs.supabase.postgrest)
-            implementation(libs.supabase.realtime)
-            implementation(libs.supabase.auth)
+            api(project.dependencies.platform(libs.supabase.bom))
+            api(libs.supabase.postgrest)
+            api(libs.supabase.realtime)
+            api(libs.supabase.auth)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

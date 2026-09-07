@@ -163,7 +163,7 @@ fun PrintPreviewScreen(
                                             .padding(8.dp)
                                     ) {
                                         Text(material.name, Modifier.weight(2f), fontSize = 10.sp, maxLines = 1)
-                                        Text(material.unit ?: "---", Modifier.weight(1f), fontSize = 10.sp)
+                                        Text(material.unit, Modifier.weight(1f), fontSize = 10.sp)
                                         Text(quantity.toString(), Modifier.weight(0.7f), fontSize = 10.sp)
                                         Text(
                                             text = "$${((rowTotal * 100).toInt() / 100.0)}",

@@ -13,6 +13,7 @@ interface UserRepository {
     
     fun getUserFlow(userId: String): Flow<Resource<User?>>
     suspend fun getUser(userId: String): Resource<User?>
+    suspend fun getUserByEmail(email: String): Resource<User?>
     suspend fun saveUser(user: User): Resource<Unit>
     
     suspend fun refreshSubscriptionHistory(userId: String): Resource<Unit>

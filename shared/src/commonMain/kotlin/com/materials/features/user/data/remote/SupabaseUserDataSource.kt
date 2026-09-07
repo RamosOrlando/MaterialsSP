@@ -58,7 +58,22 @@ class SupabaseUserDataSource(
                 }
                 .decodeSingleOrNull<User>()
         } catch (e: Exception) {
-            println("SupabaseUserDataSource: Error fetching User: ${e.message}")
+            println("SupabaseUserDataSource: Error fetching User by ID: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getUserByEmail(email: String): User? = withContext(Dispatchers.IO) {
+        try {
+            supabaseClient.postgrest["User"]
+                .select {
+                    filter {
+                        eq("email", email)
+                    }
+                }
+                .decodeSingleOrNull<User>()
+        } catch (e: Exception) {
+            println("SupabaseUserDataSource: Error fetching User by email: ${e.message}")
             throw e
         }
     }
@@ -66,7 +81,6 @@ class SupabaseUserDataSource(
     override suspend fun upsertUser(user: User): Unit = withContext(Dispatchers.IO) {
         supabaseClient.postgrest["User"]
             .upsert(user)
-        Unit
     }
 
     override suspend fun getSubscriptionHistory(userId: String): List<SubscriptionHistory> = withContext(Dispatchers.IO) {
@@ -87,6 +101,5 @@ class SupabaseUserDataSource(
     override suspend fun upsertSubscriptionHistory(history: SubscriptionHistory): Unit = withContext(Dispatchers.IO) {
         supabaseClient.postgrest["SubscriptionHistory"]
             .upsert(history)
-        Unit
     }
 }

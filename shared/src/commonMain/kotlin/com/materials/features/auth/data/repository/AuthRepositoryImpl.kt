@@ -3,6 +3,7 @@ package com.materials.features.auth.data.repository
 import com.materials.features.auth.domain.repository.AuthRepository
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.auth
+import io.github.jan.supabase.auth.OtpType
 import io.github.jan.supabase.auth.status.SessionStatus
 import io.github.jan.supabase.auth.providers.builtin.Email
 import io.github.jan.supabase.postgrest.postgrest
@@ -36,7 +37,10 @@ class AuthRepositoryImpl(
 
     override suspend fun signUpWithEmail(email: String, password: String, name: String): Result<String> {
         return try {
-            val user = supabaseClient.auth.signUpWith(Email) {
+            val user = supabaseClient.auth.signUpWith(
+                Email,
+                redirectUrl = "materialsp://auth-callback"
+            ) {
                 this.email = email
                 this.password = password
                 data = buildJsonObject {
@@ -130,6 +134,32 @@ class AuthRepositoryImpl(
                     else -> null
                 }
             }
+    }
+
+    override suspend fun verifyEmailOtp(email: String, token: String): Result<Unit> {
+        return try {
+            supabaseClient.auth.verifyEmailOtp(
+                type = OtpType.Email.SIGNUP,
+                email = email,
+                token = token
+            )
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun verifyRecoveryOtp(email: String, token: String): Result<Unit> {
+        return try {
+            supabaseClient.auth.verifyEmailOtp(
+                type = OtpType.Email.RECOVERY,
+                email = email,
+                token = token
+            )
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 
     override suspend fun awaitInitialization() {

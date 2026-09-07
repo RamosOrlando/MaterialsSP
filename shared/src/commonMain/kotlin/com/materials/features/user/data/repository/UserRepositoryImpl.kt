@@ -79,6 +79,15 @@ class UserRepositoryImpl(
         }
     }
 
+    override suspend fun getUserByEmail(email: String): Resource<User?> = withContext(Dispatchers.IO) {
+        try {
+            val remoteUser = remoteDataSource.getUserByEmail(email)
+            Resource.Success(remoteUser)
+        } catch (e: Exception) {
+            Resource.Error(e.message ?: "Error checking user existence")
+        }
+    }
+
     override suspend fun saveUser(user: User): Resource<Unit> = withContext(Dispatchers.IO) {
         try {
             remoteDataSource.upsertUser(user)

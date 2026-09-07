@@ -4,22 +4,22 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.materials.core.presentation.theme.*
 import com.materials.core.presentation.util.AdaptivePreviews
 import org.koin.compose.viewmodel.koinViewModel
@@ -48,6 +48,18 @@ fun LoginScreen(
         onEvent = viewModel::onEvent,
         onNavigateToSignUp = onNavigateToSignUp
     )
+
+    if (uiState.showForgotPasswordDialog) {
+        ForgotPasswordDialog(
+            uiState = uiState,
+            onEvent = { event ->
+                if (event is LoginEvent.OnDismissForgotPassword && uiState.forgotPasswordSuccess) {
+                    onLoginSuccess()
+                }
+                viewModel.onEvent(event)
+            }
+        )
+    }
 }
 
 @Composable
@@ -121,13 +133,7 @@ fun LoginScreenContent(
                         ),
                         singleLine = true,
                         shape = IndustrialShapes.small,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
-                            focusedBorderColor = IndustrialOrange,
-                            cursorColor = IndustrialOrange,
-                            focusedLabelColor = IndustrialOrange
-                        )
+                        colors = loginTextFieldColors()
                     )
 
                     OutlinedTextField(
@@ -154,14 +160,20 @@ fun LoginScreenContent(
                         ),
                         singleLine = true,
                         shape = IndustrialShapes.small,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
-                            focusedBorderColor = IndustrialOrange,
-                            cursorColor = IndustrialOrange,
-                            focusedLabelColor = IndustrialOrange
-                        )
+                        colors = loginTextFieldColors()
                     )
+
+                    TextButton(
+                        onClick = { onEvent(LoginEvent.OnForgotPasswordClicked) },
+                        modifier = Modifier.align(Alignment.End)
+                    ) {
+                        Text(
+                            text = "¿Olvidaste tu contraseña?",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = IndustrialOrange,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
 
                     if (uiState.error != null) {
                         Text(
@@ -206,6 +218,170 @@ fun LoginScreenContent(
     }
 }
 
+@Composable
+fun ForgotPasswordDialog(
+    uiState: LoginUiState,
+    onEvent: (LoginEvent) -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = { onEvent(LoginEvent.OnDismissForgotPassword) },
+        title = {
+            Text(
+                text = "Recuperar Contraseña",
+                fontWeight = FontWeight.ExtraBold,
+                color = IndustrialOrange
+            )
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                if (uiState.forgotPasswordSuccess) {
+                    Text(
+                        text = "¡Contraseña actualizada con éxito! Ya puedes iniciar sesión con tu nueva contraseña.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color(0xFF4CAF50),
+                        textAlign = TextAlign.Center
+                    )
+                } else {
+                    when (uiState.forgotPasswordStep) {
+                        ForgotPasswordStep.EMAIL -> {
+                            Text(
+                                text = "Ingresa tu correo electrónico para recibir un código de verificación.",
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                            OutlinedTextField(
+                                value = uiState.forgotPasswordEmail,
+                                onValueChange = { onEvent(LoginEvent.OnForgotPasswordEmailChanged(it)) },
+                                label = { Text("Correo Electrónico") },
+                                modifier = Modifier.fillMaxWidth(),
+                                leadingIcon = { Icon(Icons.Default.Email, contentDescription = null, tint = IndustrialOrange) },
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Done),
+                                singleLine = true,
+                                shape = IndustrialShapes.small,
+                                colors = loginTextFieldColors()
+                            )
+                        }
+                        ForgotPasswordStep.OTP -> {
+                            Text(
+                                text = "Hemos enviado un código de 8 dígitos a ${uiState.forgotPasswordEmail}.",
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                            OutlinedTextField(
+                                value = uiState.forgotPasswordOtp,
+                                onValueChange = { if (it.length <= 8) onEvent(LoginEvent.OnForgotPasswordOtpChanged(it)) },
+                                label = { Text("Código de 8 dígitos") },
+                                modifier = Modifier.fillMaxWidth(),
+                                leadingIcon = { Icon(Icons.Default.VpnKey, contentDescription = null, tint = IndustrialOrange) },
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
+                                singleLine = true,
+                                shape = IndustrialShapes.small,
+                                colors = loginTextFieldColors(),
+                                textStyle = TextStyle(
+                                    textAlign = TextAlign.Center,
+                                    letterSpacing = 4.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            )
+                        }
+                        ForgotPasswordStep.NEW_PASSWORD -> {
+                            Text(
+                                text = "Ingresa tu nueva contraseña.",
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                            var passVisible by remember { mutableStateOf(false) }
+                            OutlinedTextField(
+                                value = uiState.forgotPasswordNewPassword,
+                                onValueChange = { onEvent(LoginEvent.OnForgotPasswordNewPasswordChanged(it)) },
+                                label = { Text("Nueva Contraseña") },
+                                modifier = Modifier.fillMaxWidth(),
+                                leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null, tint = IndustrialOrange) },
+                                trailingIcon = {
+                                    IconButton(onClick = { passVisible = !passVisible }) {
+                                        Icon(imageVector = if (passVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff, contentDescription = null)
+                                    }
+                                },
+                                visualTransformation = if (passVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Next),
+                                singleLine = true,
+                                shape = IndustrialShapes.small,
+                                colors = loginTextFieldColors()
+                            )
+                            OutlinedTextField(
+                                value = uiState.forgotPasswordConfirmPassword,
+                                onValueChange = { onEvent(LoginEvent.OnForgotPasswordConfirmPasswordChanged(it)) },
+                                label = { Text("Confirmar Contraseña") },
+                                modifier = Modifier.fillMaxWidth(),
+                                leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null, tint = IndustrialOrange) },
+                                visualTransformation = if (passVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
+                                singleLine = true,
+                                shape = IndustrialShapes.small,
+                                colors = loginTextFieldColors()
+                            )
+                        }
+                    }
+                }
+
+                if (uiState.forgotPasswordError != null) {
+                    Text(
+                        text = uiState.forgotPasswordError,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            if (uiState.forgotPasswordSuccess) {
+                Button(
+                    onClick = { onEvent(LoginEvent.OnDismissForgotPassword) },
+                    colors = ButtonDefaults.buttonColors(containerColor = IndustrialOrange)
+                ) {
+                    Text("Cerrar")
+                }
+            } else {
+                Button(
+                    onClick = {
+                        when (uiState.forgotPasswordStep) {
+                            ForgotPasswordStep.EMAIL -> onEvent(LoginEvent.OnSendForgotPasswordEmailClicked)
+                            ForgotPasswordStep.OTP -> onEvent(LoginEvent.OnVerifyForgotPasswordOtpClicked)
+                            ForgotPasswordStep.NEW_PASSWORD -> onEvent(LoginEvent.OnResetPasswordClicked)
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = IndustrialOrange),
+                    enabled = !uiState.forgotPasswordLoading
+                ) {
+                    if (uiState.forgotPasswordLoading) {
+                        CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.White, strokeWidth = 2.dp)
+                    } else {
+                        val text = when (uiState.forgotPasswordStep) {
+                            ForgotPasswordStep.EMAIL -> "Enviar Código"
+                            ForgotPasswordStep.OTP -> "Verificar Código"
+                            ForgotPasswordStep.NEW_PASSWORD -> "Cambiar Contraseña"
+                        }
+                        Text(text)
+                    }
+                }
+            }
+        },
+        dismissButton = {
+            if (!uiState.forgotPasswordSuccess) {
+                TextButton(onClick = { onEvent(LoginEvent.OnDismissForgotPassword) }) {
+                    Text("Cancelar")
+                }
+            }
+        }
+    )
+}
+
+@Composable
+fun loginTextFieldColors() = OutlinedTextFieldDefaults.colors(
+    focusedTextColor = MaterialTheme.colorScheme.onSurface,
+    unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+    focusedBorderColor = IndustrialOrange,
+    cursorColor = IndustrialOrange,
+    focusedLabelColor = IndustrialOrange
+)
+
 @AdaptivePreviews
 @Composable
 private fun LoginScreenPreview() {
@@ -214,20 +390,6 @@ private fun LoginScreenPreview() {
             uiState = LoginUiState(
                 email = "industrial@material.com",
                 password = "password123"
-            ),
-            onEvent = {},
-            onNavigateToSignUp = {}
-        )
-    }
-}
-
-@AdaptivePreviews
-@Composable
-private fun LoginScreenLoadingPreview() {
-    IndustrialTheme {
-        LoginScreenContent(
-            uiState = LoginUiState(
-                isLoading = true
             ),
             onEvent = {},
             onNavigateToSignUp = {}

@@ -592,13 +592,11 @@ fun EditMaterialDialog(
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                        if (historyId != null) {
-                            Text(
-                                text = "Historial ID: $historyId",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
+                        Text(
+                            text = "Historial ID: $historyId",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                         if (userEmail != null) {
                             Text(
                                 text = "Usuario: $userEmail",

@@ -32,7 +32,9 @@ class NavigationViewModel(
                 if (userId != null) {
                     fetchProfile()
                     syncManager.startSyncing()
-                    if (_initialScreen.value != Screen.Category) {
+                    // Si ya tenemos una pantalla inicial definida, no la sobreescribimos.
+                    // Esto evita saltos de navegación automáticos durante flujos multi-paso como la recuperación de contraseña.
+                    if (_initialScreen.value == null) {
                         _initialScreen.value = Screen.Category
                     }
                 } else {

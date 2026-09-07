@@ -14,5 +14,7 @@ interface AuthRepository {
     fun getCurrentUserEmail(): String?
     fun getCurrentUserId(): String?
     fun getUserIdFlow(): Flow<String?>
+    suspend fun verifyEmailOtp(email: String, token: String): Result<Unit>
+    suspend fun verifyRecoveryOtp(email: String, token: String): Result<Unit>
     suspend fun awaitInitialization()
 }

@@ -37,7 +37,6 @@ class SupabasePriceHistoryDataSource(
     override suspend fun upsertPriceHistory(priceHistory: PriceHistory): Unit = withContext(Dispatchers.IO) {
         supabaseClient.postgrest["PriceHistory"]
             .upsert(priceHistory)
-        Unit
     }
 
     override fun observePriceHistories(): Flow<Unit> = callbackFlow {
