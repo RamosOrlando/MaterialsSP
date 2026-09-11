@@ -2,6 +2,7 @@ package com.materials.core.presentation.navigation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.materials.core.common.util.getCurrentIsoDate
 import com.materials.core.domain.util.Resource
 import com.materials.features.auth.domain.repository.AuthRepository
 import com.materials.features.user.domain.model.User
@@ -80,7 +81,7 @@ class MainViewModel(
 
                             val daysRemaining = latestSub?.let { sub ->
                                 try {
-                                    val now = Instant.parse(com.materials.core.util.date.getCurrentIsoDate()).toLocalDateTime(TimeZone.currentSystemDefault()).date
+                                    val now = Instant.parse(getCurrentIsoDate()).toLocalDateTime(TimeZone.currentSystemDefault()).date
                                     val end = LocalDate.parse(sub.endDate.substringBefore("T"))
                                     now.daysUntil(end)
                                 } catch (e: Exception) {

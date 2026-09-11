@@ -1,7 +1,7 @@
 package com.materials.features.category.data.repository
 
 import com.materials.core.domain.util.Resource
-import com.materials.features.category.data.local.CategoryDao
+import com.materials.core.database.category.CategoryDao
 import com.materials.features.category.data.mapper.toDomain
 import com.materials.features.category.data.mapper.toEntity
 import com.materials.features.category.data.remote.CategoryRemoteDataSource

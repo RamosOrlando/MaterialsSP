@@ -420,7 +420,7 @@ fun EmailConfirmationCard(
             Spacer(modifier = Modifier.height(16.dp))
             
             Text(
-                text = "Hemos enviado un código de 8 dígitos a:",
+                text = "Hemos enviado un código de 6 dígitos a:",
                 style = MaterialTheme.typography.bodyMedium,
                 textAlign = TextAlign.Center
             )
@@ -435,8 +435,8 @@ fun EmailConfirmationCard(
             
             OutlinedTextField(
                 value = otpToken,
-                onValueChange = { if (it.length <= 8) onOtpChange(it) },
-                label = { Text("Código de 8 dígitos") },
+                onValueChange = { if (it.length <= 6) onOtpChange(it) },
+                label = { Text("Código de 6 dígitos") },
                 modifier = Modifier.fillMaxWidth(),
                 leadingIcon = {
                     Icon(Icons.Default.VpnKey, contentDescription = null, tint = MaterialTheme.colorScheme.tertiary)
@@ -472,7 +472,7 @@ fun EmailConfirmationCard(
                 modifier = Modifier.fillMaxWidth().height(50.dp),
                 shape = IndustrialShapes.small,
                 colors = ButtonDefaults.buttonColors(containerColor = IndustrialOrange),
-                enabled = otpToken.length == 8 && !isLoading
+                enabled = otpToken.length == 6 && !isLoading
             ) {
                 if (isLoading) {
                     CircularProgressIndicator(

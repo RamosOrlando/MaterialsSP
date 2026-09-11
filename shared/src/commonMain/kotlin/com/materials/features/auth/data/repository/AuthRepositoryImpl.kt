@@ -14,9 +14,9 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import com.materials.features.auth.domain.model.UserProfile
 import com.materials.features.auth.domain.model.UserRole
-import com.materials.features.auth.data.local.ProfileDao
-import com.materials.features.auth.data.local.toDomain
-import com.materials.features.auth.data.local.toEntity
+import com.materials.core.database.auth.ProfileDao
+import com.materials.features.auth.data.mapper.toDomain
+import com.materials.features.auth.data.mapper.toEntity
 
 class AuthRepositoryImpl(
     private val supabaseClient: SupabaseClient,
@@ -26,7 +26,7 @@ class AuthRepositoryImpl(
     override suspend fun signInWithEmail(email: String, password: String): Result<Unit> {
         return try {
             supabaseClient.auth.signInWith(Email) {
-                this.email = email
+                this.email = email.trim()
                 this.password = password
             }
             Result.success(Unit)
@@ -41,7 +41,7 @@ class AuthRepositoryImpl(
                 Email,
                 redirectUrl = "materialsp://auth-callback"
             ) {
-                this.email = email
+                this.email = email.trim()
                 this.password = password
                 data = buildJsonObject {
                     put("full_name", name)
@@ -67,7 +67,7 @@ class AuthRepositoryImpl(
 
     override suspend fun resetPassword(email: String): Result<Unit> {
         return try {
-            supabaseClient.auth.resetPasswordForEmail(email)
+            supabaseClient.auth.resetPasswordForEmail(email.trim())
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -140,7 +140,7 @@ class AuthRepositoryImpl(
         return try {
             supabaseClient.auth.verifyEmailOtp(
                 type = OtpType.Email.SIGNUP,
-                email = email,
+                email = email.trim(),
                 token = token
             )
             Result.success(Unit)
@@ -153,7 +153,7 @@ class AuthRepositoryImpl(
         return try {
             supabaseClient.auth.verifyEmailOtp(
                 type = OtpType.Email.RECOVERY,
-                email = email,
+                email = email.trim(),
                 token = token
             )
             Result.success(Unit)
@@ -163,6 +163,14 @@ class AuthRepositoryImpl(
     }
 
     override suspend fun awaitInitialization() {
-        supabaseClient.auth.awaitInitialization()
+        try {
+            supabaseClient.auth.awaitInitialization()
+        } catch (e: Exception) {
+            // If initialization fails (e.g. network error during first refresh)
+            // we ensure the local state is cleared if the session is invalid
+            if (supabaseClient.auth.currentSessionOrNull() == null) {
+                profileDao.clearProfile()
+            }
+        }
     }
 }

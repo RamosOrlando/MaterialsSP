@@ -7,7 +7,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
-import com.materials.core.data.remote.SupabaseClient
+import com.materials.core.network.SupabaseClient
 import io.github.jan.supabase.auth.handleDeeplinks
 
 class MainActivity : ComponentActivity() {

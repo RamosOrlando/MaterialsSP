@@ -1,6 +1,6 @@
 package com.materials.features.category.data.mapper
 
-import com.materials.features.category.data.local.CategoryEntity
+import com.materials.core.database.category.CategoryEntity
 import com.materials.features.category.domain.model.Category
 
 fun CategoryEntity.toDomain(): Category {

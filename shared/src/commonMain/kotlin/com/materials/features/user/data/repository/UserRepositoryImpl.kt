@@ -1,7 +1,9 @@
 package com.materials.features.user.data.repository
 
 import com.materials.core.domain.util.Resource
-import com.materials.features.user.data.local.*
+import com.materials.core.database.user.UserDao
+import com.materials.features.user.data.mapper.toDomain
+import com.materials.features.user.data.mapper.toEntity
 import com.materials.features.user.data.remote.UserRemoteDataSource
 import com.materials.features.user.domain.model.*
 import com.materials.features.user.domain.repository.UserRepository

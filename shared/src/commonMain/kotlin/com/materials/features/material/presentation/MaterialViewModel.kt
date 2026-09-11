@@ -3,13 +3,13 @@ package com.materials.features.material.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.materials.core.domain.util.Resource
-import com.materials.features.material.domain.model.Material
+import com.materials.core.common.domain.model.Material
 import com.materials.features.material.domain.use_case.GetMaterialsUseCase
 import com.materials.features.maker.domain.use_case.GetMakersUseCase
 import com.materials.features.price_history.domain.repository.PriceHistoryRepository
 import com.materials.features.auth.domain.repository.AuthRepository
 import com.materials.features.price_history.domain.model.PriceHistory
-import com.materials.core.util.getCurrentDate
+import com.materials.core.common.util.getCurrentDate
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow

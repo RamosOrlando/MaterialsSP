@@ -1,7 +1,7 @@
 package com.materials.features.material.domain.use_case
 
 import com.materials.core.domain.util.Resource
-import com.materials.features.material.domain.model.Material
+import com.materials.core.common.domain.model.Material
 import com.materials.features.material.domain.model.MaterialWithPrices
 import com.materials.features.material.domain.repository.MaterialRepository
 import kotlinx.coroutines.flow.Flow

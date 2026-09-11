@@ -7,7 +7,6 @@ plugins {
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.jetbrains.kotlin.serialization)
     alias(libs.plugins.google.devtools.ksp)
-    alias(libs.plugins.androidx.room)
     alias(libs.plugins.screenshot)
 }
 
@@ -48,12 +47,14 @@ kotlin {
             implementation(libs.androidx.core.ktx)
             // Koin
             implementation(libs.koin.android)
-            implementation(libs.ktor.client.cio)
             
             // Screenshot Testing Support
             implementation(libs.screenshot.validation.api)
         }
         commonMain.dependencies {
+            implementation(project(":core:network"))
+            implementation(project(":core:database"))
+            implementation(project(":core:common"))
             implementation(libs.compose.runtime)
             implementation(libs.compose.foundation)
             implementation(libs.compose.material3)
@@ -86,38 +87,14 @@ kotlin {
             implementation(libs.kotlinx.datetime)
             // Persistent storage in KMP, for small data
             implementation(libs.multiplatformSettings)
-            // Ktor core
-            implementation(libs.ktor.client.core)
-            implementation(libs.ktor.client.websockets)
-            //Room
-            implementation(libs.androidx.room.runtime)
-            implementation(libs.androidx.sqlite.bundled)
-            // Supabase Core SDK via BOM
-            api(project.dependencies.platform(libs.supabase.bom))
-            api(libs.supabase.postgrest)
-            api(libs.supabase.realtime)
-            api(libs.supabase.auth)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
         }
         iosMain.dependencies {
-            implementation(libs.ktor.client.darwin)
         }
         jvmMain.dependencies {
-            implementation(libs.ktor.client.cio)
         }
     }
 }
 
-room {
-    schemaDirectory("$projectDir/schemas")
-}
-
-dependencies {
-    androidRuntimeClasspath(libs.compose.uiTooling)
-    add("kspAndroid", libs.androidx.room.compiler)
-    add("kspIosArm64", libs.androidx.room.compiler)
-    add("kspIosSimulatorArm64", libs.androidx.room.compiler)
-    add("kspJvm", libs.androidx.room.compiler)
-}

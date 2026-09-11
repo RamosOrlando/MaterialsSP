@@ -83,14 +83,14 @@ class LoginViewModel(
 
     private fun verifyForgotPasswordOtp() {
         val state = uiState.value
-        if (state.forgotPasswordOtp.length != 8) {
-            _uiState.update { it.copy(forgotPasswordError = "El código debe ser de 8 dígitos") }
+        if (state.forgotPasswordOtp.length != 6) {
+            _uiState.update { it.copy(forgotPasswordError = "El código debe ser de 6 dígitos") }
             return
         }
 
         viewModelScope.launch {
             _uiState.update { it.copy(forgotPasswordLoading = true, forgotPasswordError = null) }
-            val result = authRepository.verifyRecoveryOtp(state.forgotPasswordEmail, state.forgotPasswordOtp)
+            val result = authRepository.verifyRecoveryOtp(state.forgotPasswordEmail.trim(), state.forgotPasswordOtp)
             result.onSuccess {
                 _uiState.update { it.copy(forgotPasswordLoading = false, forgotPasswordStep = ForgotPasswordStep.NEW_PASSWORD) }
             }.onFailure { e ->

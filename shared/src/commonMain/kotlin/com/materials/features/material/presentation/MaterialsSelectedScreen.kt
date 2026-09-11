@@ -19,7 +19,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.border
 import com.materials.core.presentation.theme.*
-import com.materials.features.material.domain.model.Material
+import com.materials.core.common.domain.model.Material
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import androidx.compose.ui.tooling.preview.Preview

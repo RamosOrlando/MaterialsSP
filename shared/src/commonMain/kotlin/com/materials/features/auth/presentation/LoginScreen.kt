@@ -262,13 +262,13 @@ fun ForgotPasswordDialog(
                         }
                         ForgotPasswordStep.OTP -> {
                             Text(
-                                text = "Hemos enviado un código de 8 dígitos a ${uiState.forgotPasswordEmail}.",
+                                text = "Hemos enviado un código de 6 dígitos a ${uiState.forgotPasswordEmail}.",
                                 style = MaterialTheme.typography.bodyMedium
                             )
                             OutlinedTextField(
                                 value = uiState.forgotPasswordOtp,
-                                onValueChange = { if (it.length <= 8) onEvent(LoginEvent.OnForgotPasswordOtpChanged(it)) },
-                                label = { Text("Código de 8 dígitos") },
+                                onValueChange = { if (it.length <= 6) onEvent(LoginEvent.OnForgotPasswordOtpChanged(it)) },
+                                label = { Text("Código de 6 dígitos") },
                                 modifier = Modifier.fillMaxWidth(),
                                 leadingIcon = { Icon(Icons.Default.VpnKey, contentDescription = null, tint = IndustrialOrange) },
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
@@ -348,7 +348,7 @@ fun ForgotPasswordDialog(
                         }
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = IndustrialOrange),
-                    enabled = !uiState.forgotPasswordLoading
+                    enabled = !uiState.forgotPasswordLoading && (uiState.forgotPasswordStep != ForgotPasswordStep.OTP || uiState.forgotPasswordOtp.length == 6)
                 ) {
                     if (uiState.forgotPasswordLoading) {
                         CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.White, strokeWidth = 2.dp)

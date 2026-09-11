@@ -19,8 +19,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.materials.core.presentation.theme.*
-import com.materials.core.util.pdf.PdfGenerator
-import com.materials.core.util.share.ShareManager
+import com.materials.core.common.util.pdf.PdfGenerator
+import com.materials.core.common.util.share.ShareManager
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf

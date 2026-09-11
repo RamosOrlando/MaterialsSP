@@ -1,8 +1,8 @@
 package com.materials
 
-import com.materials.core.data.local.AppDatabase
-import com.materials.core.data.local.getRoomDatabase
-import com.materials.core.data.remote.SupabaseClient
+import com.materials.core.database.AppDatabase
+import com.materials.core.database.getRoomDatabase
+import com.materials.core.network.SupabaseClient
 import com.materials.core.domain.RealtimeSyncManager
 import com.materials.core.domain.repository.SyncRepository
 import com.materials.core.data.repository.SyncRepositoryImpl
@@ -53,7 +53,7 @@ import com.materials.features.provider.domain.repository.ProviderRepository
 import com.materials.features.provider.domain.use_case.GetProvidersUseCase
 import com.materials.features.provider.domain.use_case.SaveProviderUseCase
 import com.materials.features.provider.presentation.ProviderViewModel
-import com.materials.features.user.data.local.UserDao
+import com.materials.core.database.user.UserDao
 import com.materials.features.user.data.remote.SupabaseUserDataSource
 import com.materials.features.user.data.remote.UserRemoteDataSource
 import com.materials.features.user.data.repository.UserRepositoryImpl

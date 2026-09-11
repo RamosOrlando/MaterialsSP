@@ -3,7 +3,7 @@ package com.materials.features.material.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.materials.core.domain.util.Resource
-import com.materials.features.material.domain.model.Material
+import com.materials.core.common.domain.model.Material
 import com.materials.features.material.domain.use_case.GetMaterialsUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted

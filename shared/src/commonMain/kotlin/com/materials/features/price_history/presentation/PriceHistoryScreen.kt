@@ -25,7 +25,7 @@ import androidx.compose.ui.unit.sp
 import com.materials.core.presentation.theme.*
 import com.materials.features.material.domain.model.MaterialWithPrices
 import com.materials.features.material.domain.model.PriceWithProvider
-import com.materials.features.material.domain.model.Material
+import com.materials.core.common.domain.model.Material
 import com.materials.features.maker.domain.model.Maker
 import com.materials.features.provider.domain.model.Provider
 import com.materials.features.price_history.domain.model.PriceHistory

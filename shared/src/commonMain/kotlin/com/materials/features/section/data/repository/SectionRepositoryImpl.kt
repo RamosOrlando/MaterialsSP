@@ -1,9 +1,9 @@
 package com.materials.features.section.data.repository
 
 import com.materials.core.domain.util.Resource
-import com.materials.features.section.data.local.SectionDao
-import com.materials.features.section.data.local.toDomain
-import com.materials.features.section.data.local.toEntity
+import com.materials.core.database.section.SectionDao
+import com.materials.features.section.data.mapper.toDomain
+import com.materials.features.section.data.mapper.toEntity
 import com.materials.features.section.data.remote.SectionRemoteDataSource
 import com.materials.features.section.domain.model.Section
 import com.materials.features.section.domain.repository.SectionRepository

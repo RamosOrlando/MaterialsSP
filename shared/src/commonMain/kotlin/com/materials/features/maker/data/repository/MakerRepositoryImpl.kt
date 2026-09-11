@@ -1,9 +1,9 @@
 package com.materials.features.maker.data.repository
 
 import com.materials.core.domain.util.Resource
-import com.materials.features.maker.data.local.MakerDao
-import com.materials.features.maker.data.local.toDomain
-import com.materials.features.maker.data.local.toEntity
+import com.materials.core.database.maker.MakerDao
+import com.materials.features.maker.data.mapper.toDomain
+import com.materials.features.maker.data.mapper.toEntity
 import com.materials.features.maker.data.remote.MakerRemoteDataSource
 import com.materials.features.maker.domain.model.Maker
 import com.materials.features.maker.domain.repository.MakerRepository

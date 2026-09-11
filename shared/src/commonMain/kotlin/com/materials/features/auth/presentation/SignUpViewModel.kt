@@ -10,8 +10,8 @@ import com.materials.features.user.domain.model.UserRole
 import com.materials.features.user.domain.model.UserPlan
 import com.materials.features.user.domain.model.SubscriptionHistory
 import com.materials.features.user.domain.repository.UserRepository
-import com.materials.core.util.date.getCurrentIsoDate
-import com.materials.core.util.randomUUID
+import com.materials.core.common.util.getCurrentIsoDate
+import com.materials.core.common.util.randomUUID
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.plus
@@ -243,14 +243,14 @@ class SignUpViewModel(
 
     private fun verifyOtp() {
         val state = uiState.value
-        if (state.otpToken.length != 8) {
-            _uiState.update { it.copy(error = "El código debe ser de 8 dígitos") }
+        if (state.otpToken.length != 6) {
+            _uiState.update { it.copy(error = "El código debe ser de 6 dígitos") }
             return
         }
 
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
-            val result = authRepository.verifyEmailOtp(state.email, state.otpToken)
+            val result = authRepository.verifyEmailOtp(state.email.trim(), state.otpToken)
             result.onSuccess {
                 // Now authenticated, create the profile
                 val newUser = User(

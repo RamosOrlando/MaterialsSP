@@ -30,10 +30,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.materials.core.presentation.theme.*
-import com.materials.features.material.domain.model.Material
-import com.materials.core.util.date.formatDateToDisplay
-import com.materials.core.util.randomUUID
-import com.materials.core.util.getCurrentDate
+import com.materials.core.common.domain.model.Material
+import com.materials.core.common.util.formatDateToDisplay
+import com.materials.core.common.util.randomUUID
+import com.materials.core.common.util.getCurrentDate
 import com.materials.features.auth.domain.model.UserRole
 import androidx.compose.ui.tooling.preview.Preview
 import org.koin.compose.viewmodel.koinViewModel

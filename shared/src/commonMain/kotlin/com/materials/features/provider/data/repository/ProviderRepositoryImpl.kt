@@ -1,9 +1,9 @@
 package com.materials.features.provider.data.repository
 
 import com.materials.core.domain.util.Resource
-import com.materials.features.provider.data.local.ProviderDao
-import com.materials.features.provider.data.local.toDomain
-import com.materials.features.provider.data.local.toEntity
+import com.materials.core.database.provider.ProviderDao
+import com.materials.features.provider.data.mapper.toDomain
+import com.materials.features.provider.data.mapper.toEntity
 import com.materials.features.provider.data.remote.ProviderRemoteDataSource
 import com.materials.features.provider.domain.model.Provider
 import com.materials.features.provider.domain.repository.ProviderRepository

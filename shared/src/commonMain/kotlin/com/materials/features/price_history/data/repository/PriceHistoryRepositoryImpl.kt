@@ -1,15 +1,15 @@
 package com.materials.features.price_history.data.repository
 
 import com.materials.core.domain.util.Resource
-import com.materials.features.material.data.local.MaterialDao
-import com.materials.features.price_history.data.local.PriceHistoryDao
-import com.materials.features.price_history.data.local.toDomain
-import com.materials.features.price_history.data.local.toEntity
+import com.materials.core.database.material.MaterialDao
+import com.materials.core.database.price_history.PriceHistoryDao
+import com.materials.features.price_history.data.mapper.toDomain
+import com.materials.features.price_history.data.mapper.toEntity
 import com.materials.features.price_history.data.remote.PriceHistoryRemoteDataSource
 import com.materials.features.price_history.domain.model.PriceHistory
 import com.materials.features.price_history.domain.model.PriceHistoryDetail
 import com.materials.features.price_history.domain.repository.PriceHistoryRepository
-import com.materials.features.provider.data.local.ProviderDao
+import com.materials.core.database.provider.ProviderDao
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow

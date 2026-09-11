@@ -1,6 +1,6 @@
 package com.materials.features.material.data.remote
 
-import com.materials.features.material.domain.model.Material
+import com.materials.core.common.domain.model.Material
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.status.SessionStatus
 import io.github.jan.supabase.postgrest.postgrest
