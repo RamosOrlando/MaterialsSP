@@ -210,8 +210,9 @@ fun SelectedMaterialCard(
                     OutlinedTextField(
                         value = quantityText,
                         onValueChange = { 
-                            quantityText = it
-                            it.toDoubleOrNull()?.let { q -> onQuantityChange(q) }
+                            val trimmed = it.trim()
+                            quantityText = trimmed
+                            trimmed.toDoubleOrNull()?.let { q -> onQuantityChange(q) }
                         },
                         modifier = Modifier.width(90.dp).padding(top = 4.dp),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),

@@ -182,7 +182,7 @@ fun SignUpScreenContent(
 
                             OutlinedTextField(
                                 value = uiState.email,
-                                onValueChange = { onEvent(SignUpEvent.OnEmailChanged(it)) },
+                                onValueChange = { onEvent(SignUpEvent.OnEmailChanged(it.trim())) },
                                 label = { Text("Correo Electrónico") },
                                 modifier = Modifier.fillMaxWidth(),
                                 leadingIcon = {
@@ -196,7 +196,7 @@ fun SignUpScreenContent(
 
                             OutlinedTextField(
                                 value = uiState.cellphone,
-                                onValueChange = { onEvent(SignUpEvent.OnCellphoneChanged(it)) },
+                                onValueChange = { onEvent(SignUpEvent.OnCellphoneChanged(it.trim())) },
                                 label = { Text("Celular") },
                                 modifier = Modifier.fillMaxWidth(),
                                 leadingIcon = {
@@ -435,7 +435,10 @@ fun EmailConfirmationCard(
             
             OutlinedTextField(
                 value = otpToken,
-                onValueChange = { if (it.length <= 6) onOtpChange(it) },
+                onValueChange = { 
+                    val trimmed = it.trim()
+                    if (trimmed.length <= 6) onOtpChange(trimmed) 
+                },
                 label = { Text("Código de 6 dígitos") },
                 modifier = Modifier.fillMaxWidth(),
                 leadingIcon = {

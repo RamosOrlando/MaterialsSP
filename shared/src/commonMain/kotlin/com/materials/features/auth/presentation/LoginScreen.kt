@@ -121,7 +121,7 @@ fun LoginScreenContent(
 
                     OutlinedTextField(
                         value = uiState.email,
-                        onValueChange = { onEvent(LoginEvent.OnEmailChanged(it)) },
+                        onValueChange = { onEvent(LoginEvent.OnEmailChanged(it.trim())) },
                         label = { Text("Correo Electrónico") },
                         modifier = Modifier.fillMaxWidth(),
                         leadingIcon = {
@@ -250,7 +250,7 @@ fun ForgotPasswordDialog(
                             )
                             OutlinedTextField(
                                 value = uiState.forgotPasswordEmail,
-                                onValueChange = { onEvent(LoginEvent.OnForgotPasswordEmailChanged(it)) },
+                                onValueChange = { onEvent(LoginEvent.OnForgotPasswordEmailChanged(it.trim())) },
                                 label = { Text("Correo Electrónico") },
                                 modifier = Modifier.fillMaxWidth(),
                                 leadingIcon = { Icon(Icons.Default.Email, contentDescription = null, tint = IndustrialOrange) },
@@ -267,7 +267,10 @@ fun ForgotPasswordDialog(
                             )
                             OutlinedTextField(
                                 value = uiState.forgotPasswordOtp,
-                                onValueChange = { if (it.length <= 6) onEvent(LoginEvent.OnForgotPasswordOtpChanged(it)) },
+                                onValueChange = { 
+                                    val trimmed = it.trim()
+                                    if (trimmed.length <= 6) onEvent(LoginEvent.OnForgotPasswordOtpChanged(trimmed)) 
+                                },
                                 label = { Text("Código de 6 dígitos") },
                                 modifier = Modifier.fillMaxWidth(),
                                 leadingIcon = { Icon(Icons.Default.VpnKey, contentDescription = null, tint = IndustrialOrange) },

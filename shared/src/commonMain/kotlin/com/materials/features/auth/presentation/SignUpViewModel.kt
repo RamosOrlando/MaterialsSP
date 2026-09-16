@@ -255,13 +255,13 @@ class SignUpViewModel(
                 // Now authenticated, create the profile
                 val newUser = User(
                     userId = authRepository.getCurrentUserId()!!,
-                    name = state.name,
-                    lastName = state.lastName,
-                    email = state.email,
+                    name = state.name.trim(),
+                    lastName = state.lastName.trim(),
+                    email = state.email.trim(),
                     roleId = state.roleId!!,
                     professionId = state.professionId!!,
                     createdAt = getCurrentIsoDate(),
-                    cellphone = state.cellphone.toIntOrNull()
+                    cellphone = state.cellphone.trim().toIntOrNull()
                 )
                 userRepository.saveUser(newUser)
                 subscribeToPlan(state.selectedPlanId!!)

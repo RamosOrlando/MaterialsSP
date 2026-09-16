@@ -126,7 +126,7 @@ class LoginViewModel(
     }
 
     private fun signIn() {
-        val email = uiState.value.email
+        val email = uiState.value.email.trim()
         val password = uiState.value.password
 
         if (email.isBlank() || password.isBlank()) {
@@ -146,7 +146,7 @@ class LoginViewModel(
     }
 
     private fun signUp() {
-        val email = uiState.value.email
+        val email = uiState.value.email.trim()
         val password = uiState.value.password
 
         if (email.isBlank() || password.isBlank()) {
