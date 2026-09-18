@@ -628,7 +628,8 @@ fun EditMaterialDialog(
                                 Text(text = providerError!!, color = MaterialTheme.colorScheme.error)
                             }
                         },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
                     )
                 }
 
@@ -649,7 +650,8 @@ fun EditMaterialDialog(
                         keyboardType = KeyboardType.Decimal,
                         imeAction = ImeAction.Done
                     ),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
                 )
             }
         },
@@ -755,7 +757,8 @@ fun CreateMaterialDialog(
                             Text(text = nameError!!, color = MaterialTheme.colorScheme.error)
                         }
                     },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
                 )
 
                 OutlinedTextField(
@@ -771,7 +774,8 @@ fun CreateMaterialDialog(
                             Text(text = unitError!!, color = MaterialTheme.colorScheme.error)
                         }
                     },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
                 )
 
                 OutlinedTextField(
@@ -787,7 +791,8 @@ fun CreateMaterialDialog(
                             Text(text = makerError!!, color = MaterialTheme.colorScheme.error)
                         }
                     },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
                 )
             }
         },
@@ -877,19 +882,22 @@ fun BulkEditMaterialDialog(
                     value = newName,
                     onValueChange = { newName = it },
                     label = { Text("Nombre") },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
                 )
                 OutlinedTextField(
                     value = newUnit,
                     onValueChange = { newUnit = it },
                     label = { Text("Unidad") },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
                 )
                 OutlinedTextField(
                     value = newSpecId,
                     onValueChange = { newSpecId = it },
                     label = { Text("Spec ID") },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
                 )
             }
         },

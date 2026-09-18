@@ -40,7 +40,15 @@ data class SignUpUiState(
     val isLoading: Boolean = false,
     val isSuccess: Boolean = false,
     val isCancelled: Boolean = false,
-    val error: String? = null
+    val error: String? = null,
+    val nameError: String? = null,
+    val lastNameError: String? = null,
+    val emailError: String? = null,
+    val cellphoneError: String? = null,
+    val passwordError: String? = null,
+    val confirmPasswordError: String? = null,
+    val professionError: String? = null,
+    val planError: String? = null
 )
 
 sealed interface SignUpEvent {
@@ -120,22 +128,22 @@ class SignUpViewModel(
     fun onEvent(event: SignUpEvent) {
         when (event) {
             is SignUpEvent.OnNameChanged -> {
-                _uiState.update { it.copy(name = event.name, error = null) }
+                _uiState.update { it.copy(name = event.name, nameError = null, error = null) }
             }
             is SignUpEvent.OnLastNameChanged -> {
-                _uiState.update { it.copy(lastName = event.lastName, error = null) }
+                _uiState.update { it.copy(lastName = event.lastName, lastNameError = null, error = null) }
             }
             is SignUpEvent.OnEmailChanged -> {
-                _uiState.update { it.copy(email = event.email, error = null) }
+                _uiState.update { it.copy(email = event.email, emailError = null, error = null) }
             }
             is SignUpEvent.OnCellphoneChanged -> {
-                _uiState.update { it.copy(cellphone = event.cellphone, error = null) }
+                _uiState.update { it.copy(cellphone = event.cellphone, cellphoneError = null, error = null) }
             }
             is SignUpEvent.OnPasswordChanged -> {
-                _uiState.update { it.copy(password = event.password, error = null) }
+                _uiState.update { it.copy(password = event.password, passwordError = null, error = null) }
             }
             is SignUpEvent.OnConfirmPasswordChanged -> {
-                _uiState.update { it.copy(confirmPassword = event.confirmPassword, error = null) }
+                _uiState.update { it.copy(confirmPassword = event.confirmPassword, confirmPasswordError = null, error = null) }
             }
             is SignUpEvent.OnOtpTokenChanged -> {
                 _uiState.update { it.copy(otpToken = event.token, error = null) }
@@ -144,10 +152,10 @@ class SignUpViewModel(
                 _uiState.update { it.copy(roleId = event.roleId, error = null) }
             }
             is SignUpEvent.OnProfessionSelected -> {
-                _uiState.update { it.copy(professionId = event.professionId, error = null) }
+                _uiState.update { it.copy(professionId = event.professionId, professionError = null, error = null) }
             }
             is SignUpEvent.OnPlanSelected -> {
-                _uiState.update { it.copy(selectedPlanId = event.planId, error = null) }
+                _uiState.update { it.copy(selectedPlanId = event.planId, planError = null, error = null) }
             }
             SignUpEvent.OnCancelSignUp -> {
                 _uiState.update { it.copy(isCancelled = true) }
@@ -181,16 +189,73 @@ class SignUpViewModel(
         val trimmedName = state.name.trim()
         val trimmedLastName = state.lastName.trim()
         val trimmedEmail = state.email.trim()
+        val trimmedCellphone = state.cellphone.trim()
 
-        if (trimmedName.isEmpty() || trimmedLastName.isEmpty() || trimmedEmail.isEmpty() || 
-            state.password.isEmpty() || state.roleId == null || state.professionId == null ||
-            state.selectedPlanId == null) {
-            _uiState.update { it.copy(error = "Por favor completa todos los campos obligatorios, incluido el plan") }
-            return
+        var nameError: String? = null
+        var lastNameError: String? = null
+        var emailError: String? = null
+        var cellphoneError: String? = null
+        var passwordError: String? = null
+        var confirmPasswordError: String? = null
+        var professionError: String? = null
+        var planError: String? = null
+
+        var hasError = false
+
+        if (trimmedName.isEmpty()) {
+            nameError = "El nombre es obligatorio"
+            hasError = true
+        }
+        if (trimmedLastName.isEmpty()) {
+            lastNameError = "Los apellidos son obligatorios"
+            hasError = true
+        }
+        if (trimmedEmail.isEmpty()) {
+            emailError = "El correo es obligatorio"
+            hasError = true
+        } else if (!trimmedEmail.contains("@")) {
+            emailError = "Formato de correo inválido"
+            hasError = true
+        }
+        if (trimmedCellphone.isEmpty()) {
+            cellphoneError = "El celular es obligatorio"
+            hasError = true
+        }
+        if (state.password.isEmpty()) {
+            passwordError = "La contraseña es obligatoria"
+            hasError = true
+        } else if (state.password.length < 6) {
+            passwordError = "Mínimo 6 caracteres"
+            hasError = true
+        }
+        if (state.confirmPassword.isEmpty()) {
+            confirmPasswordError = "Confirma tu contraseña"
+            hasError = true
+        } else if (state.password != state.confirmPassword) {
+            confirmPasswordError = "Las contraseñas no coinciden"
+            hasError = true
+        }
+        if (state.professionId == null) {
+            professionError = "Selecciona una profesión"
+            hasError = true
+        }
+        if (state.selectedPlanId == null) {
+            planError = "Debes seleccionar un plan"
+            hasError = true
         }
 
-        if (state.password != state.confirmPassword) {
-            _uiState.update { it.copy(error = "Las contraseñas no coinciden") }
+        if (hasError) {
+            _uiState.update { it.copy(
+                nameError = nameError,
+                lastNameError = lastNameError,
+                emailError = emailError,
+                cellphoneError = cellphoneError,
+                passwordError = passwordError,
+                confirmPasswordError = confirmPasswordError,
+                professionError = professionError,
+                planError = planError,
+                error = "Por favor corrige los errores señalados"
+            ) }
             return
         }
 

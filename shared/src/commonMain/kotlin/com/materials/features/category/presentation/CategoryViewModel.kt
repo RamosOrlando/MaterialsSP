@@ -57,6 +57,10 @@ class CategoryViewModel(
             initialValue = CategoryUiState.Loading
         )
 
+    init {
+        onEvent(CategoryEvent.Refresh)
+    }
+
     fun onEvent(event: CategoryEvent) {
         when (event) {
             is CategoryEvent.OnSearchQueryChanged -> {

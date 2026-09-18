@@ -45,6 +45,10 @@ fun CategoryScreen(
     val searchQuery by viewModel.searchQuery.collectAsState()
     val isSignedOut by viewModel.isSignedOut.collectAsState()
 
+    LaunchedEffect(Unit) {
+        viewModel.onEvent(CategoryEvent.Refresh)
+    }
+
     LaunchedEffect(isSignedOut) {
         if (isSignedOut) {
             onLogout()
@@ -374,7 +378,7 @@ fun CategoryCard(
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = category.description,
+                text = category.description ?: "",
                 color = Color.White.copy(alpha = 0.85f),
                 style = MaterialTheme.typography.bodyMedium.copy(
                     fontSize = 14.sp,

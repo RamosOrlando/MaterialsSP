@@ -23,14 +23,19 @@ class CategoryRepositoryImpl(
 
     override suspend fun refreshCategories(): Resource<Unit> = withContext(Dispatchers.IO) {
         try {
-            println("Starting refreshCategories...")
+            println("DEBUG: Starting refreshCategories from Supabase...")
             val remoteCategories = remoteDataSource.getCategories()
-            println("Fetched ${remoteCategories.size} categories")
+            println("DEBUG: Categories fetched from Supabase: ${remoteCategories.size}")
+            
+            remoteCategories.forEach { cat ->
+                println("DEBUG: Category: id=${cat.categoryId}, name=${cat.name}, desc=${cat.description}")
+            }
+
             categoryDao.insertCategories(remoteCategories.map { it.toEntity() })
-            println("refreshCategories finished successfully")
+            println("DEBUG: Categories successfully inserted into Room")
             Resource.Success(Unit)
         } catch (e: Exception) {
-            println("Error refreshing categories: ${e.message}")
+            println("DEBUG: ERROR in refreshCategories: ${e.message}")
             e.printStackTrace()
             Resource.Error(e.message ?: "Unknown error")
         }

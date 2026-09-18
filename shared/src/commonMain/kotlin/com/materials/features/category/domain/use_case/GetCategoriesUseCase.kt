@@ -16,7 +16,7 @@ class GetCategoriesUseCase(
             if (resource is Resource.Success<List<Category>> && query.isNotBlank()) {
                 val filtered = resource.data.filter {
                     it.name.contains(query, ignoreCase = true) ||
-                            it.description.contains(query, ignoreCase = true)
+                            (it.description?.contains(query, ignoreCase = true) ?: false)
                 }
                 Resource.Success(filtered)
             } else {

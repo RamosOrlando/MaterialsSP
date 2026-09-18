@@ -157,6 +157,10 @@ fun SignUpScreenContent(
                                     onValueChange = { onEvent(SignUpEvent.OnNameChanged(it)) },
                                     label = { Text("Nombre") },
                                     modifier = Modifier.weight(1f),
+                                    isError = uiState.nameError != null,
+                                    supportingText = if (uiState.nameError != null) {
+                                        { Text(uiState.nameError, color = MaterialTheme.colorScheme.error) }
+                                    } else null,
                                     keyboardOptions = KeyboardOptions(
                                         capitalization = KeyboardCapitalization.Words,
                                         imeAction = ImeAction.Next
@@ -170,6 +174,10 @@ fun SignUpScreenContent(
                                     onValueChange = { onEvent(SignUpEvent.OnLastNameChanged(it)) },
                                     label = { Text("Apellidos") },
                                     modifier = Modifier.weight(1f),
+                                    isError = uiState.lastNameError != null,
+                                    supportingText = if (uiState.lastNameError != null) {
+                                        { Text(uiState.lastNameError, color = MaterialTheme.colorScheme.error) }
+                                    } else null,
                                     keyboardOptions = KeyboardOptions(
                                         capitalization = KeyboardCapitalization.Words,
                                         imeAction = ImeAction.Next
@@ -185,6 +193,10 @@ fun SignUpScreenContent(
                                 onValueChange = { onEvent(SignUpEvent.OnEmailChanged(it.trim())) },
                                 label = { Text("Correo Electrónico") },
                                 modifier = Modifier.fillMaxWidth(),
+                                isError = uiState.emailError != null,
+                                supportingText = if (uiState.emailError != null) {
+                                    { Text(uiState.emailError, color = MaterialTheme.colorScheme.error) }
+                                } else null,
                                 leadingIcon = {
                                     Icon(Icons.Default.Email, contentDescription = null, tint = MaterialTheme.colorScheme.tertiary)
                                 },
@@ -199,6 +211,10 @@ fun SignUpScreenContent(
                                 onValueChange = { onEvent(SignUpEvent.OnCellphoneChanged(it.trim())) },
                                 label = { Text("Celular") },
                                 modifier = Modifier.fillMaxWidth(),
+                                isError = uiState.cellphoneError != null,
+                                supportingText = if (uiState.cellphoneError != null) {
+                                    { Text(uiState.cellphoneError, color = MaterialTheme.colorScheme.error) }
+                                } else null,
                                 leadingIcon = {
                                     Icon(Icons.Default.Phone, contentDescription = null, tint = MaterialTheme.colorScheme.tertiary)
                                 },
@@ -218,6 +234,10 @@ fun SignUpScreenContent(
                                     onValueChange = {},
                                     readOnly = true,
                                     label = { Text("Profesión") },
+                                    isError = uiState.professionError != null,
+                                    supportingText = if (uiState.professionError != null) {
+                                        { Text(uiState.professionError, color = MaterialTheme.colorScheme.error) }
+                                    } else null,
                                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = professionExpanded) },
                                     modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable).fillMaxWidth(),
                                     shape = IndustrialShapes.small,
@@ -243,9 +263,16 @@ fun SignUpScreenContent(
                             Text(
                                 text = "Selecciona tu Plan",
                                 style = MaterialTheme.typography.titleSmall,
-                                color = IndustrialOrange,
+                                color = if (uiState.planError != null) MaterialTheme.colorScheme.error else IndustrialOrange,
                                 fontWeight = FontWeight.Bold
                             )
+                            if (uiState.planError != null) {
+                                Text(
+                                    text = uiState.planError,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.error
+                                )
+                            }
 
                             // Plans in 2 columns
                             uiState.activePlans.chunked(2).forEach { pair ->
@@ -307,8 +334,12 @@ fun SignUpScreenContent(
                             OutlinedTextField(
                                 value = uiState.password,
                                 onValueChange = { onEvent(SignUpEvent.OnPasswordChanged(it)) },
-                                label = { Text("Contraseña") },
+                                label = { Text("Contraseña (mínimo 6 digitos)") },
                                 modifier = Modifier.fillMaxWidth(),
+                                isError = uiState.passwordError != null,
+                                supportingText = if (uiState.passwordError != null) {
+                                    { Text(uiState.passwordError, color = MaterialTheme.colorScheme.error) }
+                                } else null,
                                 leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null, tint = MaterialTheme.colorScheme.tertiary) },
                                 trailingIcon = {
                                     IconButton(onClick = { passwordVisible = !passwordVisible }) {
@@ -331,6 +362,10 @@ fun SignUpScreenContent(
                                 onValueChange = { onEvent(SignUpEvent.OnConfirmPasswordChanged(it)) },
                                 label = { Text("Confirmar Contraseña") },
                                 modifier = Modifier.fillMaxWidth(),
+                                isError = uiState.confirmPasswordError != null,
+                                supportingText = if (uiState.confirmPasswordError != null) {
+                                    { Text(uiState.confirmPasswordError, color = MaterialTheme.colorScheme.error) }
+                                } else null,
                                 leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null, tint = MaterialTheme.colorScheme.tertiary) },
                                 trailingIcon = {
                                     IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
