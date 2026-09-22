@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ProviderDao {
-    @Query("SELECT * FROM Provider")
+    @Query("SELECT * FROM Provider ORDER BY providerId ASC")
     fun getProviders(): Flow<List<ProviderEntity>>
 
     @Upsert

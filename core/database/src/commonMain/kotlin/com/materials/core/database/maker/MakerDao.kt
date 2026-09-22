@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface MakerDao {
-    @Query("SELECT * FROM Maker")
+    @Query("SELECT * FROM Maker ORDER BY makerId ASC")
     fun getMakers(): Flow<List<MakerEntity>>
 
     @Upsert

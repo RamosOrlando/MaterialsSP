@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -76,6 +77,18 @@ fun CategoryScreenContent(
     columns: Int? = null,
     modifier: Modifier = Modifier
 ) {
+    val gridState = rememberLazyGridState()
+
+    // Efecto para centrar la categoría seleccionada al principio
+    LaunchedEffect(selectedCategoryId, uiState) {
+        if (selectedCategoryId != null && uiState is CategoryUiState.Success) {
+            val index = uiState.categories.indexOfFirst { it.categoryId == selectedCategoryId }
+            if (index != -1) {
+                gridState.animateScrollToItem(index)
+            }
+        }
+    }
+
     val adaptiveInfo = currentWindowAdaptiveInfo()
     val finalColumns = columns ?: with(adaptiveInfo.windowSizeClass) {
         when {
@@ -163,6 +176,7 @@ fun CategoryScreenContent(
                         }
                     } else {
                         LazyVerticalGrid(
+                            state = gridState,
                             columns = GridCells.Fixed(finalColumns),
                             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                             verticalArrangement = Arrangement.spacedBy(16.dp),

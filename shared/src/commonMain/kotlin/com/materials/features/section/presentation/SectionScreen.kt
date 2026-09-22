@@ -36,7 +36,7 @@ import org.koin.compose.viewmodel.koinViewModel
 @Composable
 fun SectionScreen(
     categoryId: String,
-    onSectionClick: (String) -> Unit = {},
+    onSectionClick: (String, String) -> Unit = { _, _ -> },
     onBackClick: () -> Unit = {},
     modifier: Modifier = Modifier,
     viewModel: SectionViewModel = koinViewModel()
@@ -63,7 +63,7 @@ fun SectionScreenContent(
     uiState: SectionUiState,
     searchQuery: String,
     onEvent: (SectionEvent) -> Unit,
-    onSectionClick: (String) -> Unit = {},
+    onSectionClick: (String, String) -> Unit = { _, _ -> },
     onBackClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
@@ -179,7 +179,7 @@ fun SectionScreenContent(
                             items(state.sections, key = { it.sectionId }) { section ->
                                 SectionCard(
                                     section = section,
-                                    onSectionClick = onSectionClick
+                                    onSectionClick = { id -> onSectionClick(id, section.name) }
                                 )
                             }
                         }
@@ -404,7 +404,7 @@ fun SectionScreenSuccessPreview() {
             ),
             searchQuery = "",
             onEvent = {},
-            onSectionClick = {}
+            onSectionClick = { _, _ -> }
         )
     }
 }

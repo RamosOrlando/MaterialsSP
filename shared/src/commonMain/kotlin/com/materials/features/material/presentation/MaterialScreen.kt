@@ -5,10 +5,12 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -36,17 +38,27 @@ import com.materials.core.common.util.randomUUID
 import com.materials.core.common.util.getCurrentDate
 import com.materials.features.auth.domain.model.UserRole
 import androidx.compose.ui.tooling.preview.Preview
+import com.materials.features.maker.domain.model.Maker
+import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun MaterialScreen(
     sectionId: String? = null,
+    sectionName: String? = null,
     onBackClick: () -> Unit = {},
     onMaterialsSelected: (List<String>) -> Unit = {},
     userRole: UserRole? = null,
+    quoteModeEnabled: Boolean = false,
     modifier: Modifier = Modifier,
     viewModel: MaterialViewModel = koinViewModel()
 ) {
+    LaunchedEffect(quoteModeEnabled) {
+        if (!quoteModeEnabled) {
+            viewModel.onEvent(MaterialEvent.ClearSelection)
+        }
+    }
+
     LaunchedEffect(sectionId) {
         viewModel.onEvent(MaterialEvent.SetSection(sectionId))
     }
@@ -61,9 +73,11 @@ fun MaterialScreen(
     var editingMaterial by remember { mutableStateOf<Material?>(null) }
     var editingProviderName by remember { mutableStateOf<String?>(null) }
     var bulkEditingMaterials by remember { mutableStateOf<List<Material>?>(null) }
+    var creatingForMakerMaterial by remember { mutableStateOf<Material?>(null) }
     var isCreatingMaterial by remember { mutableStateOf(false) }
 
     val snackbarHostState = remember { SnackbarHostState() }
+    val listState = rememberLazyListState()
     
     LaunchedEffect(uiState) {
         (uiState as? MaterialUiState.Success)?.errorMessage?.let { error ->
@@ -82,16 +96,20 @@ fun MaterialScreen(
         selectedIds = selectedIds,
         isRefreshing = isRefreshing,
         snackbarHostState = snackbarHostState,
+        listState = listState,
         onEvent = { viewModel.onEvent(it) },
         onBackClick = onBackClick,
         onProceed = { onMaterialsSelected(selectedIds.toList()) },
+        sectionName = sectionName,
         onEditMaterial = { item -> 
             editingMaterial = item.material
             editingProviderName = item.providerName
         },
         onBulkEdit = { bulkEditingMaterials = it },
         onAddMaterial = { isCreatingMaterial = true },
+        onCreateForMaker = { creatingForMakerMaterial = it },
         userRole = userRole,
+        quoteModeEnabled = quoteModeEnabled,
         modifier = modifier
     )
     
@@ -139,6 +157,22 @@ fun MaterialScreen(
         )
     }
 
+    creatingForMakerMaterial?.let { material ->
+        val state = uiState as? MaterialUiState.Success
+        val makers = state?.makers ?: emptyList()
+        val existingMaterials = state?.materials?.map { it.material } ?: emptyList()
+        CreateMaterialForMakerDialog(
+            material = material,
+            makers = makers,
+            existingMaterials = existingMaterials,
+            onDismiss = { creatingForMakerMaterial = null },
+            onConfirm = { newMaterial ->
+                viewModel.onEvent(MaterialEvent.CreateMaterial(newMaterial))
+                creatingForMakerMaterial = null
+            }
+        )
+    }
+
     if (isCreatingMaterial) {
         val makers = (uiState as? MaterialUiState.Success)?.makers ?: emptyList()
         CreateMaterialDialog(
@@ -159,15 +193,19 @@ fun MaterialScreenContent(
     uiState: MaterialUiState,
     searchQuery: String,
     selectedIds: Set<String> = emptySet(),
+    sectionName: String? = null,
     isRefreshing: Boolean = false,
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
+    listState: LazyListState = rememberLazyListState(),
     onEvent: (MaterialEvent) -> Unit,
     onBackClick: () -> Unit = {},
     onProceed: () -> Unit = {},
     onEditMaterial: (MaterialItem) -> Unit = {},
     onBulkEdit: (List<Material>) -> Unit = {},
     onAddMaterial: () -> Unit = {},
+    onCreateForMaker: (Material) -> Unit = {},
     userRole: UserRole? = null,
+    quoteModeEnabled: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     Scaffold(
@@ -175,8 +213,9 @@ fun MaterialScreenContent(
             .fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.background,
         snackbarHost = { SnackbarHost(snackbarHostState) },
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         floatingActionButton = {
-            if (selectedIds.isNotEmpty()) {
+            if (quoteModeEnabled && selectedIds.isNotEmpty()) {
                 ExtendedFloatingActionButton(
                     onClick = onProceed,
                     containerColor = MaterialTheme.colorScheme.primary,
@@ -204,11 +243,10 @@ fun MaterialScreenContent(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                    .padding(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 8.dp)
             ) {
                 Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(bottom = 8.dp)
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     IconButton(
                         onClick = onBackClick,
@@ -222,22 +260,18 @@ fun MaterialScreenContent(
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Materiales",
+                        text = if (sectionName != null) "Materiales - $sectionName" else "Materiales",
                         fontWeight = FontWeight.ExtraBold,
                         color = MaterialTheme.colorScheme.onSurface,
                         style = MaterialTheme.typography.headlineMedium.copy(
-                            fontSize = 28.sp,
+                            fontSize = 20.sp,
                             letterSpacing = (-0.5).sp
-                        )
+                        ),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f)
                     )
                 }
-                Text(
-                    text = "Catálogo detallado de materiales industriales.",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodyMedium,
-                    lineHeight = 20.sp,
-                    modifier = Modifier.padding(start = 40.dp)
-                )
             }
 
             // Search Bar
@@ -277,8 +311,16 @@ fun MaterialScreenContent(
                                 state.materials.groupBy { it.material.name + it.material.unit }
                             }
 
+                            val scope = rememberCoroutineScope()
+
                             LazyColumn(
-                                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                                state = listState,
+                                contentPadding = PaddingValues(
+                                    start = 16.dp, 
+                                    end = 16.dp, 
+                                    top = 8.dp, 
+                                    bottom =40.dp // Espacio extra para que el FAB no tape el contenido
+                                ),
                                 verticalArrangement = Arrangement.spacedBy(16.dp),
                                 modifier = Modifier.fillMaxSize()
                             ) {
@@ -290,7 +332,8 @@ fun MaterialScreenContent(
                                             name = firstItem.material.name,
                                             unit = firstItem.material.unit,
                                             canEdit = userRole != UserRole.CLIENT,
-                                            onEditClick = { onBulkEdit(items.map { it.material }) }
+                                            onEditClick = { onBulkEdit(items.map { it.material }) },
+                                            onCreateClick = { onCreateForMaker(firstItem.material) }
                                         )
                                     }
 
@@ -301,15 +344,48 @@ fun MaterialScreenContent(
                                             isSelected = isSelected,
                                             canEdit = userRole != UserRole.CLIENT,
                                             onSelect = {
-                                                onEvent(
-                                                    MaterialEvent.ToggleMaterialSelection(
-                                                        it
+                                                if (quoteModeEnabled) {
+                                                    onEvent(
+                                                        MaterialEvent.ToggleMaterialSelection(it)
                                                     )
-                                                )
+                                                }
                                             },
                                             onEdit = { onEditMaterial(materialItem) },
                                             modifier = Modifier.padding(start = 16.dp)
                                         )
+                                    }
+                                }
+
+                                // Botón "Volver al principio" al final de la lista
+                                item {
+                                    Box(
+                                        modifier = Modifier.fillMaxWidth().padding(top = 0.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Button(
+                                            onClick = {
+                                                scope.launch {
+                                                    listState.animateScrollToItem(0)
+                                                }
+                                            },
+                                            colors = ButtonDefaults.buttonColors(
+                                                containerColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.1f),
+                                                contentColor = MaterialTheme.colorScheme.secondary
+                                            ),
+                                            shape = IndustrialShapes.small
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.VerticalAlignTop,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(18.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Text(
+                                                text = "Volver al principio",
+                                                style = MaterialTheme.typography.labelLarge,
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -392,6 +468,7 @@ fun MaterialHeaderCard(
     unit: String,
     canEdit: Boolean = false,
     onEditClick: () -> Unit = {},
+    onCreateClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -430,6 +507,20 @@ fun MaterialHeaderCard(
             }
 
             if (canEdit) {
+                IconButton(
+                    onClick = onCreateClick,
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Agregar Fabricante a este Material",
+                        tint = IndustrialOrange,
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(4.dp))
+
                 IconButton(
                     onClick = onEditClick,
                     modifier = Modifier.size(32.dp)
@@ -701,7 +792,9 @@ fun CreateMaterialDialog(
 ) {
     var name by remember { mutableStateOf("") }
     var unit by remember { mutableStateOf("") }
-    var makerIdInput by remember { mutableStateOf("") }
+    var makerSearchQuery by remember { mutableStateOf("") }
+    var selectedMakerId by remember { mutableStateOf<String?>(null) }
+    var makerExpanded by remember { mutableStateOf(false) }
     
     var nameError by remember { mutableStateOf<String?>(null) }
     var unitError by remember { mutableStateOf<String?>(null) }
@@ -734,7 +827,7 @@ fun CreateMaterialDialog(
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                        val previewId = if (makerIdInput.isNotBlank()) "$sectionId-$correlative-$makerIdInput" else "$sectionId-$correlative-?"
+                        val previewId = if (selectedMakerId != null) "$sectionId-$correlative-$selectedMakerId" else "$sectionId-$correlative-?"
                         Text(
                             text = "Vista previa ID: $previewId",
                             style = MaterialTheme.typography.labelSmall,
@@ -778,22 +871,53 @@ fun CreateMaterialDialog(
                     singleLine = true
                 )
 
-                OutlinedTextField(
-                    value = makerIdInput,
-                    onValueChange = { 
-                        makerIdInput = it
-                        makerError = null
-                    },
-                    label = { Text("ID Fabricante (Maker ID)") },
-                    isError = makerError != null,
-                    supportingText = {
-                        if (makerError != null) {
-                            Text(text = makerError!!, color = MaterialTheme.colorScheme.error)
+                val filteredMakers = remember(makerSearchQuery, makers) {
+                    makers.filter {
+                        it.makerId.contains(makerSearchQuery, ignoreCase = true) ||
+                                it.name.contains(makerSearchQuery, ignoreCase = true)
+                    }
+                }
+
+                ExposedDropdownMenuBox(
+                    expanded = makerExpanded,
+                    onExpandedChange = { makerExpanded = !makerExpanded },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    OutlinedTextField(
+                        value = makerSearchQuery,
+                        onValueChange = { 
+                            makerSearchQuery = it
+                            selectedMakerId = null // Reset selection if typing
+                            makerExpanded = true 
+                        },
+                        label = { Text("Buscar Fabricante") },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = makerExpanded) },
+                        isError = makerError != null,
+                        supportingText = if (makerError != null) {
+                            { Text(makerError!!, color = MaterialTheme.colorScheme.error) }
+                        } else null,
+                        modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable).fillMaxWidth(),
+                        singleLine = true
+                    )
+                    if (filteredMakers.isNotEmpty()) {
+                        ExposedDropdownMenu(
+                            expanded = makerExpanded,
+                            onDismissRequest = { makerExpanded = false }
+                        ) {
+                            filteredMakers.forEach { maker ->
+                                DropdownMenuItem(
+                                    text = { Text("${maker.makerId} - ${maker.name}") },
+                                    onClick = {
+                                        makerSearchQuery = "${maker.makerId} - ${maker.name}"
+                                        selectedMakerId = maker.makerId
+                                        makerExpanded = false
+                                        makerError = null
+                                    }
+                                )
+                            }
                         }
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
+                    }
+                }
             }
         },
         confirmButton = {
@@ -801,7 +925,6 @@ fun CreateMaterialDialog(
                 onClick = {
                     val trimmedName = name.trim()
                     val trimmedUnit = unit.trim()
-                    val trimmedMakerId = makerIdInput.trim()
                     
                     var hasError = false
                     
@@ -815,21 +938,17 @@ fun CreateMaterialDialog(
                         hasError = true
                     }
                     
-                    val makerExists = makers.any { it.makerId == trimmedMakerId }
-                    if (trimmedMakerId.isEmpty()) {
-                        makerError = "El ID de fabricante es obligatorio"
-                        hasError = true
-                    } else if (!makerExists) {
-                        makerError = "El ID de fabricante no existe"
+                    if (selectedMakerId == null) {
+                        makerError = "Selecciona un fabricante de la lista"
                         hasError = true
                     }
                     
                     if (!hasError) {
                         val newMaterial = Material(
-                            materialId = "$sectionId-$correlative-$trimmedMakerId",
+                            materialId = "$sectionId-$correlative-$selectedMakerId",
                             name = trimmedName,
                             unit = trimmedUnit,
-                            makerId = trimmedMakerId,
+                            makerId = selectedMakerId!!,
                             sectionId = sectionId,
                             specId = null,
                             historyId = null,
@@ -993,6 +1112,154 @@ private fun ErrorState(message: String, onRetry: () -> Unit) {
             }
         }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun CreateMaterialForMakerDialog(
+    material: Material,
+    makers: List<Maker>,
+    existingMaterials: List<Material>,
+    onDismiss: () -> Unit,
+    onConfirm: (Material) -> Unit
+) {
+    // Calculamos el ID base (Sección-Correlativo) eliminando el último segmento tras el guion
+    val baseId = remember(material.materialId) {
+        material.materialId.substringBeforeLast("-")
+    }
+    
+    var makerSearchQuery by remember { mutableStateOf("") }
+    var selectedMakerId by remember { mutableStateOf<String?>(null) }
+    var makerError by remember { mutableStateOf<String?>(null) }
+    var makerExpanded by remember { mutableStateOf(false) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Añadir Fabricante a Material", fontWeight = FontWeight.Bold) },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // Información de solo lectura
+                OutlinedTextField(
+                    value = material.name,
+                    onValueChange = {},
+                    label = { Text("Nombre (Solo lectura)") },
+                    readOnly = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
+                    )
+                )
+                OutlinedTextField(
+                    value = material.unit,
+                    onValueChange = {},
+                    label = { Text("Unidad (Solo lectura)") },
+                    readOnly = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
+                    )
+                )
+                
+                // Visualización del nuevo ID progresivo
+                Text(
+                    text = "Nuevo ID: $baseId-${selectedMakerId ?: "?"}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = IndustrialOrange,
+                    fontWeight = FontWeight.Bold
+                )
+
+                // Campo único para el nuevo Maker con búsqueda
+                val filteredMakers = remember(makerSearchQuery, makers) {
+                    makers.filter {
+                        it.makerId.contains(makerSearchQuery, ignoreCase = true) ||
+                                it.name.contains(makerSearchQuery, ignoreCase = true)
+                    }
+                }
+
+                ExposedDropdownMenuBox(
+                    expanded = makerExpanded,
+                    onExpandedChange = { makerExpanded = !makerExpanded },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    OutlinedTextField(
+                        value = makerSearchQuery,
+                        onValueChange = { 
+                            makerSearchQuery = it
+                            selectedMakerId = null
+                            makerExpanded = true
+                            makerError = null
+                        },
+                        label = { Text("Buscar Nuevo Fabricante") },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = makerExpanded) },
+                        isError = makerError != null,
+                        supportingText = if (makerError != null) {
+                            { Text(makerError!!, color = MaterialTheme.colorScheme.error) }
+                        } else null,
+                        modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable).fillMaxWidth(),
+                        singleLine = true
+                    )
+                    if (filteredMakers.isNotEmpty()) {
+                        ExposedDropdownMenu(
+                            expanded = makerExpanded,
+                            onDismissRequest = { makerExpanded = false }
+                        ) {
+                            filteredMakers.forEach { maker ->
+                                DropdownMenuItem(
+                                    text = { Text("${maker.makerId} - ${maker.name}") },
+                                    onClick = {
+                                        makerSearchQuery = "${maker.makerId} - ${maker.name}"
+                                        selectedMakerId = maker.makerId
+                                        makerExpanded = false
+                                        makerError = null
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    if (selectedMakerId == null) {
+                        makerError = "Selecciona un fabricante de la lista"
+                        return@Button
+                    }
+                    
+                    val newId = "$baseId-$selectedMakerId"
+                    val alreadyExists = existingMaterials.any { it.materialId == newId }
+                    
+                    if (alreadyExists) {
+                        makerError = "Ya existe el material con el fabricante seleccionado"
+                    } else {
+                        onConfirm(
+                            material.copy(
+                                materialId = newId,
+                                makerId = selectedMakerId!!,
+                                historyId = null,
+                                price = null,
+                                quoteDate = null
+                            )
+                        )
+                    }
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = IndustrialOrange)
+            ) {
+                Text("Crear material")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancelar")
+            }
+        }
+    )
 }
 
 @Preview(showBackground = true, name = "Success")

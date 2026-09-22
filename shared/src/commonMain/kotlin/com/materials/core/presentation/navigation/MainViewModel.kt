@@ -33,8 +33,15 @@ class MainViewModel(
     private val _userHeaderState = MutableStateFlow(UserHeaderState())
     val userHeaderState = _userHeaderState.asStateFlow()
 
+    private val _quoteModeEnabled = MutableStateFlow(false)
+    val quoteModeEnabled = _quoteModeEnabled.asStateFlow()
+
     init {
         observeUserSession()
+    }
+
+    fun toggleQuoteMode() {
+        _quoteModeEnabled.update { !it }
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)

@@ -10,7 +10,9 @@ import androidx.compose.material3.*
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.*
 import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -41,9 +43,12 @@ fun MainScreen(
     viewModel: MainViewModel = koinViewModel()
 ) {
     val headerState by viewModel.userHeaderState.collectAsState()
+    val quoteModeEnabled by viewModel.quoteModeEnabled.collectAsState()
 
     MainScreenContent(
         headerState = headerState,
+        quoteModeEnabled = quoteModeEnabled,
+        onToggleQuoteMode = viewModel::toggleQuoteMode,
         onLogout = onLogout,
         initialScreen = initialScreen,
         userRole = userRole,
@@ -55,6 +60,8 @@ fun MainScreen(
 @Composable
 fun MainScreenContent(
     headerState: UserHeaderState,
+    quoteModeEnabled: Boolean = false,
+    onToggleQuoteMode: () -> Unit = {},
     onLogout: () -> Unit = {},
     initialScreen: Screen = Screen.Category,
     userRole: UserRole? = null,
@@ -88,7 +95,7 @@ fun MainScreenContent(
                             style = MaterialTheme.typography.titleMedium
                         )
                         Row(
-                            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                            verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             Text(
@@ -130,7 +137,7 @@ fun MainScreenContent(
                             
                             val timeStatus = when {
                                 headerState.daysRemaining == -999 -> ""
-                                headerState.daysRemaining > 0 -> "${headerState.daysRemaining} días restantes"
+                                headerState.daysRemaining > 0 -> "${headerState.daysRemaining} días"
                                 headerState.daysRemaining == 0 -> "Expira hoy"
                                 else -> "Expirado"
                             }
@@ -160,6 +167,40 @@ fun MainScreenContent(
                         onDismissRequest = { showMenu = false },
                         modifier = Modifier.background(MaterialTheme.colorScheme.surface)
                     ) {
+                        DropdownMenuItem(
+                            text = { 
+                                Text(
+                                    text = "Modo Cotización",
+                                    color = if (quoteModeEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                                ) 
+                            },
+                            onClick = {
+                                onToggleQuoteMode()
+                                // No cerramos el menú inmediatamente para que el usuario vea el cambio del switch si lo desea,
+                                // o podemos cerrarlo si prefieres. Por ahora lo mantenemos abierto para facilitar el toggle.
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = if (quoteModeEnabled) Icons.Default.ShoppingCart else Icons.Default.ShoppingCartCheckout,
+                                    contentDescription = null,
+                                    tint = if (quoteModeEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            },
+                            trailingIcon = {
+                                Switch(
+                                    checked = quoteModeEnabled,
+                                    onCheckedChange = { onToggleQuoteMode() },
+                                    modifier = Modifier.scale(0.7f), // Un poco más pequeño para que quepa bien en el menú
+                                    colors = SwitchDefaults.colors(
+                                        checkedThumbColor = MaterialTheme.colorScheme.primary,
+                                        checkedTrackColor = MaterialTheme.colorScheme.primaryContainer
+                                    )
+                                )
+                            }
+                        )
+
+                        HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+
                         DropdownMenuItem(
                             text = { Text("Cerrar Sesión") },
                             onClick = {
@@ -283,6 +324,7 @@ fun MainScreenContent(
                                     screen = key,
                                     shouldUseDualPane = shouldUseRail,
                                     userRole = userRole,
+                                    quoteModeEnabled = quoteModeEnabled,
                                     backstack = backstack,
                                     onLogout = onLogout
                                 )
@@ -338,6 +380,7 @@ private fun CatalogPane(
     screen: Screen,
     shouldUseDualPane: Boolean,
     userRole: UserRole?,
+    quoteModeEnabled: Boolean,
     backstack: SnapshotStateList<Screen>,
     onLogout: () -> Unit
 ) {
@@ -357,8 +400,7 @@ private fun CatalogPane(
                     onLogout = onLogout,
                     selectedCategoryId = when (screen) {
                         is Screen.Section -> screen.categoryId
-                        // For material, we'd need to know its parent category... 
-                        // for now let's just highlight if it's a section
+                        is Screen.Material -> screen.categoryId
                         else -> null
                     },
                     columns = 1
@@ -370,14 +412,16 @@ private fun CatalogPane(
                     Screen.Category -> CatalogDetailPlaceholder()
                     is Screen.Section -> SectionScreen(
                         categoryId = screen.categoryId,
-                        onSectionClick = { sectionId ->
-                            backstack.add(element = Screen.Material(sectionId))
+                        onSectionClick = { sectionId, sectionName ->
+                            backstack.add(element = Screen.Material(sectionId, sectionName, screen.categoryId))
                         },
                         onBackClick = { backstack.removeAt(backstack.size - 1) }
                     )
                     is Screen.Material -> MaterialScreen(
                         sectionId = screen.sectionId,
+                        sectionName = screen.sectionName,
                         userRole = userRole,
+                        quoteModeEnabled = quoteModeEnabled,
                         onBackClick = { backstack.removeAt(backstack.size - 1) },
                         onMaterialsSelected = { ids ->
                             backstack.add(element = Screen.MaterialsSelected(ids))
@@ -398,12 +442,16 @@ private fun CatalogPane(
             )
             is Screen.Section -> SectionScreen(
                 categoryId = screen.categoryId,
-                onSectionClick = { sectionId -> backstack.add(Screen.Material(sectionId)) },
+                onSectionClick = { sectionId, sectionName -> 
+                    backstack.add(Screen.Material(sectionId, sectionName, screen.categoryId)) 
+                },
                 onBackClick = { backstack.removeLast() }
             )
             is Screen.Material -> MaterialScreen(
                 sectionId = screen.sectionId,
+                sectionName = screen.sectionName,
                 userRole = userRole,
+                quoteModeEnabled = quoteModeEnabled,
                 onBackClick = { backstack.removeLast() },
                 onMaterialsSelected = { ids ->
                     backstack.add(element = Screen.MaterialsSelected(ids))

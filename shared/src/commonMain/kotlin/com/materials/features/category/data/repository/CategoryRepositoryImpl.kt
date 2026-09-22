@@ -47,7 +47,6 @@ class CategoryRepositoryImpl(
                 val domainCategories = entities.map { it.toDomain() }
                 Resource.Success(domainCategories) as Resource<List<Category>>
             }
-            .onStart { emit(Resource.Loading) }
             .catch { e -> emit(Resource.Error(e.message ?: "Unknown error")) }
     }
 

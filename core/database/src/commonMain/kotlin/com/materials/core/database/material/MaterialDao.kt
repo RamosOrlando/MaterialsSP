@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface MaterialDao {
-    @Query("SELECT * FROM Material")
+    @Query("SELECT * FROM Material ORDER BY materialId ASC")
     fun getMaterials(): Flow<List<MaterialEntity>>
 
     @Query("""
@@ -20,6 +20,7 @@ interface MaterialDao {
              OR m.name LIKE '%' || :query || '%' 
              OR mk.name LIKE '%' || :query || '%'
              OR p.name LIKE '%' || :query || '%')
+        ORDER BY m.materialId ASC
     """)
     fun getMaterialsFiltered(query: String, sectionId: String?): Flow<List<MaterialEntity>>
 
