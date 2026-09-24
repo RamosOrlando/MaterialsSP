@@ -24,6 +24,10 @@ class GetMaterialsUseCase(
         return repository.updateMaterial(material)
     }
 
+    suspend fun deleteMaterial(materialId: String): Resource<Unit> {
+        return repository.deleteMaterial(materialId)
+    }
+
     suspend fun getNextIndex(sectionId: String): Int {
         return repository.getMaterialCount(sectionId) + 1
     }

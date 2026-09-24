@@ -36,6 +36,9 @@ interface MaterialDao {
     @Query("SELECT COUNT(DISTINCT SUBSTR(materialId, 1, LENGTH(:sectionId) + 4)) FROM Material WHERE sectionId = :sectionId")
     fun getMaterialCountFlow(sectionId: String): Flow<Int>
 
+    @Query("DELETE FROM Material WHERE materialId = :materialId")
+    suspend fun deleteMaterial(materialId: String)
+
     @Query("DELETE FROM Material")
     suspend fun clearAll()
 }

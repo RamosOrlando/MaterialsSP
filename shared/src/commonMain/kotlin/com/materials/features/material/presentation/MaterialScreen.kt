@@ -72,6 +72,7 @@ fun MaterialScreen(
     
     var editingMaterial by remember { mutableStateOf<Material?>(null) }
     var editingProviderName by remember { mutableStateOf<String?>(null) }
+    var deletingMaterial by remember { mutableStateOf<Material?>(null) }
     var bulkEditingMaterials by remember { mutableStateOf<List<Material>?>(null) }
     var creatingForMakerMaterial by remember { mutableStateOf<Material?>(null) }
     var isCreatingMaterial by remember { mutableStateOf(false) }
@@ -105,6 +106,9 @@ fun MaterialScreen(
             editingMaterial = item.material
             editingProviderName = item.providerName
         },
+        onDeleteMaterial = { item ->
+            deletingMaterial = item.material
+        },
         onBulkEdit = { bulkEditingMaterials = it },
         onAddMaterial = { isCreatingMaterial = true },
         onCreateForMaker = { creatingForMakerMaterial = it },
@@ -128,6 +132,17 @@ fun MaterialScreen(
                 viewModel.onEvent(MaterialEvent.UpdateMaterial(updatedMaterial))
                 editingMaterial = null
                 editingProviderName = null
+            }
+        )
+    }
+
+    deletingMaterial?.let { material ->
+        DeleteMaterialDialog(
+            material = material,
+            onDismiss = { deletingMaterial = null },
+            onConfirm = {
+                viewModel.onEvent(MaterialEvent.DeleteMaterial(material.materialId))
+                deletingMaterial = null
             }
         )
     }
@@ -201,6 +216,7 @@ fun MaterialScreenContent(
     onBackClick: () -> Unit = {},
     onProceed: () -> Unit = {},
     onEditMaterial: (MaterialItem) -> Unit = {},
+    onDeleteMaterial: (MaterialItem) -> Unit = {},
     onBulkEdit: (List<Material>) -> Unit = {},
     onAddMaterial: () -> Unit = {},
     onCreateForMaker: (Material) -> Unit = {},
@@ -351,6 +367,7 @@ fun MaterialScreenContent(
                                                 }
                                             },
                                             onEdit = { onEditMaterial(materialItem) },
+                                            onDelete = { onDeleteMaterial(materialItem) },
                                             modifier = Modifier.padding(start = 16.dp)
                                         )
                                     }
@@ -544,6 +561,7 @@ fun MakerCard(
     canEdit: Boolean = true,
     onSelect: (String) -> Unit = {},
     onEdit: () -> Unit = {},
+    onDelete: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val material = materialItem.material
@@ -622,6 +640,18 @@ fun MakerCard(
                                 modifier = Modifier.size(18.dp)
                             )
                         }
+
+                        IconButton(
+                            onClick = { onDelete() },
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = "Borrar",
+                                tint = MaterialTheme.colorScheme.error,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
                     }
                 }
             }
@@ -642,7 +672,19 @@ fun EditMaterialDialog(
     val isPriceCreation = material.historyId == null
     val isPriceUpdate = material.historyId != null
 
-    var providerId by remember { mutableStateOf(material.providerId ?: "") }
+    val initialProvider = remember(material.providerId, providers) {
+        providers.find { it.providerId == material.providerId }
+    }
+
+    var providerSearchQuery by remember {
+        mutableStateOf(
+            if (initialProvider != null) "${initialProvider.providerId} - ${initialProvider.name}"
+            else material.providerId ?: ""
+        )
+    }
+    var selectedProviderId by remember { mutableStateOf<String?>(material.providerId) }
+    var providerExpanded by remember { mutableStateOf(false) }
+
     var priceStr by remember { mutableStateOf(material.price?.toString() ?: "") }
     
     var priceError by remember { mutableStateOf<String?>(null) }
@@ -706,22 +748,56 @@ fun EditMaterialDialog(
                 }
 
                 if (isPriceCreation) {
-                    OutlinedTextField(
-                        value = providerId,
-                        onValueChange = { 
-                            providerId = it
-                            providerError = null
-                        },
-                        label = { Text("ID Proveedor") },
-                        isError = providerError != null,
-                        supportingText = {
-                            if (providerError != null) {
-                                Text(text = providerError!!, color = MaterialTheme.colorScheme.error)
+                    val filteredProviders = remember(providerSearchQuery, providers) {
+                        providers.filter {
+                            it.providerId.contains(providerSearchQuery, ignoreCase = true) ||
+                                    it.name.contains(providerSearchQuery, ignoreCase = true)
+                        }
+                    }
+
+                    ExposedDropdownMenuBox(
+                        expanded = providerExpanded,
+                        onExpandedChange = { providerExpanded = !providerExpanded },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        OutlinedTextField(
+                            value = providerSearchQuery,
+                            onValueChange = { query ->
+                                providerSearchQuery = query
+                                selectedProviderId = providers.find { 
+                                    it.providerId.equals(query.trim(), ignoreCase = true) 
+                                }?.providerId
+                                providerExpanded = true
+                                providerError = null
+                            },
+                            label = { Text("Buscar Proveedor") },
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = providerExpanded) },
+                            isError = providerError != null,
+                            supportingText = if (providerError != null) {
+                                { Text(providerError!!, color = MaterialTheme.colorScheme.error) }
+                            } else null,
+                            modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable).fillMaxWidth(),
+                            singleLine = true
+                        )
+                        if (filteredProviders.isNotEmpty()) {
+                            ExposedDropdownMenu(
+                                expanded = providerExpanded,
+                                onDismissRequest = { providerExpanded = false }
+                            ) {
+                                filteredProviders.forEach { provider ->
+                                    DropdownMenuItem(
+                                        text = { Text("${provider.providerId} - ${provider.name}") },
+                                        onClick = {
+                                            providerSearchQuery = "${provider.providerId} - ${provider.name}"
+                                            selectedProviderId = provider.providerId
+                                            providerExpanded = false
+                                            providerError = null
+                                        }
+                                    )
+                                }
                             }
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true
-                    )
+                        }
+                    }
                 }
 
                 OutlinedTextField(
@@ -752,17 +828,25 @@ fun EditMaterialDialog(
                     val cleanPriceStr = priceStr.trim()
                     val parsedPrice = cleanPriceStr.toDoubleOrNull()
                     
-                    val providerExists = providers.any { it.providerId == providerId.trim() }
-                    
+                    val matchedProvider = if (isPriceCreation) {
+                        selectedProviderId?.let { id -> providers.find { it.providerId == id } }
+                            ?: providers.find { 
+                                it.providerId.equals(providerSearchQuery.trim(), ignoreCase = true) ||
+                                "${it.providerId} - ${it.name}".equals(providerSearchQuery.trim(), ignoreCase = true)
+                            }
+                    } else null
+
+                    val finalProviderId = matchedProvider?.providerId
+
                     if (parsedPrice == null) {
                         priceError = "Introduce un número válido"
-                    } else if (isPriceCreation && !providerExists) {
-                        providerError = "El ID de proveedor no existe"
+                    } else if (isPriceCreation && finalProviderId == null) {
+                        providerError = "Selecciona un proveedor de la lista"
                     } else {
                         onConfirm(
                             material.copy(
                                 historyId = historyId,
-                                providerId = providerId.trim().ifBlank { null },
+                                providerId = if (isPriceCreation) finalProviderId else material.providerId,
                                 price = parsedPrice,
                                 quoteDate = quoteDate
                             )
@@ -1252,6 +1336,75 @@ fun CreateMaterialForMakerDialog(
                 colors = ButtonDefaults.buttonColors(containerColor = IndustrialOrange)
             ) {
                 Text("Crear material")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancelar")
+            }
+        }
+    )
+}
+
+@Composable
+fun DeleteMaterialDialog(
+    material: Material,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit
+) {
+    var deleteInputText by remember { mutableStateOf("") }
+    val isDeleteEnabled = deleteInputText.trim() == "Borrar"
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { 
+            Text(
+                text = "Eliminar Material", 
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.error
+            ) 
+        },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(
+                    text = "¿Está seguro de que desea eliminar el material '${material.name}'?",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = "Para proceder con el borrado, por favor introduzca la palabra \"Borrar\":",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontWeight = FontWeight.Medium
+                )
+                OutlinedTextField(
+                    value = deleteInputText,
+                    onValueChange = { deleteInputText = it },
+                    placeholder = { Text("Escriba \"Borrar\"") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = MaterialTheme.colorScheme.error,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outline
+                    )
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = onConfirm,
+                enabled = isDeleteEnabled,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.error,
+                    contentColor = MaterialTheme.colorScheme.onError,
+                    disabledContainerColor = MaterialTheme.colorScheme.error.copy(alpha = 0.3f),
+                    disabledContentColor = MaterialTheme.colorScheme.onError.copy(alpha = 0.5f)
+                )
+            ) {
+                Text("Borrar")
             }
         },
         dismissButton = {

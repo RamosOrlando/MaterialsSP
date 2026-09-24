@@ -19,13 +19,15 @@ import com.materials.core.database.provider.ProviderEntity
             entity = MaterialEntity::class,
             parentColumns = ["materialId"],
             childColumns = ["materialId"],
-            onDelete = ForeignKey.NO_ACTION
+            onDelete = ForeignKey.CASCADE,
+            onUpdate = ForeignKey.CASCADE
         ),
         ForeignKey(
             entity = ProviderEntity::class,
             parentColumns = ["providerId"],
             childColumns = ["providerId"],
-            onDelete = ForeignKey.NO_ACTION
+            onDelete = ForeignKey.NO_ACTION,
+            onUpdate = ForeignKey.NO_ACTION
         )
     ]
 )

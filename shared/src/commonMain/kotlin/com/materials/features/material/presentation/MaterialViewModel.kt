@@ -46,6 +46,7 @@ sealed interface MaterialEvent {
     data class ToggleMaterialSelection(val materialId: String) : MaterialEvent
     data class UpdateMaterial(val material: Material) : MaterialEvent
     data class CreateMaterial(val material: Material) : MaterialEvent
+    data class DeleteMaterial(val materialId: String) : MaterialEvent
     data class BulkUpdateMaterials(val updatedMaterials: List<Material>) : MaterialEvent
     object ClearError : MaterialEvent
     object ClearSelection : MaterialEvent
@@ -188,6 +189,17 @@ class MaterialViewModel(
                     _isRefreshing.value = true
                     _refreshError.value = null
                     val result = getMaterialsUseCase.updateMaterial(event.material)
+                    if (result is Resource.Error) {
+                        _refreshError.value = result.message
+                    }
+                    _isRefreshing.value = false
+                }
+            }
+            is MaterialEvent.DeleteMaterial -> {
+                viewModelScope.launch {
+                    _isRefreshing.value = true
+                    _refreshError.value = null
+                    val result = getMaterialsUseCase.deleteMaterial(event.materialId)
                     if (result is Resource.Error) {
                         _refreshError.value = result.message
                     }

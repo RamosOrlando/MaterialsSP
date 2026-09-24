@@ -23,7 +23,7 @@ import com.materials.core.database.user.*
     MakerEntity::class, MaterialEntity::class, ProviderEntity::class,
     PriceHistoryEntity::class, ProfileEntity::class,
     UserEntity::class, UserRoleEntity::class, UserProfessionEntity::class,
-    UserPlanEntity::class, SubscriptionHistoryEntity::class], version = 17)
+    UserPlanEntity::class, SubscriptionHistoryEntity::class], version = 18)
 @ConstructedBy(AppDatabaseConstructor::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun categoryDao(): CategoryDao

@@ -36,6 +36,16 @@ class SupabaseMaterialDataSource(
         Unit
     }
 
+    override suspend fun deleteMaterial(materialId: String): Unit = withContext(Dispatchers.IO) {
+        supabaseClient.postgrest["Material"]
+            .delete {
+                filter {
+                    eq("materialId", materialId)
+                }
+            }
+        Unit
+    }
+
     override fun observeMaterials(): Flow<Unit> = callbackFlow {
         // Wait for auth to be initialized to avoid invalid access token error
         supabaseClient.auth.sessionStatus.first { it !is SessionStatus.Initializing }

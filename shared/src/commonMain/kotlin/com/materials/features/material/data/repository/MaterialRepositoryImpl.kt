@@ -108,6 +108,16 @@ class MaterialRepositoryImpl(
         }
     }
 
+    override suspend fun deleteMaterial(materialId: String): Resource<Unit> = withContext(Dispatchers.IO) {
+        try {
+            remoteDataSource.deleteMaterial(materialId)
+            materialDao.deleteMaterial(materialId)
+            Resource.Success(Unit)
+        } catch (e: Exception) {
+            Resource.Error(e.message ?: "Error al eliminar material")
+        }
+    }
+
     override suspend fun getMaterialCount(sectionId: String): Int = withContext(Dispatchers.IO) {
         materialDao.getMaterialCount(sectionId)
     }
