@@ -208,8 +208,13 @@ fun SignUpScreenContent(
 
                             OutlinedTextField(
                                 value = uiState.cellphone,
-                                onValueChange = { onEvent(SignUpEvent.OnCellphoneChanged(it.trim())) },
-                                label = { Text("Celular") },
+                                onValueChange = { 
+                                    val trimmed = it.trim()
+                                    if (trimmed.length <= 8 && trimmed.all { char -> char.isDigit() }) {
+                                        onEvent(SignUpEvent.OnCellphoneChanged(trimmed))
+                                    }
+                                },
+                                label = { Text("Celular *") },
                                 modifier = Modifier.fillMaxWidth(),
                                 isError = uiState.cellphoneError != null,
                                 supportingText = if (uiState.cellphoneError != null) {
@@ -218,7 +223,7 @@ fun SignUpScreenContent(
                                 leadingIcon = {
                                     Icon(Icons.Default.Phone, contentDescription = null, tint = MaterialTheme.colorScheme.tertiary)
                                 },
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone, imeAction = ImeAction.Next),
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Next),
                                 singleLine = true,
                                 shape = IndustrialShapes.small,
                                 colors = signUpTextFieldColors()

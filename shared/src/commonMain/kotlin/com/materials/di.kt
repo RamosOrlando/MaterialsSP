@@ -58,6 +58,7 @@ import com.materials.features.user.data.remote.SupabaseUserDataSource
 import com.materials.features.user.data.remote.UserRemoteDataSource
 import com.materials.features.user.data.repository.UserRepositoryImpl
 import com.materials.features.user.domain.repository.UserRepository
+import com.materials.features.auth.di.authModule
 import org.koin.core.context.startKoin
 import org.koin.core.module.Module
 import org.koin.dsl.KoinAppDeclaration
@@ -105,7 +106,7 @@ val dataModule = module {
     factory<UserRemoteDataSource> { SupabaseUserDataSource(get()) }
     single<UserRepository> { UserRepositoryImpl(get(), get()) }
     
-    single<AuthRepository> { AuthRepositoryImpl(get(), get()) }
+    // AuthRepository is provided by authModule
 
     single<SyncRepository> { SyncRepositoryImpl(get(), get(), get(), get(), get(), get(), get()) }
     
@@ -131,8 +132,7 @@ val viewModelModule = module {
     viewModelOf(::MaterialViewModel)
     viewModelOf(::PriceHistoryViewModel)
     viewModelOf(::ProviderViewModel)
-    viewModelOf(::LoginViewModel)
-    viewModelOf(::SignUpViewModel)
+    // LoginViewModel and SignUpViewModel are provided by authModule
     viewModelOf(::NavigationViewModel)
     viewModelOf(::MainViewModel)
     factory { (materialIds: List<String>, initialQuantities: Map<String, Double>?) -> 
@@ -145,6 +145,6 @@ expect val platformModule: Module
 fun initKoin(config: KoinAppDeclaration? = null) {
     startKoin {
         config?.invoke(this)
-        modules(dataModule, domainModule, viewModelModule, platformModule)
+        modules(dataModule, domainModule, viewModelModule, authModule, platformModule)
     }
 }

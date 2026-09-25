@@ -678,7 +678,7 @@ fun EditMaterialDialog(
 
     var providerSearchQuery by remember {
         mutableStateOf(
-            if (initialProvider != null) "${initialProvider.providerId} - ${initialProvider.name}"
+            if (initialProvider != null) "${initialProvider.providerId} - ${initialProvider.name}${if (!initialProvider.city.isNullOrBlank()) " - ${initialProvider.city}" else ""}"
             else material.providerId ?: ""
         )
     }
@@ -751,7 +751,8 @@ fun EditMaterialDialog(
                     val filteredProviders = remember(providerSearchQuery, providers) {
                         providers.filter {
                             it.providerId.contains(providerSearchQuery, ignoreCase = true) ||
-                                    it.name.contains(providerSearchQuery, ignoreCase = true)
+                                    it.name.contains(providerSearchQuery, ignoreCase = true) ||
+                                    (it.city != null && it.city.contains(providerSearchQuery, ignoreCase = true))
                         }
                     }
 
@@ -770,7 +771,7 @@ fun EditMaterialDialog(
                                 providerExpanded = true
                                 providerError = null
                             },
-                            label = { Text("Buscar Proveedor") },
+                            label = { Text("Buscar Proveedor (Nombre o Ciudad)") },
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = providerExpanded) },
                             isError = providerError != null,
                             supportingText = if (providerError != null) {
@@ -785,10 +786,16 @@ fun EditMaterialDialog(
                                 onDismissRequest = { providerExpanded = false }
                             ) {
                                 filteredProviders.forEach { provider ->
+                                    val displayText = buildString {
+                                        append("${provider.providerId} - ${provider.name}")
+                                        if (!provider.city.isNullOrBlank()) {
+                                            append(" - ${provider.city}")
+                                        }
+                                    }
                                     DropdownMenuItem(
-                                        text = { Text("${provider.providerId} - ${provider.name}") },
+                                        text = { Text(displayText) },
                                         onClick = {
-                                            providerSearchQuery = "${provider.providerId} - ${provider.name}"
+                                            providerSearchQuery = displayText
                                             selectedProviderId = provider.providerId
                                             providerExpanded = false
                                             providerError = null

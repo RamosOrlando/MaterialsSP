@@ -3,6 +3,7 @@ package com.materials.features.auth.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.materials.features.auth.domain.repository.AuthRepository
+import com.materials.features.auth.domain.util.AuthErrorMapper
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -65,8 +66,13 @@ class LoginViewModel(
 
     private fun sendForgotPasswordEmail() {
         val email = uiState.value.forgotPasswordEmail.trim()
-        if (email.isEmpty()) {
-            _uiState.update { it.copy(forgotPasswordError = "Ingresa tu correo electrónico") }
+        if (email.isBlank()) {
+            _uiState.update { it.copy(forgotPasswordError = "Por favor, ingresa tu correo electrónico") }
+            return
+        }
+
+        if (!AuthErrorMapper.isEmailValid(email)) {
+            _uiState.update { it.copy(forgotPasswordError = "El correo electrónico no es válido. Escribe un formato correcto (ejemplo@dominio.com)") }
             return
         }
 
@@ -76,7 +82,12 @@ class LoginViewModel(
             result.onSuccess {
                 _uiState.update { it.copy(forgotPasswordLoading = false, forgotPasswordStep = ForgotPasswordStep.OTP) }
             }.onFailure { e ->
-                _uiState.update { it.copy(forgotPasswordLoading = false, forgotPasswordError = e.message ?: "Error al enviar correo") }
+                _uiState.update { 
+                    it.copy(
+                        forgotPasswordLoading = false, 
+                        forgotPasswordError = AuthErrorMapper.mapThrowableToUserMessage(e)
+                    ) 
+                }
             }
         }
     }
@@ -84,7 +95,7 @@ class LoginViewModel(
     private fun verifyForgotPasswordOtp() {
         val state = uiState.value
         if (state.forgotPasswordOtp.length != 6) {
-            _uiState.update { it.copy(forgotPasswordError = "El código debe ser de 6 dígitos") }
+            _uiState.update { it.copy(forgotPasswordError = "El código de verificación debe ser de 6 dígitos") }
             return
         }
 
@@ -94,15 +105,24 @@ class LoginViewModel(
             result.onSuccess {
                 _uiState.update { it.copy(forgotPasswordLoading = false, forgotPasswordStep = ForgotPasswordStep.NEW_PASSWORD) }
             }.onFailure { e ->
-                _uiState.update { it.copy(forgotPasswordLoading = false, forgotPasswordError = e.message ?: "Código inválido") }
+                _uiState.update { 
+                    it.copy(
+                        forgotPasswordLoading = false, 
+                        forgotPasswordError = AuthErrorMapper.mapThrowableToUserMessage(e)
+                    ) 
+                }
             }
         }
     }
 
     private fun resetPassword() {
         val state = uiState.value
-        if (state.forgotPasswordNewPassword.isEmpty()) {
-            _uiState.update { it.copy(forgotPasswordError = "Ingresa la nueva contraseña") }
+        if (state.forgotPasswordNewPassword.isBlank()) {
+            _uiState.update { it.copy(forgotPasswordError = "Por favor, ingresa tu nueva contraseña") }
+            return
+        }
+        if (state.forgotPasswordNewPassword.length < 6) {
+            _uiState.update { it.copy(forgotPasswordError = "La contraseña debe tener al menos 6 caracteres") }
             return
         }
         if (state.forgotPasswordNewPassword != state.forgotPasswordConfirmPassword) {
@@ -116,7 +136,12 @@ class LoginViewModel(
             result.onSuccess {
                 _uiState.update { it.copy(forgotPasswordLoading = false, forgotPasswordSuccess = true) }
             }.onFailure { e ->
-                _uiState.update { it.copy(forgotPasswordLoading = false, forgotPasswordError = e.message ?: "Error al actualizar contraseña") }
+                _uiState.update { 
+                    it.copy(
+                        forgotPasswordLoading = false, 
+                        forgotPasswordError = AuthErrorMapper.mapThrowableToUserMessage(e)
+                    ) 
+                }
             }
         }
     }
@@ -129,8 +154,23 @@ class LoginViewModel(
         val email = uiState.value.email.trim()
         val password = uiState.value.password
 
-        if (email.isBlank() || password.isBlank()) {
-            _uiState.update { it.copy(error = "Por favor completa todos los campos") }
+        if (email.isBlank() && password.isBlank()) {
+            _uiState.update { it.copy(error = "Por favor, ingresa tu correo electrónico y contraseña") }
+            return
+        }
+
+        if (email.isBlank()) {
+            _uiState.update { it.copy(error = "Por favor, ingresa tu correo electrónico") }
+            return
+        }
+
+        if (!AuthErrorMapper.isEmailValid(email)) {
+            _uiState.update { it.copy(error = "El correo electrónico no es válido. Escribe un formato correcto (ejemplo@dominio.com)") }
+            return
+        }
+
+        if (password.isBlank()) {
+            _uiState.update { it.copy(error = "Por favor, ingresa tu contraseña") }
             return
         }
 
@@ -140,7 +180,12 @@ class LoginViewModel(
             result.onSuccess {
                 _uiState.update { it.copy(isLoading = false, isSuccess = true) }
             }.onFailure { e ->
-                _uiState.update { it.copy(isLoading = false, error = e.message ?: "Error al iniciar sesión") }
+                _uiState.update { 
+                    it.copy(
+                        isLoading = false, 
+                        error = AuthErrorMapper.mapThrowableToUserMessage(e)
+                    ) 
+                }
             }
         }
     }
@@ -160,7 +205,12 @@ class LoginViewModel(
             result.onSuccess {
                 _uiState.update { it.copy(isLoading = false, isSuccess = true) }
             }.onFailure { e ->
-                _uiState.update { it.copy(isLoading = false, error = e.message ?: "Error al registrarse") }
+                _uiState.update { 
+                    it.copy(
+                        isLoading = false, 
+                        error = AuthErrorMapper.mapThrowableToUserMessage(e)
+                    ) 
+                }
             }
         }
     }

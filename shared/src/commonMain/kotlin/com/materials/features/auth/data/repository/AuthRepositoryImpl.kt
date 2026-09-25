@@ -164,6 +164,9 @@ class AuthRepositoryImpl(
 
     override suspend fun awaitInitialization() {
         try {
+            checkFreshInstallAndClearSessionIfNeeded {
+                supabaseClient.auth.signOut()
+            }
             supabaseClient.auth.awaitInitialization()
         } catch (e: Exception) {
             // If initialization fails (e.g. network error during first refresh)

@@ -447,6 +447,20 @@ private fun ErrorState(message: String, onRetry: () -> Unit) {
     }
 }
 
+enum class BoliviaCity(val cityName: String) {
+    ORURO("Oruro"),
+    LA_PAZ("La Paz"),
+    SANTA_CRUZ("Santa Cruz"),
+    COCHABAMBA("Cochabamba"),
+    POTOSI("Potosí"),
+    SUCRE("Sucre"),
+    TARIJA("Tarija");
+
+    companion object {
+        val allNames: List<String> = entries.map { it.cityName }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddProviderDialog(
@@ -515,15 +529,39 @@ fun AddProviderDialog(
                     )
                 )
 
-                OutlinedTextField(
-                    value = state.city,
-                    onValueChange = { onEvent(ProviderEvent.OnCityChanged(it)) },
-                    label = { Text("Ciudad") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    shape = IndustrialShapes.small,
-                    isError = state.error?.contains("ciudad", ignoreCase = true) == true
-                )
+                var cityExpanded by remember { mutableStateOf(false) }
+
+                ExposedDropdownMenuBox(
+                    expanded = cityExpanded,
+                    onExpandedChange = { cityExpanded = !cityExpanded },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    OutlinedTextField(
+                        value = state.city,
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Ciudad") },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = cityExpanded) },
+                        modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable).fillMaxWidth(),
+                        singleLine = true,
+                        shape = IndustrialShapes.small,
+                        isError = state.error?.contains("ciudad", ignoreCase = true) == true
+                    )
+                    ExposedDropdownMenu(
+                        expanded = cityExpanded,
+                        onDismissRequest = { cityExpanded = false }
+                    ) {
+                        BoliviaCity.entries.forEach { city ->
+                            DropdownMenuItem(
+                                text = { Text(city.cityName) },
+                                onClick = {
+                                    onEvent(ProviderEvent.OnCityChanged(city.cityName))
+                                    cityExpanded = false
+                                }
+                            )
+                        }
+                    }
+                }
 
                 OutlinedTextField(
                     value = state.email,

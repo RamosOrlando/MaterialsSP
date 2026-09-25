@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.materials.core.domain.util.Resource
 import com.materials.features.auth.domain.repository.AuthRepository
+import com.materials.features.auth.domain.util.AuthErrorMapper
 import com.materials.features.user.domain.model.User
 import com.materials.features.user.domain.model.UserProfession
 import com.materials.features.user.domain.model.UserRole
@@ -12,6 +13,7 @@ import com.materials.features.user.domain.model.SubscriptionHistory
 import com.materials.features.user.domain.repository.UserRepository
 import com.materials.core.common.util.getCurrentIsoDate
 import com.materials.core.common.util.randomUUID
+import com.materials.core.util.getDevicePhoneNumber
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.plus
@@ -80,6 +82,13 @@ class SignUpViewModel(
     private var registeredUserId: String? = null
 
     init {
+        try {
+            val devicePhone = getDevicePhoneNumber()
+            if (!devicePhone.isNullOrBlank() && devicePhone.length == 8) {
+                _uiState.update { it.copy(cellphone = devicePhone) }
+            }
+        } catch (_: Exception) {}
+
         // Observar Roles
         userRepository.getRolesFlow()
             .onEach { res ->
@@ -218,7 +227,10 @@ class SignUpViewModel(
             hasError = true
         }
         if (trimmedCellphone.isEmpty()) {
-            cellphoneError = "El celular es obligatorio"
+            cellphoneError = "El número de celular es obligatorio"
+            hasError = true
+        } else if (trimmedCellphone.toIntOrNull() == null || trimmedCellphone.length != 8) {
+            cellphoneError = "El número de celular debe tener exactamente 8 dígitos"
             hasError = true
         }
         if (state.password.isEmpty()) {
@@ -301,7 +313,12 @@ class SignUpViewModel(
                 registeredUserId = userId
                 _uiState.update { it.copy(isLoading = false, waitingForEmailConfirmation = true) }
             }.onFailure { e ->
-                _uiState.update { it.copy(isLoading = false, error = e.message ?: "Error al registrarse") }
+                _uiState.update { 
+                    it.copy(
+                        isLoading = false, 
+                        error = AuthErrorMapper.mapThrowableToUserMessage(e)
+                    ) 
+                }
             }
         }
     }
@@ -309,7 +326,7 @@ class SignUpViewModel(
     private fun verifyOtp() {
         val state = uiState.value
         if (state.otpToken.length != 6) {
-            _uiState.update { it.copy(error = "El código debe ser de 6 dígitos") }
+            _uiState.update { it.copy(error = "El código de verificación debe ser de 6 dígitos") }
             return
         }
 
@@ -331,7 +348,12 @@ class SignUpViewModel(
                 userRepository.saveUser(newUser)
                 subscribeToPlan(state.selectedPlanId!!)
             }.onFailure { e ->
-                _uiState.update { it.copy(isLoading = false, error = e.message ?: "Código inválido") }
+                _uiState.update { 
+                    it.copy(
+                        isLoading = false, 
+                        error = AuthErrorMapper.mapThrowableToUserMessage(e)
+                    ) 
+                }
             }
         }
     }
