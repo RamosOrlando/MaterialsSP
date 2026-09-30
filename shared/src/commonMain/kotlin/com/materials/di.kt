@@ -59,6 +59,8 @@ import com.materials.features.user.data.remote.UserRemoteDataSource
 import com.materials.features.user.data.repository.UserRepositoryImpl
 import com.materials.features.user.domain.repository.UserRepository
 import com.materials.features.auth.di.authModule
+import com.materials.features.profile.di.profileModule
+import com.materials.features.export.di.exportModule
 import org.koin.core.context.startKoin
 import org.koin.core.module.Module
 import org.koin.dsl.KoinAppDeclaration
@@ -145,6 +147,6 @@ expect val platformModule: Module
 fun initKoin(config: KoinAppDeclaration? = null) {
     startKoin {
         config?.invoke(this)
-        modules(dataModule, domainModule, viewModelModule, authModule, platformModule)
+        modules(dataModule, domainModule, viewModelModule, authModule, profileModule, exportModule, platformModule)
     }
 }

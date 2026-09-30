@@ -452,6 +452,7 @@ enum class BoliviaCity(val cityName: String) {
     LA_PAZ("La Paz"),
     SANTA_CRUZ("Santa Cruz"),
     COCHABAMBA("Cochabamba"),
+    EL_ALTO("El Alto"),
     POTOSI("Potosí"),
     SUCRE("Sucre"),
     TARIJA("Tarija");
@@ -633,7 +634,7 @@ fun ProviderScreenSuccessPreview() {
                         name = "Suministros Industriales",
                         address = "Calle Montesinos No. 200",
                         city = "Madrid",
-                        telephone = 34912345678L,
+                        telephone = "34912345678",
                         email = "contacto@suministros.es",
                         imagePath = ""
                     ),
@@ -642,7 +643,7 @@ fun ProviderScreenSuccessPreview() {
                         name = "Ferretería Central",
                         address = "Av. Brasil, entre Santa Barbara",
                         city = "Barcelona",
-                        telephone = 34934567890L,
+                        telephone = "34934567890",
                         email = "info@ferreteriacentral.com",
                         imagePath = ""
                     )

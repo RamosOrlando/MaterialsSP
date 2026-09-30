@@ -41,6 +41,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.materials.features.maker.domain.model.Maker
 import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
+import com.materials.features.provider.presentation.BoliviaCity
 
 @Composable
 fun MaterialScreen(
@@ -678,7 +679,7 @@ fun EditMaterialDialog(
 
     var providerSearchQuery by remember {
         mutableStateOf(
-            if (initialProvider != null) "${initialProvider.providerId} - ${initialProvider.name}${if (!initialProvider.city.isNullOrBlank()) " - ${initialProvider.city}" else ""}"
+            if (initialProvider != null) "${initialProvider.providerId} - ${initialProvider.name}"
             else material.providerId ?: ""
         )
     }
@@ -748,11 +749,65 @@ fun EditMaterialDialog(
                 }
 
                 if (isPriceCreation) {
-                    val filteredProviders = remember(providerSearchQuery, providers) {
-                        providers.filter {
+                    var selectedCity by remember { mutableStateOf<BoliviaCity?>(
+                        initialProvider?.city?.let { cityStr ->
+                            BoliviaCity.entries.find { it.cityName.equals(cityStr, ignoreCase = true) }
+                        }
+                    ) }
+                    var cityExpanded by remember { mutableStateOf(false) }
+
+                    // City Dropdown
+                    ExposedDropdownMenuBox(
+                        expanded = cityExpanded,
+                        onExpandedChange = { cityExpanded = !cityExpanded },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        OutlinedTextField(
+                            value = selectedCity?.cityName ?: "",
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text("Filtrar por Ciudad (Opcional)") },
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = cityExpanded) },
+                            modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable).fillMaxWidth(),
+                            singleLine = true
+                        )
+                        ExposedDropdownMenu(
+                            expanded = cityExpanded,
+                            onDismissRequest = { cityExpanded = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("Todas las ciudades") },
+                                onClick = {
+                                    selectedCity = null
+                                    cityExpanded = false
+                                    providerSearchQuery = ""
+                                    selectedProviderId = null
+                                }
+                            )
+                            BoliviaCity.entries.forEach { city ->
+                                DropdownMenuItem(
+                                    text = { Text(city.cityName) },
+                                    onClick = {
+                                        selectedCity = city
+                                        cityExpanded = false
+                                        providerSearchQuery = ""
+                                        selectedProviderId = null
+                                    }
+                                )
+                            }
+                        }
+                    }
+
+                    val providersInCity = remember(selectedCity, providers) {
+                        providers.filter { provider ->
+                            selectedCity == null || provider.city.equals(selectedCity?.cityName, ignoreCase = true)
+                        }
+                    }
+
+                    val filteredProviders = remember(providerSearchQuery, providersInCity) {
+                        providersInCity.filter {
                             it.providerId.contains(providerSearchQuery, ignoreCase = true) ||
-                                    it.name.contains(providerSearchQuery, ignoreCase = true) ||
-                                    (it.city != null && it.city.contains(providerSearchQuery, ignoreCase = true))
+                                    it.name.contains(providerSearchQuery, ignoreCase = true)
                         }
                     }
 
@@ -765,13 +820,13 @@ fun EditMaterialDialog(
                             value = providerSearchQuery,
                             onValueChange = { query ->
                                 providerSearchQuery = query
-                                selectedProviderId = providers.find { 
+                                selectedProviderId = providersInCity.find { 
                                     it.providerId.equals(query.trim(), ignoreCase = true) 
                                 }?.providerId
                                 providerExpanded = true
                                 providerError = null
                             },
-                            label = { Text("Buscar Proveedor (Nombre o Ciudad)") },
+                            label = { Text("Buscar Proveedor (ID o Nombre)") },
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = providerExpanded) },
                             isError = providerError != null,
                             supportingText = if (providerError != null) {
@@ -786,12 +841,7 @@ fun EditMaterialDialog(
                                 onDismissRequest = { providerExpanded = false }
                             ) {
                                 filteredProviders.forEach { provider ->
-                                    val displayText = buildString {
-                                        append("${provider.providerId} - ${provider.name}")
-                                        if (!provider.city.isNullOrBlank()) {
-                                            append(" - ${provider.city}")
-                                        }
-                                    }
+                                    val displayText = "${provider.providerId} - ${provider.name}"
                                     DropdownMenuItem(
                                         text = { Text(displayText) },
                                         onClick = {

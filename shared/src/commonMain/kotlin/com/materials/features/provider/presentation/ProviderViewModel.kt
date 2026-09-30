@@ -137,13 +137,14 @@ class ProviderViewModel(
             return
         }
 
-        // Check for duplicates (name + city)
+        // Check for duplicates (name + address + city)
         val currentProviders = (uiState.value as? ProviderUiState.Success)?.providers ?: emptyList()
         if (currentProviders.any { 
                 it.name.trim().equals(name, ignoreCase = true) && 
-                it.city?.trim().equals(city, ignoreCase = true) 
+                (it.address?.trim() ?: "").equals(address, ignoreCase = true) &&
+                it.city.trim().equals(city, ignoreCase = true)
             }) {
-            _createProviderState.update { it.copy(error = "El proveedor ya existe en esta ciudad") }
+            _createProviderState.update { it.copy(error = "El proveedor ya existe con este nombre, dirección y ciudad") }
             return
         }
 
@@ -157,8 +158,8 @@ class ProviderViewModel(
                 providerId = nextId.toString(),
                 name = name,
                 address = if (address.isEmpty()) null else address,
-                telephone = telephone.toLongOrNull(),
-                city = if (city.isEmpty()) null else city,
+                telephone = if (telephone.isEmpty()) null else telephone,
+                city = city, // city is now non-null
                 email = if (email.isEmpty()) null else email,
                 imagePath = if (imagePath.isEmpty()) null else imagePath
             )

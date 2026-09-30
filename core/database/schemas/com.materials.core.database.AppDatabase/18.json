@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 18,
-    "identityHash": "23e400aec1d0a1ca5fe8e47ca7f125d4",
+    "identityHash": "f381f0383677e7d0c669924a543081cb",
     "entities": [
       {
         "tableName": "Category",
@@ -239,7 +239,7 @@
       },
       {
         "tableName": "Provider",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`providerId` TEXT NOT NULL, `name` TEXT NOT NULL, `address` TEXT, `telephone` INTEGER, `city` TEXT, `email` TEXT, `imagePath` TEXT, PRIMARY KEY(`providerId`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`providerId` TEXT NOT NULL, `name` TEXT NOT NULL, `address` TEXT, `telephone` TEXT, `city` TEXT NOT NULL, `email` TEXT, `imagePath` TEXT, PRIMARY KEY(`providerId`))",
         "fields": [
           {
             "fieldPath": "providerId",
@@ -261,12 +261,13 @@
           {
             "fieldPath": "telephone",
             "columnName": "telephone",
-            "affinity": "INTEGER"
+            "affinity": "TEXT"
           },
           {
             "fieldPath": "city",
             "columnName": "city",
-            "affinity": "TEXT"
+            "affinity": "TEXT",
+            "notNull": true
           },
           {
             "fieldPath": "email",
@@ -287,14 +288,15 @@
         },
         "indices": [
           {
-            "name": "index_Provider_name_address",
+            "name": "index_Provider_name_address_city",
             "unique": true,
             "columnNames": [
               "name",
-              "address"
+              "address",
+              "city"
             ],
             "orders": [],
-            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_Provider_name_address` ON `${TABLE_NAME}` (`name`, `address`)"
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_Provider_name_address_city` ON `${TABLE_NAME}` (`name`, `address`, `city`)"
           }
         ]
       },
@@ -746,7 +748,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '23e400aec1d0a1ca5fe8e47ca7f125d4')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'f381f0383677e7d0c669924a543081cb')"
     ]
   }
 }
