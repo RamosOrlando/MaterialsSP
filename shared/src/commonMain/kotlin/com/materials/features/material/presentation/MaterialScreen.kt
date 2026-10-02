@@ -347,6 +347,7 @@ fun MaterialScreenContent(
                                     item(key = "header_$key") {
                                         MaterialHeaderCard(
                                             name = firstItem.material.name,
+                                            materialId = firstItem.material.materialId,
                                             unit = firstItem.material.unit,
                                             canEdit = userRole != UserRole.CLIENT,
                                             onEditClick = { onBulkEdit(items.map { it.material }) },
@@ -483,6 +484,7 @@ fun MaterialSearchBar(
 @Composable
 fun MaterialHeaderCard(
     name: String,
+    materialId: String? = null,
     unit: String,
     canEdit: Boolean = false,
     onEditClick: () -> Unit = {},
@@ -500,13 +502,23 @@ fun MaterialHeaderCard(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = name,
-                color = MaterialTheme.colorScheme.onSurface,
-                fontWeight = FontWeight.ExtraBold,
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.weight(1f)
-            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = name,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.ExtraBold,
+                    style = MaterialTheme.typography.titleMedium
+                )
+                if (!materialId.isNullOrBlank()) {
+                    Text(
+                        text = "ID: $materialId",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.padding(top = 2.dp)
+                    )
+                }
+            }
             
             if (unit.isNotEmpty()) {
                 Surface(
@@ -598,6 +610,17 @@ fun MakerCard(
                     )
                     
                     Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = "ID: ${material.materialId}",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = " • ",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                            style = MaterialTheme.typography.bodySmall
+                        )
                         Text(
                             text = "📅 ${formatDateToDisplay(material.quoteDate)}",
                             color = MaterialTheme.colorScheme.onSurfaceVariant,

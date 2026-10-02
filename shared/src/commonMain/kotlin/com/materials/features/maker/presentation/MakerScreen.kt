@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -23,12 +24,12 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.SubcomposeAsyncImage
 import com.materials.core.presentation.theme.*
 import com.materials.features.maker.domain.model.Maker
-import androidx.compose.ui.tooling.preview.Preview
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -80,88 +81,91 @@ fun MakerScreenContent(
                 .background(MaterialTheme.colorScheme.background)
         ) {
             // Header Content
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(bottom = 8.dp)
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
             ) {
-                IconButton(
-                    onClick = onBackClick,
-                    modifier = Modifier.size(32.dp)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(bottom = 8.dp)
                 ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Regresar",
-                        tint = MaterialTheme.colorScheme.onSurface
+                    IconButton(
+                        onClick = onBackClick,
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Regresar",
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Fabricantes",
+                        fontWeight = FontWeight.ExtraBold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        style = MaterialTheme.typography.headlineMedium.copy(
+                            fontSize = 28.sp,
+                            letterSpacing = (-0.5).sp
+                        )
                     )
                 }
-                Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "Fabricantes",
-                    fontWeight = FontWeight.ExtraBold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    style = MaterialTheme.typography.headlineMedium.copy(
-                        fontSize = 28.sp,
-                        letterSpacing = (-0.5).sp
-                    )
+                    text = "Explore los materiales por fabricante.",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodyMedium,
+                    lineHeight = 20.sp,
+                    modifier = Modifier.padding(start = 40.dp)
                 )
             }
-            Text(
-                text = "Explore los materiales por fabricante.",
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                style = MaterialTheme.typography.bodyMedium,
-                lineHeight = 20.sp,
-                modifier = Modifier.padding(start = 40.dp)
+
+            // Search Bar
+            MakerSearchBar(
+                query = searchQuery,
+                onQueryChange = { onEvent(MakerEvent.OnSearchQueryChanged(it)) }
             )
-        }
 
-        // Search Bar
-        MakerSearchBar(
-            query = searchQuery,
-            onQueryChange = { onEvent(MakerEvent.OnSearchQueryChanged(it)) }
-        )
+            Spacer(modifier = Modifier.height(8.dp))
 
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // Body Area
-        Box(modifier = Modifier.fillMaxSize().weight(1f)) {
-            when (val state = uiState) {
-                is MakerUiState.Loading -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
-                    }
-                }
-                is MakerUiState.Success -> {
-                    if (state.makers.isEmpty()) {
-                        EmptyState()
-                    } else {
-                        LazyVerticalGrid(
-                            columns = GridCells.Fixed(2),
-                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                            verticalArrangement = Arrangement.spacedBy(16.dp),
-                            horizontalArrangement = Arrangement.spacedBy(16.dp),
-                            modifier = Modifier.fillMaxSize()
+            // Body Area
+            Box(modifier = Modifier.fillMaxSize().weight(1f)) {
+                when (val state = uiState) {
+                    is MakerUiState.Loading -> {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
                         ) {
-                            items(state.makers, key = { it.makerId }) { maker ->
-                                MakerCard(maker = maker)
+                            CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                        }
+                    }
+                    is MakerUiState.Success -> {
+                        if (state.makers.isEmpty()) {
+                            EmptyState()
+                        } else {
+                            LazyVerticalGrid(
+                                columns = GridCells.Fixed(2),
+                                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                                verticalArrangement = Arrangement.spacedBy(16.dp),
+                                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                modifier = Modifier.fillMaxSize()
+                            ) {
+                                items(state.makers, key = { it.makerId }) { maker ->
+                                    MakerCard(
+                                        maker = maker,
+                                        onEditClick = { onEvent(MakerEvent.OnShowEditDialog(it)) }
+                                    )
+                                }
                             }
                         }
                     }
-                }
-                is MakerUiState.Error -> {
-                    ErrorState(message = state.message, onRetry = { onEvent(MakerEvent.Refresh) })
+                    is MakerUiState.Error -> {
+                        ErrorState(message = state.message, onRetry = { onEvent(MakerEvent.Refresh) })
+                    }
                 }
             }
         }
     }
-}
 
     if (createMakerState.showAddDialog) {
         val nextId = if (uiState is MakerUiState.Success) {
@@ -238,23 +242,26 @@ fun MakerSearchBar(
 @Composable
 fun MakerCard(
     maker: Maker,
+    onEditClick: (Maker) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
+    var menuExpanded by remember { mutableStateOf(false) }
+
     Box(
         modifier = modifier
             .fillMaxWidth()
             .height(140.dp)
             .clip(IndustrialShapes.medium)
-            .background(Color.White) // Mantener blanco para logos que suelen ser sobre fondo claro
+            .background(Color.White)
             .clickable { /* Navegar a los materiales del fabricante */ }
     ) {
         SubcomposeAsyncImage(
             model = maker.imagePath,
             contentDescription = maker.name,
-            contentScale = ContentScale.Fit, // Changed from Crop to Fit to see the full logo
+            contentScale = ContentScale.Fit,
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp), // Add padding so the logo doesn't touch the edges
+                .padding(16.dp),
             loading = {
                 Box(
                     modifier = Modifier
@@ -286,7 +293,49 @@ fun MakerCard(
             }
         )
 
+        // Botón de opciones con menú emergente
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(4.dp)
+        ) {
+            IconButton(
+                onClick = { menuExpanded = true },
+                modifier = Modifier
+                    .size(32.dp)
+                    .background(
+                        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.85f),
+                        shape = CircleShape
+                    )
+            ) {
+                Icon(
+                    imageVector = Icons.Default.MoreVert,
+                    contentDescription = "Opciones de Fabricante",
+                    tint = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
 
+            DropdownMenu(
+                expanded = menuExpanded,
+                onDismissRequest = { menuExpanded = false }
+            ) {
+                DropdownMenuItem(
+                    text = { Text("Editar Fabricante") },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Edit,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    },
+                    onClick = {
+                        menuExpanded = false
+                        onEditClick(maker)
+                    }
+                )
+            }
+        }
 
         Column(
             modifier = Modifier
@@ -317,7 +366,7 @@ fun MakerCard(
                 }
                 Text(
                     text = maker.name,
-                    color = IndustrialCharcoalDark, // Mantener oscuro sobre fondo blanco
+                    color = IndustrialCharcoalDark,
                     fontWeight = FontWeight.Bold,
                     style = MaterialTheme.typography.titleSmall.copy(
                         fontSize = 14.sp
@@ -415,11 +464,14 @@ fun AddMakerDialog(
     state: CreateMakerUiState,
     onEvent: (MakerEvent) -> Unit
 ) {
+    val isEditing = state.editingMaker != null
+    val displayId = if (isEditing) state.editingMaker.makerId else nextId
+
     AlertDialog(
         onDismissRequest = { onEvent(MakerEvent.OnDismissAddDialog) },
         title = {
             Text(
-                text = "Nuevo Fabricante",
+                text = if (isEditing) "Editar Fabricante" else "Nuevo Fabricante",
                 fontWeight = FontWeight.ExtraBold,
                 color = IndustrialOrange
             )
@@ -430,9 +482,9 @@ fun AddMakerDialog(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 OutlinedTextField(
-                    value = nextId,
+                    value = displayId,
                     onValueChange = {},
-                    label = { Text("ID Fabricante (Auto)") },
+                    label = { Text("ID Fabricante") },
                     modifier = Modifier.fillMaxWidth(),
                     readOnly = true,
                     enabled = false,
@@ -484,7 +536,7 @@ fun AddMakerDialog(
                         strokeWidth = 2.dp
                     )
                 } else {
-                    Text("Guardar")
+                    Text(if (isEditing) "Guardar Cambios" else "Guardar")
                 }
             }
         },

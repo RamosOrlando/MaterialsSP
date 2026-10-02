@@ -6,12 +6,15 @@ import com.materials.core.domain.util.Resource
 import com.materials.features.provider.domain.model.Provider
 import com.materials.features.provider.domain.use_case.GetProvidersUseCase
 import com.materials.features.provider.domain.use_case.SaveProviderUseCase
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
 
 data class CreateProviderUiState(
     val showAddDialog: Boolean = false,
+    val editingProvider: Provider? = null,
     val name: String = "",
     val address: String = "",
     val telephone: String = "",
@@ -32,6 +35,7 @@ sealed interface ProviderEvent {
     data class OnSearchQueryChanged(val query: String) : ProviderEvent
     object Refresh : ProviderEvent
     object OnShowAddDialog : ProviderEvent
+    data class OnShowEditDialog(val provider: Provider) : ProviderEvent
     object OnDismissAddDialog : ProviderEvent
     data class OnNameChanged(val name: String) : ProviderEvent
     data class OnAddressChanged(val address: String) : ProviderEvent
@@ -55,7 +59,7 @@ class ProviderViewModel(
 
     private val _refreshError = MutableStateFlow<String?>(null)
 
-    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class, kotlinx.coroutines.FlowPreview::class)
+    @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
     val uiState: StateFlow<ProviderUiState> = combine(
         _searchQuery.debounce(300.milliseconds).flatMapLatest { query ->
             getProvidersUseCase.executeFlow(query)
@@ -94,7 +98,35 @@ class ProviderViewModel(
                 }
             }
             ProviderEvent.OnShowAddDialog -> {
-                _createProviderState.update { it.copy(showAddDialog = true, error = null) }
+                _createProviderState.update {
+                    CreateProviderUiState(
+                        showAddDialog = true,
+                        editingProvider = null,
+                        name = "",
+                        address = "",
+                        telephone = "",
+                        city = "Oruro",
+                        email = "",
+                        imagePath = "",
+                        error = null
+                    )
+                }
+            }
+            is ProviderEvent.OnShowEditDialog -> {
+                val provider = event.provider
+                _createProviderState.update {
+                    CreateProviderUiState(
+                        showAddDialog = true,
+                        editingProvider = provider,
+                        name = provider.name,
+                        address = provider.address ?: "",
+                        telephone = provider.telephone ?: "",
+                        city = if (provider.city.isBlank()) "Oruro" else provider.city,
+                        email = provider.email ?: "",
+                        imagePath = provider.imagePath ?: "",
+                        error = null
+                    )
+                }
             }
             ProviderEvent.OnDismissAddDialog -> {
                 _createProviderState.update { CreateProviderUiState() }
@@ -137,10 +169,12 @@ class ProviderViewModel(
             return
         }
 
-        // Check for duplicates (name + address + city)
+        val editingProvider = state.editingProvider
         val currentProviders = (uiState.value as? ProviderUiState.Success)?.providers ?: emptyList()
-        if (currentProviders.any { 
-                it.name.trim().equals(name, ignoreCase = true) && 
+
+        if (currentProviders.any {
+                it.providerId != editingProvider?.providerId &&
+                it.name.trim().equals(name, ignoreCase = true) &&
                 (it.address?.trim() ?: "").equals(address, ignoreCase = true) &&
                 it.city.trim().equals(city, ignoreCase = true)
             }) {
@@ -150,21 +184,30 @@ class ProviderViewModel(
 
         viewModelScope.launch {
             _createProviderState.update { it.copy(isLoading = true) }
-            
-            // Calculate next correlative ID
-            val nextId = (currentProviders.mapNotNull { it.providerId.toIntOrNull() }.maxOrNull() ?: 0) + 1
-            
-            val newProvider = Provider(
-                providerId = nextId.toString(),
-                name = name,
-                address = if (address.isEmpty()) null else address,
-                telephone = if (telephone.isEmpty()) null else telephone,
-                city = city, // city is now non-null
-                email = if (email.isEmpty()) null else email,
-                imagePath = if (imagePath.isEmpty()) null else imagePath
-            )
 
-            val result = saveProviderUseCase.execute(newProvider)
+            val providerToSave = if (editingProvider != null) {
+                editingProvider.copy(
+                    name = name,
+                    address = if (address.isEmpty()) null else address,
+                    telephone = if (telephone.isEmpty()) null else telephone,
+                    city = city,
+                    email = if (email.isEmpty()) null else email,
+                    imagePath = if (imagePath.isEmpty()) null else imagePath
+                )
+            } else {
+                val nextId = (currentProviders.mapNotNull { it.providerId.toIntOrNull() }.maxOrNull() ?: 0) + 1
+                Provider(
+                    providerId = nextId.toString(),
+                    name = name,
+                    address = if (address.isEmpty()) null else address,
+                    telephone = if (telephone.isEmpty()) null else telephone,
+                    city = city,
+                    email = if (email.isEmpty()) null else email,
+                    imagePath = if (imagePath.isEmpty()) null else imagePath
+                )
+            }
+
+            val result = saveProviderUseCase.execute(providerToSave)
             when (result) {
                 is Resource.Success -> {
                     _createProviderState.update { CreateProviderUiState() }

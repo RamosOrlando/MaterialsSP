@@ -6,9 +6,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -21,19 +18,18 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil3.compose.SubcomposeAsyncImage
 import com.materials.core.presentation.theme.*
 import com.materials.features.provider.domain.model.Provider
-import androidx.compose.ui.tooling.preview.Preview
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -153,7 +149,10 @@ fun ProviderScreenContent(
                                 modifier = Modifier.fillMaxSize()
                             ) {
                                 items(state.providers, key = { it.providerId }) { provider ->
-                                    ProviderCard(provider = provider)
+                                    ProviderCard(
+                                        provider = provider,
+                                        onEditClick = { onEvent(ProviderEvent.OnShowEditDialog(it)) }
+                                    )
                                 }
                             }
                         }
@@ -241,8 +240,11 @@ fun ProviderSearchBar(
 @Composable
 fun ProviderCard(
     provider: Provider,
+    onEditClick: (Provider) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
+    var menuExpanded by remember { mutableStateOf(false) }
+
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -271,7 +273,7 @@ fun ProviderCard(
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
-                    
+
                     if (!provider.address.isNullOrBlank()) {
                         Text(
                             text = provider.address,
@@ -290,7 +292,7 @@ fun ProviderCard(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        if (!provider.city.isNullOrBlank()) {
+                        if (provider.city.isNotBlank()) {
                             ProviderTag(
                                 text = provider.city,
                                 icon = Icons.Default.LocationOn,
@@ -316,19 +318,57 @@ fun ProviderCard(
                         }
                     }
                 }
-                
-                Surface(
-                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                    shape = IndustrialShapes.small,
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.padding(start = 8.dp)
                 ) {
-                    Text(
-                        text = "ID: ${provider.providerId}",
-                        color = MaterialTheme.colorScheme.primary,
-                        style = MaterialTheme.typography.labelSmall,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                        fontWeight = FontWeight.Bold
-                    )
+                    Surface(
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                        shape = IndustrialShapes.small
+                    ) {
+                        Text(
+                            text = "ID: ${provider.providerId}",
+                            color = MaterialTheme.colorScheme.primary,
+                            style = MaterialTheme.typography.labelSmall,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+
+                    Box {
+                        IconButton(
+                            onClick = { menuExpanded = true },
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.MoreVert,
+                                contentDescription = "Opciones de Proveedor",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+
+                        DropdownMenu(
+                            expanded = menuExpanded,
+                            onDismissRequest = { menuExpanded = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("Editar Proveedor") },
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Default.Edit,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                },
+                                onClick = {
+                                    menuExpanded = false
+                                    onEditClick(provider)
+                                }
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -338,7 +378,7 @@ fun ProviderCard(
 @Composable
 private fun ProviderTag(
     text: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    icon: ImageVector,
     containerColor: Color,
     contentColor: Color
 ) {
@@ -469,11 +509,14 @@ fun AddProviderDialog(
     state: CreateProviderUiState,
     onEvent: (ProviderEvent) -> Unit
 ) {
+    val isEditing = state.editingProvider != null
+    val displayId = if (isEditing) state.editingProvider.providerId else nextId
+
     AlertDialog(
         onDismissRequest = { onEvent(ProviderEvent.OnDismissAddDialog) },
         title = {
             Text(
-                text = "Nuevo Proveedor",
+                text = if (isEditing) "Editar Proveedor" else "Nuevo Proveedor",
                 fontWeight = FontWeight.ExtraBold,
                 color = IndustrialOrange
             )
@@ -486,9 +529,9 @@ fun AddProviderDialog(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 OutlinedTextField(
-                    value = nextId,
+                    value = displayId,
                     onValueChange = {},
-                    label = { Text("ID Proveedor (Auto)") },
+                    label = { Text("ID Proveedor") },
                     modifier = Modifier.fillMaxWidth(),
                     readOnly = true,
                     enabled = false,
@@ -526,7 +569,7 @@ fun AddProviderDialog(
                     singleLine = true,
                     shape = IndustrialShapes.small,
                     keyboardOptions = KeyboardOptions(
-                        keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
+                        keyboardType = KeyboardType.Number
                     )
                 )
 
@@ -572,7 +615,7 @@ fun AddProviderDialog(
                     singleLine = true,
                     shape = IndustrialShapes.small,
                     keyboardOptions = KeyboardOptions(
-                        keyboardType = androidx.compose.ui.text.input.KeyboardType.Email
+                        keyboardType = KeyboardType.Email
                     )
                 )
 
@@ -607,7 +650,7 @@ fun AddProviderDialog(
                         strokeWidth = 2.dp
                     )
                 } else {
-                    Text("Guardar")
+                    Text(if (isEditing) "Guardar Cambios" else "Guardar")
                 }
             }
         },

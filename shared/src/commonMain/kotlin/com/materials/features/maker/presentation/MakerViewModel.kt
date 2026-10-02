@@ -6,11 +6,13 @@ import com.materials.core.domain.util.Resource
 import com.materials.features.maker.domain.model.Maker
 import com.materials.features.maker.domain.use_case.GetMakersUseCase
 import com.materials.features.maker.domain.use_case.SaveMakerUseCase
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 data class CreateMakerUiState(
     val showAddDialog: Boolean = false,
+    val editingMaker: Maker? = null,
     val newName: String = "",
     val newImagePath: String = "",
     val error: String? = null,
@@ -27,6 +29,7 @@ sealed interface MakerEvent {
     data class OnSearchQueryChanged(val query: String) : MakerEvent
     object Refresh : MakerEvent
     object OnShowAddDialog : MakerEvent
+    data class OnShowEditDialog(val maker: Maker) : MakerEvent
     object OnDismissAddDialog : MakerEvent
     data class OnNewNameChanged(val name: String) : MakerEvent
     data class OnNewImagePathChanged(val path: String) : MakerEvent
@@ -46,7 +49,7 @@ class MakerViewModel(
 
     private val _refreshError = MutableStateFlow<String?>(null)
 
-    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    @OptIn(ExperimentalCoroutinesApi::class)
     val uiState: StateFlow<MakerUiState> = _searchQuery
         .flatMapLatest { query ->
             getMakersUseCase.executeFlow(query)
@@ -82,7 +85,26 @@ class MakerViewModel(
                 }
             }
             MakerEvent.OnShowAddDialog -> {
-                _createMakerState.update { it.copy(showAddDialog = true, error = null) }
+                _createMakerState.update {
+                    CreateMakerUiState(
+                        showAddDialog = true,
+                        editingMaker = null,
+                        newName = "",
+                        newImagePath = "",
+                        error = null
+                    )
+                }
+            }
+            is MakerEvent.OnShowEditDialog -> {
+                _createMakerState.update {
+                    CreateMakerUiState(
+                        showAddDialog = true,
+                        editingMaker = event.maker,
+                        newName = event.maker.name,
+                        newImagePath = event.maker.imagePath ?: "",
+                        error = null
+                    )
+                }
             }
             MakerEvent.OnDismissAddDialog -> {
                 _createMakerState.update { CreateMakerUiState() }
@@ -109,26 +131,32 @@ class MakerViewModel(
             return
         }
 
-        // Check for duplicates
+        val editingMaker = state.editingMaker
         val currentMakers = (uiState.value as? MakerUiState.Success)?.makers ?: emptyList()
-        if (currentMakers.any { it.name.trim().equals(name, ignoreCase = true) }) {
+
+        if (currentMakers.any { it.makerId != editingMaker?.makerId && it.name.trim().equals(name, ignoreCase = true) }) {
             _createMakerState.update { it.copy(error = "El fabricante ya existe") }
             return
         }
 
         viewModelScope.launch {
             _createMakerState.update { it.copy(isLoading = true) }
-            
-            // Calculate next correlative ID
-            val nextId = (currentMakers.mapNotNull { it.makerId.toIntOrNull() }.maxOrNull() ?: 0) + 1
-            
-            val newMaker = Maker(
-                makerId = nextId.toString(),
-                name = name,
-                imagePath = if (imagePath.isEmpty()) null else imagePath
-            )
 
-            val result = saveMakerUseCase.execute(newMaker)
+            val makerToSave = if (editingMaker != null) {
+                editingMaker.copy(
+                    name = name,
+                    imagePath = if (imagePath.isEmpty()) null else imagePath
+                )
+            } else {
+                val nextId = (currentMakers.mapNotNull { it.makerId.toIntOrNull() }.maxOrNull() ?: 0) + 1
+                Maker(
+                    makerId = nextId.toString(),
+                    name = name,
+                    imagePath = if (imagePath.isEmpty()) null else imagePath
+                )
+            }
+
+            val result = saveMakerUseCase.execute(makerToSave)
             when (result) {
                 is Resource.Success -> {
                     _createMakerState.update { CreateMakerUiState() }
