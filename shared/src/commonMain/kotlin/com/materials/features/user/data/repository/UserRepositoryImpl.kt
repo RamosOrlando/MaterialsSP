@@ -1,6 +1,6 @@
 package com.materials.features.user.data.repository
 
-import com.materials.core.domain.util.Resource
+import com.materials.core.domain.util.ResultState
 import com.materials.core.database.user.UserDao
 import com.materials.features.user.data.mapper.toDomain
 import com.materials.features.user.data.mapper.toEntity
@@ -17,7 +17,7 @@ class UserRepositoryImpl(
     private val remoteDataSource: UserRemoteDataSource
 ) : UserRepository {
 
-    override suspend fun refreshMetadata(): Resource<Unit> = withContext(Dispatchers.IO) {
+    override suspend fun refreshMetadata(): ResultState<Unit> = withContext(Dispatchers.IO) {
         try {
             println("UserRepository: Refreshing metadata (Roles, Professions, Plans)...")
             
@@ -35,96 +35,96 @@ class UserRepositoryImpl(
             userDao.insertPlans(plans.map { it.toEntity() })
             
             println("UserRepository: Metadata successfully synchronized to Room")
-            Resource.Success(Unit)
+            ResultState.Success(Unit)
         } catch (e: Exception) {
             println("UserRepository: ERROR refreshing metadata: ${e.message}")
             e.printStackTrace()
-            Resource.Error(e.message ?: "Error refreshing metadata")
+            ResultState.Error(e.message ?: "Error refreshing metadata")
         }
     }
 
-    override fun getRolesFlow(): Flow<Resource<List<UserRole>>> = 
+    override fun getRolesFlow(): Flow<ResultState<List<UserRole>>> =
         userDao.getRoles()
-            .map { entities -> Resource.Success(entities.map { it.toDomain() }) as Resource<List<UserRole>> }
-            .onStart { emit(Resource.Loading) }
-            .catch { emit(Resource.Error(it.message ?: "Error loading roles")) }
+            .map { entities -> ResultState.Success(entities.map { it.toDomain() }) as ResultState<List<UserRole>> }
+            .onStart { emit(ResultState.Loading) }
+            .catch { emit(ResultState.Error(it.message ?: "Error loading roles")) }
 
-    override fun getProfessionsFlow(): Flow<Resource<List<UserProfession>>> =
+    override fun getProfessionsFlow(): Flow<ResultState<List<UserProfession>>> =
         userDao.getProfessions()
-            .map { entities -> Resource.Success(entities.map { it.toDomain() }) as Resource<List<UserProfession>> }
-            .onStart { emit(Resource.Loading) }
-            .catch { emit(Resource.Error(it.message ?: "Error loading professions")) }
+            .map { entities -> ResultState.Success(entities.map { it.toDomain() }) as ResultState<List<UserProfession>> }
+            .onStart { emit(ResultState.Loading) }
+            .catch { emit(ResultState.Error(it.message ?: "Error loading professions")) }
 
-    override fun getActivePlansFlow(): Flow<Resource<List<UserPlan>>> =
+    override fun getActivePlansFlow(): Flow<ResultState<List<UserPlan>>> =
         userDao.getActivePlans()
-            .map { entities -> Resource.Success(entities.map { it.toDomain() }) as Resource<List<UserPlan>> }
-            .onStart { emit(Resource.Loading) }
-            .catch { emit(Resource.Error(it.message ?: "Error loading plans")) }
+            .map { entities -> ResultState.Success(entities.map { it.toDomain() }) as ResultState<List<UserPlan>> }
+            .onStart { emit(ResultState.Loading) }
+            .catch { emit(ResultState.Error(it.message ?: "Error loading plans")) }
 
-    override fun getUserFlow(userId: String): Flow<Resource<User?>> =
+    override fun getUserFlow(userId: String): Flow<ResultState<User?>> =
         userDao.getUser(userId)
-            .map { entity -> Resource.Success(entity?.toDomain()) as Resource<User?> }
-            .onStart { emit(Resource.Loading) }
-            .catch { emit(Resource.Error(it.message ?: "Error loading user")) }
+            .map { entity -> ResultState.Success(entity?.toDomain()) as ResultState<User?> }
+            .onStart { emit(ResultState.Loading) }
+            .catch { emit(ResultState.Error(it.message ?: "Error loading user")) }
 
-    override suspend fun getUser(userId: String): Resource<User?> = withContext(Dispatchers.IO) {
+    override suspend fun getUser(userId: String): ResultState<User?> = withContext(Dispatchers.IO) {
         try {
             val remoteUser = remoteDataSource.getUser(userId)
             remoteUser?.let { 
                 userDao.insertUser(it.toEntity())
             }
-            Resource.Success(remoteUser)
+            ResultState.Success(remoteUser)
         } catch (e: Exception) {
             // Fallback to local
             val localUser = userDao.getUser(userId).firstOrNull()?.toDomain()
-            Resource.Success(localUser)
+            ResultState.Success(localUser)
         }
     }
 
-    override suspend fun getUserByEmail(email: String): Resource<User?> = withContext(Dispatchers.IO) {
+    override suspend fun getUserByEmail(email: String): ResultState<User?> = withContext(Dispatchers.IO) {
         try {
             val remoteUser = remoteDataSource.getUserByEmail(email)
-            Resource.Success(remoteUser)
+            ResultState.Success(remoteUser)
         } catch (e: Exception) {
-            Resource.Error(e.message ?: "Error checking user existence")
+            ResultState.Error(e.message ?: "Error checking user existence")
         }
     }
 
-    override suspend fun saveUser(user: User): Resource<Unit> = withContext(Dispatchers.IO) {
+    override suspend fun saveUser(user: User): ResultState<Unit> = withContext(Dispatchers.IO) {
         try {
             remoteDataSource.upsertUser(user)
             userDao.insertUser(user.toEntity())
-            Resource.Success(Unit)
+            ResultState.Success(Unit)
         } catch (e: Exception) {
-            Resource.Error(e.message ?: "Error saving user")
+            ResultState.Error(e.message ?: "Error saving user")
         }
     }
 
-    override suspend fun refreshSubscriptionHistory(userId: String): Resource<Unit> = withContext(Dispatchers.IO) {
+    override suspend fun refreshSubscriptionHistory(userId: String): ResultState<Unit> = withContext(Dispatchers.IO) {
         try {
             val history = remoteDataSource.getSubscriptionHistory(userId)
             history.forEach { 
                 userDao.insertSubscriptionHistory(it.toEntity())
             }
-            Resource.Success(Unit)
+            ResultState.Success(Unit)
         } catch (e: Exception) {
-            Resource.Error(e.message ?: "Error refreshing subscription history")
+            ResultState.Error(e.message ?: "Error refreshing subscription history")
         }
     }
 
-    override fun getSubscriptionHistoryFlow(userId: String): Flow<Resource<List<SubscriptionHistory>>> =
+    override fun getSubscriptionHistoryFlow(userId: String): Flow<ResultState<List<SubscriptionHistory>>> =
         userDao.getSubscriptionHistory(userId)
-            .map { entities -> Resource.Success(entities.map { it.toDomain() }) as Resource<List<SubscriptionHistory>> }
-            .onStart { emit(Resource.Loading) }
-            .catch { emit(Resource.Error(it.message ?: "Error loading subscription history")) }
+            .map { entities -> ResultState.Success(entities.map { it.toDomain() }) as ResultState<List<SubscriptionHistory>> }
+            .onStart { emit(ResultState.Loading) }
+            .catch { emit(ResultState.Error(it.message ?: "Error loading subscription history")) }
 
-    override suspend fun saveSubscriptionHistory(history: SubscriptionHistory): Resource<Unit> = withContext(Dispatchers.IO) {
+    override suspend fun saveSubscriptionHistory(history: SubscriptionHistory): ResultState<Unit> = withContext(Dispatchers.IO) {
         try {
             remoteDataSource.upsertSubscriptionHistory(history)
             userDao.insertSubscriptionHistory(history.toEntity())
-            Resource.Success(Unit)
+            ResultState.Success(Unit)
         } catch (e: Exception) {
-            Resource.Error(e.message ?: "Error saving subscription history")
+            ResultState.Error(e.message ?: "Error saving subscription history")
         }
     }
 }

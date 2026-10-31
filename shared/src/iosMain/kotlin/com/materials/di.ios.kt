@@ -15,7 +15,7 @@ actual val platformModule = module {
         val dbFile = NSHomeDirectory() + "/materials.db"
         Room.databaseBuilder<AppDatabase>(
             name = dbFile
-        )
+        ).fallbackToDestructiveMigration(true)
     }
 
     single<PdfGenerator> { IosPdfGenerator() }

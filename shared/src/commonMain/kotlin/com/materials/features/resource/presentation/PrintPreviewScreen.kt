@@ -1,7 +1,6 @@
-package com.materials.features.material.presentation
+package com.materials.features.resource.presentation
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -28,11 +27,11 @@ import org.koin.core.parameter.parametersOf
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PrintPreviewScreen(
-    materialIds: List<String>,
+    resourceIds: List<String>,
     quantities: Map<String, Double> = emptyMap(),
     onBackClick: () -> Unit = {},
     modifier: Modifier = Modifier,
-    viewModel: MaterialsSelectedViewModel = koinViewModel { parametersOf(materialIds, quantities) },
+    viewModel: ResourcesSelectedViewModel = koinViewModel { parametersOf(resourceIds, quantities) },
     pdfGenerator: PdfGenerator = koinInject(),
     shareManager: ShareManager = koinInject()
 ) {
@@ -52,11 +51,11 @@ fun PrintPreviewScreen(
             )
         },
         floatingActionButton = {
-            if (uiState is MaterialsSelectedUiState.Success) {
+            if (uiState is ResourcesSelectedUiState.Success) {
                 ExtendedFloatingActionButton(
                     onClick = {
-                        val materials = (uiState as MaterialsSelectedUiState.Success).materials
-                        val pdfPath = pdfGenerator.generateMaterialsPdf(materials, vmQuantities)
+                        val resources = (uiState as ResourcesSelectedUiState.Success).resources
+                        val pdfPath = pdfGenerator.generateResourcesPdf(resources, vmQuantities)
                         if (pdfPath != null) {
                             shareManager.sharePdf(pdfPath, "Cotización de Materiales")
                         }
@@ -77,10 +76,10 @@ fun PrintPreviewScreen(
             contentAlignment = Alignment.TopCenter
         ) {
             when (val state = uiState) {
-                is MaterialsSelectedUiState.Loading -> {
+                is ResourcesSelectedUiState.Loading -> {
                     CircularProgressIndicator(Modifier.align(Alignment.Center), color = IndustrialOrange)
                 }
-                is MaterialsSelectedUiState.Success -> {
+                is ResourcesSelectedUiState.Success -> {
                     // Simulación de hoja Carta (Proporción 1:1.29 aproximadamente)
                     Card(
                         modifier = Modifier
@@ -152,9 +151,9 @@ fun PrintPreviewScreen(
                                 modifier = Modifier.fillMaxWidth().weight(1f),
                                 verticalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
-                                items(state.materials) { material ->
+                                items(state.resources) { material ->
                                     val price = material.price ?: 0.0
-                                    val quantity = vmQuantities[material.materialId] ?: 1.0
+                                    val quantity = vmQuantities[material.resourceId] ?: 1.0
                                     val rowTotal = quantity * price
                                     
                                     Row(
@@ -181,9 +180,9 @@ fun PrintPreviewScreen(
                             Spacer(modifier = Modifier.height(16.dp))
                             
                             // Gran Total
-                            val grandTotal = state.materials.sumOf { material ->
+                            val grandTotal = state.resources.sumOf { material ->
                                 val price = material.price ?: 0.0
-                                val quantity = vmQuantities[material.materialId] ?: 1.0
+                                val quantity = vmQuantities[material.resourceId] ?: 1.0
                                 quantity * price
                             }
                             
@@ -201,7 +200,7 @@ fun PrintPreviewScreen(
                         }
                     }
                 }
-                is MaterialsSelectedUiState.Error -> {
+                is ResourcesSelectedUiState.Error -> {
                     Text(state.message, color = Color.Red, modifier = Modifier.align(Alignment.Center))
                 }
             }

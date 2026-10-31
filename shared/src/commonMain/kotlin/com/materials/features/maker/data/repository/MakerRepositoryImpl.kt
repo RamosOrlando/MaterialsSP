@@ -1,6 +1,6 @@
 package com.materials.features.maker.data.repository
 
-import com.materials.core.domain.util.Resource
+import com.materials.core.domain.util.ResultState
 import com.materials.core.database.maker.MakerDao
 import com.materials.features.maker.data.mapper.toDomain
 import com.materials.features.maker.data.mapper.toEntity
@@ -21,29 +21,29 @@ class MakerRepositoryImpl(
     private val remoteDataSource: MakerRemoteDataSource
 ) : MakerRepository {
 
-    override suspend fun refreshMakers(): Resource<Unit> = withContext(Dispatchers.IO) {
+    override suspend fun refreshMakers(): ResultState<Unit> = withContext(Dispatchers.IO) {
         try {
             println("Starting refreshMakers...")
             val remoteMakers = remoteDataSource.getMakers()
             println("Fetched ${remoteMakers.size} makers")
             makerDao.insertMakers(remoteMakers.map { it.toEntity() })
             println("refreshMakers finished successfully")
-            Resource.Success(Unit)
+            ResultState.Success(Unit)
         } catch (e: Exception) {
             println("Error refreshing makers: ${e.message}")
             e.printStackTrace()
-            Resource.Error(e.message ?: "Unknown error")
+            ResultState.Error(e.message ?: "Unknown error")
         }
     }
 
-    override fun getMakersFlow(): Flow<Resource<List<Maker>>> {
+    override fun getMakersFlow(): Flow<ResultState<List<Maker>>> {
         return makerDao.getMakers()
             .map { entities ->
                 val domainMakers = entities.map { it.toDomain() }
-                Resource.Success(domainMakers) as Resource<List<Maker>>
+                ResultState.Success(domainMakers) as ResultState<List<Maker>>
             }
-            .onStart { emit(Resource.Loading) }
-            .catch { e -> emit(Resource.Error(e.message ?: "Unknown error")) }
+            .onStart { emit(ResultState.Loading) }
+            .catch { e -> emit(ResultState.Error(e.message ?: "Unknown error")) }
     }
 
     override fun listenToRealtimeChanges(): Flow<Unit> = flow {
@@ -53,13 +53,13 @@ class MakerRepositoryImpl(
         }
     }
 
-    override suspend fun saveMaker(maker: Maker): Resource<Unit> = withContext(Dispatchers.IO) {
+    override suspend fun saveMaker(maker: Maker): ResultState<Unit> = withContext(Dispatchers.IO) {
         try {
             remoteDataSource.saveMaker(maker)
             makerDao.insertMakers(listOf(maker.toEntity()))
-            Resource.Success(Unit)
+            ResultState.Success(Unit)
         } catch (e: Exception) {
-            Resource.Error(e.message ?: "Unknown error")
+            ResultState.Error(e.message ?: "Unknown error")
         }
     }
 }

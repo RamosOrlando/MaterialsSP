@@ -1,9 +1,8 @@
 package com.materials.features.price_history.data.repository
 
-import com.materials.core.domain.util.Resource
-import com.materials.core.database.material.MaterialDao
+import com.materials.core.domain.util.ResultState
+import com.materials.core.database.resource.ResourceDao
 import com.materials.core.database.price_history.PriceHistoryDao
-import com.materials.features.price_history.data.mapper.toDomain
 import com.materials.features.price_history.data.mapper.toEntity
 import com.materials.features.price_history.data.remote.PriceHistoryRemoteDataSource
 import com.materials.features.price_history.domain.model.PriceHistory
@@ -20,45 +19,47 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.withContext
 
 class PriceHistoryRepositoryImpl(
-    private val materialDao: MaterialDao,
+    private val resourceDao: ResourceDao,
     private val providerDao: ProviderDao,
     private val priceHistoryDao: PriceHistoryDao,
     private val remoteDataSource: PriceHistoryRemoteDataSource
 ) : PriceHistoryRepository {
 
-    override suspend fun refreshPriceHistory(): Resource<Unit> = withContext(Dispatchers.IO) {
+    override suspend fun refreshPriceHistory(): ResultState<Unit> = withContext(Dispatchers.IO) {
         try {
             println("Starting refreshPriceHistory...")
             val remotePrices = remoteDataSource.getPriceHistories()
             println("Fetched ${remotePrices.size} prices")
             priceHistoryDao.insertPriceHistories(remotePrices.map { it.toEntity() })
+            resourceDao.syncAllResourcesCurrentPricesFromHistory()
             println("refreshPriceHistory finished successfully")
-            Resource.Success(Unit)
+            ResultState.Success(Unit)
         } catch (e: Exception) {
             println("Error refreshing price history: ${e.message}")
             e.printStackTrace()
-            Resource.Error(e.message ?: "Unknown error")
+            ResultState.Error(e.message ?: "Unknown error")
         }
     }
 
-    override suspend fun upsertPriceHistory(priceHistory: PriceHistory): Resource<Unit> = withContext(Dispatchers.IO) {
+    override suspend fun upsertPriceHistory(priceHistory: PriceHistory): ResultState<Unit> = withContext(Dispatchers.IO) {
         try {
             remoteDataSource.upsertPriceHistory(priceHistory)
             priceHistoryDao.insertPriceHistory(priceHistory.toEntity())
-            Resource.Success(Unit)
+            resourceDao.updateResourceCurrentPriceFromHistory(priceHistory.materialId)
+            ResultState.Success(Unit)
         } catch (e: Exception) {
-            Resource.Error(e.message ?: "Error al guardar historial de precios")
+            ResultState.Error(e.message ?: "Error al guardar historial de precios")
         }
     }
 
-    override fun getPriceHistoryDetailFlow(): Flow<Resource<List<PriceHistoryDetail>>> {
+    override fun getPriceHistoryDetailFlow(): Flow<ResultState<List<PriceHistoryDetail>>> {
         return combine(
-            materialDao.getMaterials(),
+            resourceDao.getResources(),
             providerDao.getProviders(),
             priceHistoryDao.getAllPriceHistory()
         ) { materials, providers, prices ->
             prices.map { priceEntity ->
-                val material = materials.find { it.materialId == priceEntity.materialId }
+                val material = materials.find { it.resourceId == priceEntity.materialId }
                 val provider = providers.find { it.providerId == priceEntity.providerId }
                 PriceHistoryDetail(
                     historyId = priceEntity.historyId,
@@ -70,9 +71,9 @@ class PriceHistoryRepositoryImpl(
                 )
             }.sortedByDescending { it.quoteDate }
         }
-            .map { Resource.Success(it) as Resource<List<PriceHistoryDetail>> }
-            .onStart { emit(Resource.Loading) }
-            .catch { e -> emit(Resource.Error(e.message ?: "Unknown error")) }
+            .map { ResultState.Success(it) as ResultState<List<PriceHistoryDetail>> }
+            .onStart { emit(ResultState.Loading) }
+            .catch { e -> emit(ResultState.Error(e.message ?: "Unknown error")) }
     }
 
     override fun listenToRealtimeChanges(): Flow<Unit> = remoteDataSource.observePriceHistories().map {

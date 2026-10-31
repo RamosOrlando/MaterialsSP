@@ -16,6 +16,9 @@ interface PriceHistoryDao {
     @Upsert
     suspend fun insertPriceHistory(history: PriceHistoryEntity)
 
+    @Query("DELETE FROM PriceHistory WHERE historyId = :historyId")
+    suspend fun deletePriceHistory(historyId: String)
+
     @Query("DELETE FROM PriceHistory")
     suspend fun clearAll()
 }

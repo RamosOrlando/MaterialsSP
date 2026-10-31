@@ -2,7 +2,7 @@ package com.materials.features.category.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.materials.core.domain.util.Resource
+import com.materials.core.domain.util.ResultState
 import com.materials.features.auth.domain.repository.AuthRepository
 import com.materials.features.category.domain.model.Category
 import com.materials.features.category.domain.use_case.GetCategoriesUseCase
@@ -47,9 +47,9 @@ class CategoryViewModel(
         }
         .map { resource ->
             when (resource) {
-                is Resource.Loading -> CategoryUiState.Loading
-                is Resource.Error -> CategoryUiState.Error(resource.message)
-                is Resource.Success<List<Category>> -> CategoryUiState.Success(resource.data)
+                is ResultState.Loading -> CategoryUiState.Loading
+                is ResultState.Error -> CategoryUiState.Error(resource.message)
+                is ResultState.Success<List<Category>> -> CategoryUiState.Success(resource.data)
             }
         }.stateIn(
             scope = viewModelScope,
@@ -70,7 +70,7 @@ class CategoryViewModel(
                 viewModelScope.launch {
                     _refreshError.value = null
                     val result = getCategoriesUseCase.refresh()
-                    if (result is Resource.Error) {
+                    if (result is ResultState.Error) {
                         _refreshError.value = result.message
                     }
                 }

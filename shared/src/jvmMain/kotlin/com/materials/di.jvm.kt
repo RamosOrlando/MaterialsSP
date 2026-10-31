@@ -15,7 +15,7 @@ actual val platformModule = module {
         val dbFile = File(System.getProperty("user.home"), "materials.db")
         Room.databaseBuilder<AppDatabase>(
             name = dbFile.absolutePath
-        )
+        ).fallbackToDestructiveMigration(true)
     }
 
     single<PdfGenerator> { JvmPdfGenerator() }

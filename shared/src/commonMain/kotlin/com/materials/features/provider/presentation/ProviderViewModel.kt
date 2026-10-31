@@ -2,7 +2,7 @@ package com.materials.features.provider.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.materials.core.domain.util.Resource
+import com.materials.core.domain.util.ResultState
 import com.materials.features.provider.domain.model.Provider
 import com.materials.features.provider.domain.use_case.GetProvidersUseCase
 import com.materials.features.provider.domain.use_case.SaveProviderUseCase
@@ -68,9 +68,9 @@ class ProviderViewModel(
     ) { resource, refreshError ->
         when {
             refreshError != null -> ProviderUiState.Error(refreshError)
-            resource is Resource.Loading -> ProviderUiState.Loading
-            resource is Resource.Error -> ProviderUiState.Error(resource.message)
-            resource is Resource.Success -> ProviderUiState.Success(resource.data)
+            resource is ResultState.Loading -> ProviderUiState.Loading
+            resource is ResultState.Error -> ProviderUiState.Error(resource.message)
+            resource is ResultState.Success -> ProviderUiState.Success(resource.data)
             else -> ProviderUiState.Loading
         }
     }.stateIn(
@@ -92,7 +92,7 @@ class ProviderViewModel(
                 viewModelScope.launch {
                     _refreshError.value = null
                     val result = getProvidersUseCase.refresh()
-                    if (result is Resource.Error) {
+                    if (result is ResultState.Error) {
                         _refreshError.value = result.message
                     }
                 }
@@ -209,10 +209,10 @@ class ProviderViewModel(
 
             val result = saveProviderUseCase.execute(providerToSave)
             when (result) {
-                is Resource.Success -> {
+                is ResultState.Success -> {
                     _createProviderState.update { CreateProviderUiState() }
                 }
-                is Resource.Error -> {
+                is ResultState.Error -> {
                     _createProviderState.update { it.copy(isLoading = false, error = result.message) }
                 }
                 else -> {}

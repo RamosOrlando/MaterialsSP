@@ -5,20 +5,20 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
-import com.materials.core.database.material.MaterialEntity
+import com.materials.core.database.resource.ResourceEntity
 import com.materials.core.database.provider.ProviderEntity
 
 @Entity(
     tableName = "PriceHistory",
     indices = [
-        Index(value = ["materialId"]),
+        Index(value = ["resourceId"]),
         Index(value = ["providerId"])
     ],
     foreignKeys = [
         ForeignKey(
-            entity = MaterialEntity::class,
-            parentColumns = ["materialId"],
-            childColumns = ["materialId"],
+            entity = ResourceEntity::class,
+            parentColumns = ["resourceId"],
+            childColumns = ["resourceId"],
             onDelete = ForeignKey.CASCADE,
             onUpdate = ForeignKey.CASCADE
         ),
@@ -35,7 +35,7 @@ data class PriceHistoryEntity(
     @PrimaryKey
     @ColumnInfo(name = "historyId")
     val historyId: String,
-    @ColumnInfo(name = "materialId")
+    @ColumnInfo(name = "resourceId")
     val materialId: String,
     @ColumnInfo(name = "providerId")
     val providerId: String,

@@ -1,4 +1,4 @@
-package com.materials.features.material.presentation
+package com.materials.features.resource.presentation
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -19,37 +19,37 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.border
 import com.materials.core.presentation.theme.*
-import com.materials.core.common.domain.model.Material
+import com.materials.core.common.domain.model.Resource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import androidx.compose.ui.tooling.preview.Preview
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MaterialsSelectedScreen(
-    materialIds: List<String>,
+fun ResourcesSelectedScreen(
+    resourcesIds: List<String>,
     onBackClick: () -> Unit = {},
     onPrintPreview: (List<String>, Map<String, Double>) -> Unit = { _, _ -> },
     modifier: Modifier = Modifier,
-    viewModel: MaterialsSelectedViewModel = koinViewModel { parametersOf(materialIds, null) }
+    viewModel: ResourcesSelectedViewModel = koinViewModel { parametersOf(resourcesIds, null) }
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val quantities by viewModel.quantities.collectAsState()
 
-    MaterialsSelectedScreenContent(
+    ResourcesSelectedScreenContent(
         uiState = uiState,
         quantities = quantities,
         onQuantityChange = viewModel::updateQuantity,
         onBackClick = onBackClick,
-        onPrintPreview = { onPrintPreview(materialIds, quantities) },
+        onPrintPreview = { onPrintPreview(resourcesIds, quantities) },
         modifier = modifier
     )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MaterialsSelectedScreenContent(
-    uiState: MaterialsSelectedUiState,
+fun ResourcesSelectedScreenContent(
+    uiState: ResourcesSelectedUiState,
     quantities: Map<String, Double>,
     onQuantityChange: (String, Double) -> Unit,
     onBackClick: () -> Unit,
@@ -76,7 +76,7 @@ fun MaterialsSelectedScreenContent(
                     }
                 },
                 actions = {
-                    if (uiState is MaterialsSelectedUiState.Success) {
+                    if (uiState is ResourcesSelectedUiState.Success) {
                         IconButton(onClick = onPrintPreview) {
                             Icon(
                                 imageVector = Icons.Default.Print,
@@ -97,30 +97,30 @@ fun MaterialsSelectedScreenContent(
                 .padding(padding)
         ) {
             when (uiState) {
-                is MaterialsSelectedUiState.Loading -> {
+                is ResourcesSelectedUiState.Loading -> {
                     CircularProgressIndicator(
                         modifier = Modifier.align(Alignment.Center),
                         color = MaterialTheme.colorScheme.primary
                     )
                 }
-                is MaterialsSelectedUiState.Success -> {
+                is ResourcesSelectedUiState.Success -> {
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
                         contentPadding = PaddingValues(16.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        items(uiState.materials) { material ->
-                            SelectedMaterialCard(
-                                material = material,
-                                quantity = quantities[material.materialId] ?: 1.0,
+                        items(uiState.resources) { resource ->
+                            SelectedResourceCard(
+                                resource = resource,
+                                quantity = quantities[resource.resourceId] ?: 1.0,
                                 onQuantityChange = { q -> 
-                                    onQuantityChange(material.materialId, q)
+                                    onQuantityChange(resource.resourceId, q)
                                 }
                             )
                         }
                     }
                 }
-                is MaterialsSelectedUiState.Error -> {
+                is ResourcesSelectedUiState.Error -> {
                     Text(
                         text = uiState.message,
                         modifier = Modifier.align(Alignment.Center),
@@ -133,14 +133,14 @@ fun MaterialsSelectedScreenContent(
 }
 
 @Composable
-fun SelectedMaterialCard(
-    material: Material,
+fun SelectedResourceCard(
+    resource: Resource,
     quantity: Double,
     onQuantityChange: (Double) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var quantityText by remember(quantity) { mutableStateOf(if (quantity == quantity.toInt().toDouble()) quantity.toInt().toString() else quantity.toString()) }
-    val bestPrice = material.price ?: 0.0
+    val bestPrice = resource.price ?: 0.0
     val total = quantity * bestPrice
 
     Card(
@@ -164,7 +164,7 @@ fun SelectedMaterialCard(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = material.name,
+                        text = resource.name,
                         color = MaterialTheme.colorScheme.onSurface,
                         fontWeight = FontWeight.Bold,
                         style = MaterialTheme.typography.titleMedium,
@@ -172,7 +172,7 @@ fun SelectedMaterialCard(
                         overflow = TextOverflow.Ellipsis
                     )
                     Text(
-                        text = "ID: ${material.materialId}",
+                        text = "ID: ${resource.resourceId}",
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         style = MaterialTheme.typography.labelMedium
                     )
@@ -183,7 +183,7 @@ fun SelectedMaterialCard(
                     shape = IndustrialShapes.small
                 ) {
                     Text(
-                        text = material.unit,
+                        text = resource.unit,
                         color = MaterialTheme.colorScheme.primary,
                         style = MaterialTheme.typography.labelSmall,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
@@ -270,31 +270,29 @@ fun SelectedMaterialCard(
 
 @Preview(showBackground = true)
 @Composable
-fun MaterialsSelectedScreenPreview() {
+fun ResourcesSelectedScreenPreview() {
     IndustrialTheme {
-        MaterialsSelectedScreenContent(
-            uiState = MaterialsSelectedUiState.Success(
+        ResourcesSelectedScreenContent(
+            uiState = ResourcesSelectedUiState.Success(
                 listOf(
-                    Material(
-                        materialId = "1",
+                    Resource(
+                        resourceId = "1",
                         name = "Tubo PVC Presión 1/2\"",
                         unit = "Metro",
                         makerId = "MAKER-01",
                         sectionId = "1",
                         specId = null,
-                        historyId = null,
                         providerId = null,
                         price = 12.5,
                         quoteDate = "2024-05-16"
                     ),
-                    Material(
-                        materialId = "2",
+                    Resource(
+                        resourceId = "2",
                         name = "Codo 90° PVC 1/2\"",
                         unit = "Unidad",
                         makerId = "MAKER-02",
                         sectionId = "1",
                         specId = null,
-                        historyId = null,
                         providerId = null,
                         price = 3.75,
                         quoteDate = "2024-05-15"

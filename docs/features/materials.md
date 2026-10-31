@@ -3,7 +3,7 @@
 Esta pantalla permite la gestión detallada del catálogo de materiales industriales, integrando datos de fabricantes (Makers), proveedores y un historial de precios.
 
 ## 1. Modelo de Datos del Material
-El objeto `Material` se rige por las siguientes propiedades:
+El objeto `Resource` se rige por las siguientes propiedades:
 - `materialId` (PK): Identificador único estructurado.
 - `name`: Nombre descriptivo (ej: "Tubo PVC").
 - `unit`: Unidad de medida (ej: "Barra", "Unidad").

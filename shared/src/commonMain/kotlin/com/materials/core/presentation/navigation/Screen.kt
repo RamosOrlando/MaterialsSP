@@ -23,14 +23,14 @@ sealed interface Screen {
     data class Section(val categoryId: String) : Screen
     
     @Serializable
-    data class Material(val sectionId: String? = null, val sectionName: String? = null, val categoryId: String? = null) : Screen
+    data class Resource(val sectionId: String? = null, val sectionName: String? = null, val categoryId: String? = null) : Screen
 
     @Serializable
-    data class MaterialsSelected(val materialIds: List<String>) : Screen
+    data class ResourcesSelected(val resourceIds: List<String>) : Screen
 
     @Serializable
     data class PrintPreview(
-        val materialIds: List<String>,
+        val resourceIds: List<String>,
         val quantities: Map<String, Double> = emptyMap()
     ) : Screen
     

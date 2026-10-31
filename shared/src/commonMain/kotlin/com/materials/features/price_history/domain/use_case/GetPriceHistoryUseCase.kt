@@ -1,31 +1,29 @@
 package com.materials.features.price_history.domain.use_case
 
-import com.materials.core.domain.util.Resource
-import com.materials.features.price_history.domain.model.PriceHistoryDetail
-import com.materials.features.price_history.domain.repository.PriceHistoryRepository
+import com.materials.core.domain.util.ResultState
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-import com.materials.features.material.domain.model.MaterialWithPrices
-import com.materials.features.material.domain.repository.MaterialRepository
+import com.materials.features.resource.domain.model.ResourceWithPrices
+import com.materials.features.resource.domain.repository.ResourceRepository
 
 class GetPriceHistoryUseCase(
-    private val repository: MaterialRepository
+    private val repository: ResourceRepository
 ) {
-    fun executeFlow(query: String = ""): Flow<Resource<List<MaterialWithPrices>>> {
-        return repository.getMaterialsFlow(query, null).map { resource ->
-            if (resource is Resource.Success<List<MaterialWithPrices>>) {
+    fun executeFlow(query: String = ""): Flow<ResultState<List<ResourceWithPrices>>> {
+        return repository.getResourcesFlow(query, null).map { resource ->
+            if (resource is ResultState.Success<List<ResourceWithPrices>>) {
                 // Ensure we only show materials that actually have prices
                 val filtered = resource.data.filter { it.prices.isNotEmpty() }
 
                 // Sort by latest quote date (descending), then by material name (ascending)
                 val sorted = filtered.sortedWith(
-                    compareByDescending<MaterialWithPrices> { 
+                    compareByDescending<ResourceWithPrices> {
                         it.prices.maxByOrNull { p -> p.priceHistory.quoteDate }?.priceHistory?.quoteDate ?: ""
-                    }.thenBy { it.material.name }
+                    }.thenBy { it.resource.name }
                 )
 
-                Resource.Success(sorted)
+                ResultState.Success(sorted)
             } else {
                 resource
             }

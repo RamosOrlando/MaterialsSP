@@ -1,6 +1,6 @@
 package com.materials.features.section.domain.use_case
 
-import com.materials.core.domain.util.Resource
+import com.materials.core.domain.util.ResultState
 import com.materials.features.section.domain.model.Section
 import com.materials.features.section.domain.repository.SectionRepository
 import kotlinx.coroutines.flow.Flow
@@ -9,11 +9,11 @@ import kotlinx.coroutines.flow.map
 class GetSectionsUseCase(
     private val repository: SectionRepository
 ) {
-    suspend fun refresh(): Resource<Unit> = repository.refreshSections()
+    suspend fun refresh(): ResultState<Unit> = repository.refreshSections()
     
-    fun executeFlow(query: String = "", categoryId: String? = null): Flow<Resource<List<Section>>> {
+    fun executeFlow(query: String = "", categoryId: String? = null): Flow<ResultState<List<Section>>> {
         return repository.getSectionsFlow().map { resource ->
-            if (resource is Resource.Success<List<Section>>) {
+            if (resource is ResultState.Success<List<Section>>) {
                 var filtered = resource.data
                 
                 if (categoryId != null) {
@@ -25,7 +25,7 @@ class GetSectionsUseCase(
                         it.name.contains(query, ignoreCase = true)
                     }
                 }
-                Resource.Success(filtered)
+                ResultState.Success(filtered)
             } else {
                 resource
             }

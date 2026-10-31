@@ -9,10 +9,6 @@ import com.materials.core.data.repository.SyncRepositoryImpl
 import com.materials.core.domain.use_case.PerformFullSyncUseCase
 import com.materials.core.presentation.navigation.MainViewModel
 import com.materials.core.presentation.navigation.NavigationViewModel
-import com.materials.features.auth.data.repository.AuthRepositoryImpl
-import com.materials.features.auth.domain.repository.AuthRepository
-import com.materials.features.auth.presentation.LoginViewModel
-import com.materials.features.auth.presentation.SignUpViewModel
 import com.materials.features.category.data.remote.CategoryRemoteDataSource
 import com.materials.features.category.data.remote.SupabaseCategoryDataSource
 import com.materials.features.category.data.repository.CategoryRepositoryImpl
@@ -32,19 +28,18 @@ import com.materials.features.maker.domain.repository.MakerRepository
 import com.materials.features.maker.domain.use_case.GetMakersUseCase
 import com.materials.features.maker.domain.use_case.SaveMakerUseCase
 import com.materials.features.maker.presentation.MakerViewModel
-import com.materials.features.material.data.remote.MaterialRemoteDataSource
-import com.materials.features.material.data.remote.SupabaseMaterialDataSource
-import com.materials.features.material.data.repository.MaterialRepositoryImpl
-import com.materials.features.material.domain.repository.MaterialRepository
-import com.materials.features.material.domain.use_case.GetMaterialsUseCase
-import com.materials.features.material.presentation.MaterialViewModel
-import com.materials.features.material.presentation.MaterialsSelectedViewModel
+import com.materials.features.resource.data.remote.ResourceRemoteDataSource
+import com.materials.features.resource.data.remote.SupabaseResourceDataSource
+import com.materials.features.resource.data.repository.ResourceRepositoryImpl
+import com.materials.features.resource.domain.repository.ResourceRepository
+import com.materials.features.resource.domain.use_case.GetResourcesUseCase
+import com.materials.features.resource.presentation.ResourceViewModel
+import com.materials.features.resource.presentation.ResourcesSelectedViewModel
 import com.materials.features.price_history.data.remote.PriceHistoryRemoteDataSource
 import com.materials.features.price_history.data.remote.SupabasePriceHistoryDataSource
 import com.materials.features.price_history.data.repository.PriceHistoryRepositoryImpl
 import com.materials.features.price_history.domain.repository.PriceHistoryRepository
 import com.materials.features.price_history.domain.use_case.GetPriceHistoryUseCase
-import com.materials.features.price_history.presentation.PriceHistoryScreen
 import com.materials.features.price_history.presentation.PriceHistoryViewModel
 import com.materials.features.provider.data.remote.ProviderRemoteDataSource
 import com.materials.features.provider.data.remote.SupabaseProviderDataSource
@@ -53,7 +48,6 @@ import com.materials.features.provider.domain.repository.ProviderRepository
 import com.materials.features.provider.domain.use_case.GetProvidersUseCase
 import com.materials.features.provider.domain.use_case.SaveProviderUseCase
 import com.materials.features.provider.presentation.ProviderViewModel
-import com.materials.core.database.user.UserDao
 import com.materials.features.user.data.remote.SupabaseUserDataSource
 import com.materials.features.user.data.remote.UserRemoteDataSource
 import com.materials.features.user.data.repository.UserRepositoryImpl
@@ -73,7 +67,7 @@ val dataModule = module {
     single { get<AppDatabase>().categoryDao() }
     single { get<AppDatabase>().sectionDao() }
     single { get<AppDatabase>().makerDao() }
-    single { get<AppDatabase>().materialDao() }
+    single { get<AppDatabase>().resourceDao() }
     single { get<AppDatabase>().providerDao() }
     single { get<AppDatabase>().priceHistoryDao() }
     single { get<AppDatabase>().profileDao() }
@@ -88,12 +82,12 @@ val dataModule = module {
     factory<MakerRemoteDataSource> { SupabaseMakerDataSource(get()) }
     single<MakerRepository> { MakerRepositoryImpl(get(), get()) }
 
-    factory<MaterialRemoteDataSource> { SupabaseMaterialDataSource(get()) }
+    factory<ResourceRemoteDataSource> { SupabaseResourceDataSource(get()) }
     factory<PriceHistoryRemoteDataSource> { SupabasePriceHistoryDataSource(get()) }
     
-    single<MaterialRepository> { 
-        MaterialRepositoryImpl(
-            materialDao = get(),
+    single<ResourceRepository> {
+        ResourceRepositoryImpl(
+            resourceDao = get(),
             providerDao = get(),
             priceHistoryDao = get(),
             makerDao = get(),
@@ -120,7 +114,7 @@ val domainModule = module {
     factory { GetSectionsUseCase(get()) }
     factory { GetMakersUseCase(get()) }
     factory { SaveMakerUseCase(get()) }
-    factory { GetMaterialsUseCase(get()) }
+    factory { GetResourcesUseCase(get()) }
     factory { GetPriceHistoryUseCase(get()) }
     factory { GetProvidersUseCase(get()) }
     factory { SaveProviderUseCase(get()) }
@@ -131,14 +125,14 @@ val viewModelModule = module {
     viewModelOf(::CategoryViewModel)
     viewModelOf(::SectionViewModel)
     viewModelOf(::MakerViewModel)
-    viewModelOf(::MaterialViewModel)
+    viewModelOf(::ResourceViewModel)
     viewModelOf(::PriceHistoryViewModel)
     viewModelOf(::ProviderViewModel)
     // LoginViewModel and SignUpViewModel are provided by authModule
     viewModelOf(::NavigationViewModel)
     viewModelOf(::MainViewModel)
-    factory { (materialIds: List<String>, initialQuantities: Map<String, Double>?) -> 
-        MaterialsSelectedViewModel(materialIds, initialQuantities ?: emptyMap(), get()) 
+    factory { (resourceIds: List<String>, initialQuantities: Map<String, Double>?) -> 
+        ResourcesSelectedViewModel(resourceIds, initialQuantities ?: emptyMap(), get())
     }
 }
 

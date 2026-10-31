@@ -1,19 +1,16 @@
 package com.materials.core.common.util.pdf
 
-import com.materials.core.common.domain.model.Material
-import platform.UIKit.*
-import platform.Foundation.*
-import platform.CoreGraphics.*
+import com.materials.core.common.domain.model.Resource
 
 class IosPdfGenerator : PdfGenerator {
-    override fun generateMaterialsPdf(
-        materials: List<Material>,
+    override fun generateResourcesPdf(
+        resources: List<Resource>,
         quantities: Map<String, Double>,
         title: String
     ): String? {
         // Implementation for iOS using UIGraphicsPDFRenderer or similar
         // For now, a placeholder that prints to console
-        println("PDF generation started on iOS for ${materials.size} items")
+        println("PDF generation started on iOS for ${resources.size} items")
         return null
     }
 }

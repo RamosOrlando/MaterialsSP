@@ -9,8 +9,8 @@ import com.materials.core.database.section.SectionDao
 import com.materials.core.database.section.SectionEntity
 import com.materials.core.database.maker.MakerDao
 import com.materials.core.database.maker.MakerEntity
-import com.materials.core.database.material.MaterialDao
-import com.materials.core.database.material.MaterialEntity
+import com.materials.core.database.resource.ResourceDao
+import com.materials.core.database.resource.ResourceEntity
 import com.materials.core.database.price_history.PriceHistoryDao
 import com.materials.core.database.price_history.PriceHistoryEntity
 import com.materials.core.database.provider.ProviderDao
@@ -20,16 +20,16 @@ import com.materials.core.database.auth.ProfileEntity
 import com.materials.core.database.user.*
 
 @Database(entities = [CategoryEntity::class, SectionEntity::class,
-    MakerEntity::class, MaterialEntity::class, ProviderEntity::class,
+    MakerEntity::class, ResourceEntity::class, ProviderEntity::class,
     PriceHistoryEntity::class, ProfileEntity::class,
     UserEntity::class, UserRoleEntity::class, UserProfessionEntity::class,
-    UserPlanEntity::class, SubscriptionHistoryEntity::class], version = 18)
+    UserPlanEntity::class, SubscriptionHistoryEntity::class], version = 21)
 @ConstructedBy(AppDatabaseConstructor::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun categoryDao(): CategoryDao
     abstract fun sectionDao(): SectionDao
     abstract fun makerDao(): MakerDao
-    abstract fun materialDao(): MaterialDao
+    abstract fun resourceDao(): ResourceDao
     abstract fun providerDao(): ProviderDao
     abstract fun priceHistoryDao(): PriceHistoryDao
     abstract fun profileDao(): ProfileDao

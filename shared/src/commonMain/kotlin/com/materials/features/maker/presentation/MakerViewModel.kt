@@ -2,7 +2,7 @@ package com.materials.features.maker.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.materials.core.domain.util.Resource
+import com.materials.core.domain.util.ResultState
 import com.materials.features.maker.domain.model.Maker
 import com.materials.features.maker.domain.use_case.GetMakersUseCase
 import com.materials.features.maker.domain.use_case.SaveMakerUseCase
@@ -56,9 +56,9 @@ class MakerViewModel(
         }
         .map { resource ->
             when (resource) {
-                is Resource.Loading -> MakerUiState.Loading
-                is Resource.Error -> MakerUiState.Error(resource.message)
-                is Resource.Success<List<Maker>> -> MakerUiState.Success(resource.data)
+                is ResultState.Loading -> MakerUiState.Loading
+                is ResultState.Error -> MakerUiState.Error(resource.message)
+                is ResultState.Success<List<Maker>> -> MakerUiState.Success(resource.data)
             }
         }.stateIn(
             scope = viewModelScope,
@@ -79,7 +79,7 @@ class MakerViewModel(
                 viewModelScope.launch {
                     _refreshError.value = null
                     val result = getMakersUseCase.refresh()
-                    if (result is Resource.Error) {
+                    if (result is ResultState.Error) {
                         _refreshError.value = result.message
                     }
                 }
@@ -158,10 +158,10 @@ class MakerViewModel(
 
             val result = saveMakerUseCase.execute(makerToSave)
             when (result) {
-                is Resource.Success -> {
+                is ResultState.Success -> {
                     _createMakerState.update { CreateMakerUiState() }
                 }
-                is Resource.Error -> {
+                is ResultState.Error -> {
                     _createMakerState.update { it.copy(isLoading = false, error = result.message) }
                 }
                 else -> {}

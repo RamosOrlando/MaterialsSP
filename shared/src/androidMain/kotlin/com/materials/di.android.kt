@@ -17,7 +17,7 @@ actual val platformModule = module {
         Room.databaseBuilder<AppDatabase>(
             context = context,
             name = dbFile.absolutePath
-        )
+        ).fallbackToDestructiveMigration(true)
     }
     
     single<PdfGenerator> { AndroidPdfGenerator(androidContext()) }

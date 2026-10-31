@@ -6,7 +6,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class PriceHistory(
     @SerialName("historyId") val historyId: String,
-    @SerialName("materialId") val materialId: String,
+    @SerialName("resourceId") val materialId: String,
     @SerialName("providerId") val providerId: String,
     @SerialName("price") val price: Double,
     @SerialName("quoteDate") val quoteDate: String,

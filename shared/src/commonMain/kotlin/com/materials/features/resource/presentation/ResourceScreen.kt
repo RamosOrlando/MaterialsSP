@@ -1,14 +1,10 @@
-package com.materials.features.material.presentation
+package com.materials.features.resource.presentation
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
@@ -19,7 +15,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -32,9 +27,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.materials.core.presentation.theme.*
-import com.materials.core.common.domain.model.Material
+import com.materials.core.common.domain.model.Resource
 import com.materials.core.common.util.formatDateToDisplay
-import com.materials.core.common.util.randomUUID
 import com.materials.core.common.util.getCurrentDate
 import com.materials.features.auth.domain.model.UserRole
 import androidx.compose.ui.tooling.preview.Preview
@@ -44,24 +38,24 @@ import org.koin.compose.viewmodel.koinViewModel
 import com.materials.features.provider.presentation.BoliviaCity
 
 @Composable
-fun MaterialScreen(
+fun ResourceScreen(
     sectionId: String? = null,
     sectionName: String? = null,
     onBackClick: () -> Unit = {},
-    onMaterialsSelected: (List<String>) -> Unit = {},
+    onResourcesSelected: (List<String>) -> Unit = {},
     userRole: UserRole? = null,
     quoteModeEnabled: Boolean = false,
     modifier: Modifier = Modifier,
-    viewModel: MaterialViewModel = koinViewModel()
+    viewModel: ResourceViewModel = koinViewModel()
 ) {
     LaunchedEffect(quoteModeEnabled) {
         if (!quoteModeEnabled) {
-            viewModel.onEvent(MaterialEvent.ClearSelection)
+            viewModel.onEvent(ResourceEvent.ClearSelection)
         }
     }
 
     LaunchedEffect(sectionId) {
-        viewModel.onEvent(MaterialEvent.SetSection(sectionId))
+        viewModel.onEvent(ResourceEvent.SetSection(sectionId))
     }
 
     val uiState by viewModel.uiState.collectAsState()
@@ -71,24 +65,24 @@ fun MaterialScreen(
     val nextIndex by viewModel.nextIndex.collectAsState()
     val userEmail = viewModel.userEmail
     
-    var editingMaterial by remember { mutableStateOf<Material?>(null) }
+    var editingMaterial by remember { mutableStateOf<Resource?>(null) }
     var editingProviderName by remember { mutableStateOf<String?>(null) }
-    var deletingMaterial by remember { mutableStateOf<Material?>(null) }
-    var bulkEditingMaterials by remember { mutableStateOf<List<Material>?>(null) }
-    var creatingForMakerMaterial by remember { mutableStateOf<Material?>(null) }
+    var deletingMaterial by remember { mutableStateOf<Resource?>(null) }
+    var bulkEditingMaterials by remember { mutableStateOf<List<Resource>?>(null) }
+    var creatingForMakerMaterial by remember { mutableStateOf<Resource?>(null) }
     var isCreatingMaterial by remember { mutableStateOf(false) }
 
     val snackbarHostState = remember { SnackbarHostState() }
     val listState = rememberLazyListState()
     
     LaunchedEffect(uiState) {
-        (uiState as? MaterialUiState.Success)?.errorMessage?.let { error ->
+        (uiState as? ResourceUiState.Success)?.errorMessage?.let { error ->
             snackbarHostState.showSnackbar(
                 message = error,
                 actionLabel = "OK",
                 duration = SnackbarDuration.Long
             )
-            viewModel.onEvent(MaterialEvent.ClearError)
+            viewModel.onEvent(ResourceEvent.ClearError)
         }
     }
 
@@ -101,14 +95,14 @@ fun MaterialScreen(
         listState = listState,
         onEvent = { viewModel.onEvent(it) },
         onBackClick = onBackClick,
-        onProceed = { onMaterialsSelected(selectedIds.toList()) },
+        onProceed = { onResourcesSelected(selectedIds.toList()) },
         sectionName = sectionName,
         onEditMaterial = { item -> 
-            editingMaterial = item.material
+            editingMaterial = item.resource
             editingProviderName = item.providerName
         },
         onDeleteMaterial = { item ->
-            deletingMaterial = item.material
+            deletingMaterial = item.resource
         },
         onBulkEdit = { bulkEditingMaterials = it },
         onAddMaterial = { isCreatingMaterial = true },
@@ -119,7 +113,7 @@ fun MaterialScreen(
     )
     
     editingMaterial?.let { material ->
-        val providers = (uiState as? MaterialUiState.Success)?.providers ?: emptyList()
+        val providers = (uiState as? ResourceUiState.Success)?.providers ?: emptyList()
         EditMaterialDialog(
             material = material,
             providers = providers,
@@ -130,7 +124,7 @@ fun MaterialScreen(
                 editingProviderName = null
             },
             onConfirm = { updatedMaterial ->
-                viewModel.onEvent(MaterialEvent.UpdateMaterial(updatedMaterial))
+                viewModel.onEvent(ResourceEvent.UpdateResource(updatedMaterial))
                 editingMaterial = null
                 editingProviderName = null
             }
@@ -142,7 +136,7 @@ fun MaterialScreen(
             material = material,
             onDismiss = { deletingMaterial = null },
             onConfirm = {
-                viewModel.onEvent(MaterialEvent.DeleteMaterial(material.materialId))
+                viewModel.onEvent(ResourceEvent.DeleteResource(material.resourceId))
                 deletingMaterial = null
             }
         )
@@ -167,37 +161,40 @@ fun MaterialScreen(
                         specId = trimmedSpecId
                     ) 
                 }
-                viewModel.onEvent(MaterialEvent.BulkUpdateMaterials(updatedList))
+                viewModel.onEvent(ResourceEvent.BulkUpdateMaterials(updatedList))
                 bulkEditingMaterials = null
             }
         )
     }
 
     creatingForMakerMaterial?.let { material ->
-        val state = uiState as? MaterialUiState.Success
+        val state = uiState as? ResourceUiState.Success
         val makers = state?.makers ?: emptyList()
-        val existingMaterials = state?.materials?.map { it.material } ?: emptyList()
+        val existingMaterials = state?.resources?.map { it.resource } ?: emptyList()
         CreateMaterialForMakerDialog(
             material = material,
             makers = makers,
             existingMaterials = existingMaterials,
             onDismiss = { creatingForMakerMaterial = null },
             onConfirm = { newMaterial ->
-                viewModel.onEvent(MaterialEvent.CreateMaterial(newMaterial))
+                viewModel.onEvent(ResourceEvent.CreateResource(newMaterial))
                 creatingForMakerMaterial = null
             }
         )
     }
 
     if (isCreatingMaterial) {
-        val makers = (uiState as? MaterialUiState.Success)?.makers ?: emptyList()
+        val stateSuccess = uiState as? ResourceUiState.Success
+        val makers = stateSuccess?.makers ?: emptyList()
+        val existingMaterials = stateSuccess?.resources?.map { it.resource } ?: emptyList()
         CreateMaterialDialog(
             sectionId = sectionId ?: "00-00",
             makers = makers,
+            existingMaterials = existingMaterials,
             nextIndex = nextIndex,
             onDismiss = { isCreatingMaterial = false },
             onConfirm = { newMaterial ->
-                viewModel.onEvent(MaterialEvent.CreateMaterial(newMaterial))
+                viewModel.onEvent(ResourceEvent.CreateResource(newMaterial))
                 isCreatingMaterial = false
             }
         )
@@ -206,21 +203,21 @@ fun MaterialScreen(
 
 @Composable
 fun MaterialScreenContent(
-    uiState: MaterialUiState,
+    uiState: ResourceUiState,
     searchQuery: String,
     selectedIds: Set<String> = emptySet(),
     sectionName: String? = null,
     isRefreshing: Boolean = false,
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
     listState: LazyListState = rememberLazyListState(),
-    onEvent: (MaterialEvent) -> Unit,
+    onEvent: (ResourceEvent) -> Unit,
     onBackClick: () -> Unit = {},
     onProceed: () -> Unit = {},
-    onEditMaterial: (MaterialItem) -> Unit = {},
-    onDeleteMaterial: (MaterialItem) -> Unit = {},
-    onBulkEdit: (List<Material>) -> Unit = {},
+    onEditMaterial: (ResourceItem) -> Unit = {},
+    onDeleteMaterial: (ResourceItem) -> Unit = {},
+    onBulkEdit: (List<Resource>) -> Unit = {},
     onAddMaterial: () -> Unit = {},
-    onCreateForMaker: (Material) -> Unit = {},
+    onCreateForMaker: (Resource) -> Unit = {},
     userRole: UserRole? = null,
     quoteModeEnabled: Boolean = false,
     modifier: Modifier = Modifier
@@ -294,7 +291,7 @@ fun MaterialScreenContent(
             // Search Bar
             MaterialSearchBar(
                 query = searchQuery,
-                onQueryChange = { onEvent(MaterialEvent.OnSearchQueryChanged(it)) }
+                onQueryChange = { onEvent(ResourceEvent.OnSearchQueryChanged(it)) }
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -302,7 +299,7 @@ fun MaterialScreenContent(
             // Body Area
             Box(modifier = Modifier.fillMaxSize().weight(1f)) {
                 when (val state = uiState) {
-                    is MaterialUiState.Loading -> {
+                    is ResourceUiState.Loading -> {
                         Box(
                             modifier = Modifier.fillMaxSize(),
                             contentAlignment = Alignment.Center
@@ -311,8 +308,8 @@ fun MaterialScreenContent(
                         }
                     }
 
-                    is MaterialUiState.Success -> {
-                        if (state.materials.isEmpty()) {
+                    is ResourceUiState.Success -> {
+                        if (state.resources.isEmpty()) {
                             if (isRefreshing) {
                                 Box(
                                     modifier = Modifier.fillMaxSize(),
@@ -324,8 +321,8 @@ fun MaterialScreenContent(
                                 EmptyState()
                             }
                         } else {
-                            val groupedMaterials = remember(state.materials) {
-                                state.materials.groupBy { it.material.name + it.material.unit }
+                            val groupedMaterials = remember(state.resources) {
+                                state.resources.groupBy { it.resource.name + it.resource.unit }
                             }
 
                             val scope = rememberCoroutineScope()
@@ -346,25 +343,25 @@ fun MaterialScreenContent(
                                     
                                     item(key = "header_$key") {
                                         MaterialHeaderCard(
-                                            name = firstItem.material.name,
-                                            materialId = firstItem.material.materialId,
-                                            unit = firstItem.material.unit,
+                                            name = firstItem.resource.name,
+                                            materialId = firstItem.resource.resourceId,
+                                            unit = firstItem.resource.unit,
                                             canEdit = userRole != UserRole.CLIENT,
-                                            onEditClick = { onBulkEdit(items.map { it.material }) },
-                                            onCreateClick = { onCreateForMaker(firstItem.material) }
+                                            onEditClick = { onBulkEdit(items.map { it.resource }) },
+                                            onCreateClick = { onCreateForMaker(firstItem.resource) }
                                         )
                                     }
 
-                                    items(items, key = { it.material.materialId }) { materialItem ->
-                                        val isSelected = selectedIds.contains(materialItem.material.materialId)
+                                    items(items, key = { it.resource.resourceId }) { materialItem ->
+                                        val isSelected = selectedIds.contains(materialItem.resource.resourceId)
                                         MakerCard(
-                                            materialItem = materialItem,
+                                            resourceItem = materialItem,
                                             isSelected = isSelected,
                                             canEdit = userRole != UserRole.CLIENT,
                                             onSelect = {
                                                 if (quoteModeEnabled) {
                                                     onEvent(
-                                                        MaterialEvent.ToggleMaterialSelection(it)
+                                                        ResourceEvent.ToggleResourceSelection(it)
                                                     )
                                                 }
                                             },
@@ -411,10 +408,10 @@ fun MaterialScreenContent(
                         }
                     }
 
-                    is MaterialUiState.Error -> {
+                    is ResourceUiState.Error -> {
                         ErrorState(
                             message = state.message,
-                            onRetry = { onEvent(MaterialEvent.Refresh) })
+                            onRetry = { onEvent(ResourceEvent.Refresh) })
                     }
                 }
             }
@@ -569,7 +566,7 @@ fun MaterialHeaderCard(
 
 @Composable
 fun MakerCard(
-    materialItem: MaterialItem,
+    resourceItem: ResourceItem,
     isSelected: Boolean = false,
     canEdit: Boolean = true,
     onSelect: (String) -> Unit = {},
@@ -577,7 +574,7 @@ fun MakerCard(
     onDelete: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    val material = materialItem.material
+    val material = resourceItem.resource
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -587,7 +584,7 @@ fun MakerCard(
                 color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
                 shape = IndustrialShapes.medium
             )
-            .clickable { onSelect(material.materialId) },
+            .clickable { onSelect(material.resourceId) },
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = if (isSelected) 4.dp else 1.dp)
     ) {
@@ -601,7 +598,7 @@ fun MakerCard(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = materialItem.makerName,
+                        text = resourceItem.makerName,
                         color = MaterialTheme.colorScheme.onSurface,
                         fontWeight = FontWeight.Bold,
                         style = MaterialTheme.typography.bodyMedium,
@@ -611,7 +608,7 @@ fun MakerCard(
                     
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
-                            text = "ID: ${material.materialId}",
+                            text = "ID: ${material.resourceId}",
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Bold
@@ -632,7 +629,7 @@ fun MakerCard(
                             style = MaterialTheme.typography.bodySmall
                         )
                         Text(
-                            text = materialItem.providerName ?: "---",
+                            text = resourceItem.providerName ?: "---",
                             color = MaterialTheme.colorScheme.secondary,
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Medium,
@@ -686,15 +683,15 @@ fun MakerCard(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditMaterialDialog(
-    material: Material,
+    material: Resource,
     providers: List<com.materials.features.provider.domain.model.Provider> = emptyList(),
     userEmail: String? = null,
     nextIndex: Int = 1,
     onDismiss: () -> Unit,
-    onConfirm: (Material) -> Unit
+    onConfirm: (Resource) -> Unit
 ) {
-    val isPriceCreation = material.historyId == null
-    val isPriceUpdate = material.historyId != null
+    val isPriceCreation = material.price == null
+    val isPriceUpdate = material.price != null
 
     val initialProvider = remember(material.providerId, providers) {
         providers.find { it.providerId == material.providerId }
@@ -714,12 +711,8 @@ fun EditMaterialDialog(
     var priceError by remember { mutableStateOf<String?>(null) }
     var providerError by remember { mutableStateOf<String?>(null) }
     
-    val quoteDate = remember(material.historyId) {
+    val quoteDate = remember(material.resourceId) {
         getCurrentDate() // Siempre usamos la fecha actual al guardar un precio
-    }
-    
-    val historyId = remember(material.historyId) {
-        if (isPriceCreation) randomUUID() else material.historyId
     }
 
     val dialogTitle = if (isPriceCreation) "Crear Precio" else "Actualizar Precio"
@@ -745,12 +738,7 @@ fun EditMaterialDialog(
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = "ID: ${material.materialId}",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Text(
-                            text = "Historial ID: $historyId",
+                            text = "ID: ${material.resourceId}",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -925,7 +913,6 @@ fun EditMaterialDialog(
                     } else {
                         onConfirm(
                             material.copy(
-                                historyId = historyId,
                                 providerId = if (isPriceCreation) finalProviderId else material.providerId,
                                 price = parsedPrice,
                                 quoteDate = quoteDate
@@ -950,9 +937,10 @@ fun EditMaterialDialog(
 fun CreateMaterialDialog(
     sectionId: String,
     makers: List<com.materials.features.maker.domain.model.Maker>,
+    existingMaterials: List<Resource> = emptyList(),
     nextIndex: Int,
     onDismiss: () -> Unit,
-    onConfirm: (Material) -> Unit
+    onConfirm: (Resource) -> Unit
 ) {
     var name by remember { mutableStateOf("") }
     var unit by remember { mutableStateOf("") }
@@ -964,7 +952,18 @@ fun CreateMaterialDialog(
     var unitError by remember { mutableStateOf<String?>(null) }
     var makerError by remember { mutableStateOf<String?>(null) }
 
-    val correlative = nextIndex.toString().padStart(3, '0')
+    val maxExistingIndex = remember(existingMaterials, sectionId) {
+        existingMaterials
+            .filter { it.sectionId == sectionId }
+            .mapNotNull { mat ->
+                val parts = mat.resourceId.split("-")
+                if (parts.size >= 2) parts[1].toIntOrNull() else null
+            }
+            .maxOrNull() ?: 0
+    }
+
+    val safeIndex = maxOf(nextIndex, maxExistingIndex + 1)
+    val correlative = safeIndex.toString().padStart(3, '0')
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -1108,14 +1107,21 @@ fun CreateMaterialDialog(
                     }
                     
                     if (!hasError) {
-                        val newMaterial = Material(
-                            materialId = "$sectionId-$correlative-$selectedMakerId",
+                        var currentCorrelative = safeIndex
+                        var generatedId = "$sectionId-${currentCorrelative.toString().padStart(3, '0')}-$selectedMakerId"
+
+                        while (existingMaterials.any { it.resourceId == generatedId }) {
+                            currentCorrelative++
+                            generatedId = "$sectionId-${currentCorrelative.toString().padStart(3, '0')}-$selectedMakerId"
+                        }
+
+                        val newMaterial = Resource(
+                            resourceId = generatedId,
                             name = trimmedName,
                             unit = trimmedUnit,
                             makerId = selectedMakerId!!,
                             sectionId = sectionId,
                             specId = null,
-                            historyId = null,
                             providerId = null,
                             price = null,
                             quoteDate = null
@@ -1281,15 +1287,15 @@ private fun ErrorState(message: String, onRetry: () -> Unit) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateMaterialForMakerDialog(
-    material: Material,
+    material: Resource,
     makers: List<Maker>,
-    existingMaterials: List<Material>,
+    existingMaterials: List<Resource>,
     onDismiss: () -> Unit,
-    onConfirm: (Material) -> Unit
+    onConfirm: (Resource) -> Unit
 ) {
     // Calculamos el ID base (Sección-Correlativo) eliminando el último segmento tras el guion
-    val baseId = remember(material.materialId) {
-        material.materialId.substringBeforeLast("-")
+    val baseId = remember(material.resourceId) {
+        material.resourceId.substringBeforeLast("-")
     }
     
     var makerSearchQuery by remember { mutableStateOf("") }
@@ -1397,16 +1403,15 @@ fun CreateMaterialForMakerDialog(
                     }
                     
                     val newId = "$baseId-$selectedMakerId"
-                    val alreadyExists = existingMaterials.any { it.materialId == newId }
+                    val alreadyExists = existingMaterials.any { it.resourceId == newId }
                     
                     if (alreadyExists) {
                         makerError = "Ya existe el material con el fabricante seleccionado"
                     } else {
                         onConfirm(
                             material.copy(
-                                materialId = newId,
+                                resourceId = newId,
                                 makerId = selectedMakerId!!,
-                                historyId = null,
                                 price = null,
                                 quoteDate = null
                             )
@@ -1428,7 +1433,7 @@ fun CreateMaterialForMakerDialog(
 
 @Composable
 fun DeleteMaterialDialog(
-    material: Material,
+    material: Resource,
     onDismiss: () -> Unit,
     onConfirm: () -> Unit
 ) {
@@ -1500,17 +1505,16 @@ fun DeleteMaterialDialog(
 fun MaterialScreenSuccessPreview() {
     IndustrialTheme {
         MaterialScreenContent(
-            uiState = MaterialUiState.Success(
+            uiState = ResourceUiState.Success(
                 listOf(
-                    MaterialItem(
-                        material = Material(
-                            materialId = "1",
+                    ResourceItem(
+                        resource = Resource(
+                            resourceId = "1",
                             name = "Tubo PVC Presión 1/2\"",
                             unit = "Barra",
                             makerId = "MAKER-01",
                             sectionId = "1",
                             specId = null,
-                            historyId = null,
                             providerId = null,
                             price = 12.5,
                             quoteDate = "12-06-2026"
@@ -1518,15 +1522,14 @@ fun MaterialScreenSuccessPreview() {
                         makerName = "Mexichem Amanco",
                         providerName = "Ferretería Central"
                     ),
-                    MaterialItem(
-                        material = Material(
-                            materialId = "2",
+                    ResourceItem(
+                        resource = Resource(
+                            resourceId = "2",
                             name = "Codo 90° PVC 1/2\"",
                             unit = "Unidad",
                             makerId = "MAKER-02",
                             sectionId = "1",
                             specId = null,
-                            historyId = null,
                             providerId = null,
                             price = 3.75,
                             quoteDate = "25-11-2026"
@@ -1547,7 +1550,7 @@ fun MaterialScreenSuccessPreview() {
 fun MaterialScreenLoadingPreview() {
     IndustrialTheme {
         MaterialScreenContent(
-            uiState = MaterialUiState.Loading,
+            uiState = ResourceUiState.Loading,
             searchQuery = "",
             onEvent = {}
         )
@@ -1559,7 +1562,7 @@ fun MaterialScreenLoadingPreview() {
 fun MaterialScreenErrorPreview() {
     IndustrialTheme {
         MaterialScreenContent(
-            uiState = MaterialUiState.Error("Error al cargar materiales"),
+            uiState = ResourceUiState.Error("Error al cargar materiales"),
             searchQuery = "",
             onEvent = {}
         )
@@ -1571,7 +1574,7 @@ fun MaterialScreenErrorPreview() {
 fun MaterialScreenEmptyPreview() {
     IndustrialTheme {
         MaterialScreenContent(
-            uiState = MaterialUiState.Success(emptyList()),
+            uiState = ResourceUiState.Success(emptyList()),
             searchQuery = "",
             onEvent = {}
         )

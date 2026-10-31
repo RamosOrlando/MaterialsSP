@@ -38,7 +38,7 @@ Tablas principales que conforman el núcleo de la aplicación.
 - `makerId` (Text, PK)
 - `name` (Text)
 
-#### Tabla: `Material`
+#### Tabla: `Resource`
 - `materialId` (Text, PK)
 - `name` (Text): Siguiendo convenciones `()` y `[]`.
 - `unit` (Text)

@@ -3,10 +3,8 @@ package com.materials.core.presentation.navigation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.materials.core.common.util.getCurrentIsoDate
-import com.materials.core.domain.util.Resource
+import com.materials.core.domain.util.ResultState
 import com.materials.features.auth.domain.repository.AuthRepository
-import com.materials.features.user.domain.model.User
-import com.materials.features.user.domain.model.UserRole
 import com.materials.features.user.domain.repository.UserRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
@@ -71,8 +69,8 @@ class MainViewModel(
                     userRepository.getSubscriptionHistoryFlow(userId),
                     userRepository.getActivePlansFlow()
                 ) { userRes, rolesRes, subsRes, plansRes ->
-                    if (userRes is Resource.Success && rolesRes is Resource.Success && 
-                        subsRes is Resource.Success && plansRes is Resource.Success) {
+                    if (userRes is ResultState.Success && rolesRes is ResultState.Success &&
+                        subsRes is ResultState.Success && plansRes is ResultState.Success) {
                         
                         val user = userRes.data
                         val roles = rolesRes.data

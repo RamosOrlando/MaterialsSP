@@ -24,9 +24,9 @@ import com.materials.core.presentation.navigation.components.CatalogDetailPlaceh
 import com.materials.features.category.presentation.CategoryScreen
 import com.materials.features.section.presentation.SectionScreen
 import com.materials.features.maker.presentation.MakerScreen
-import com.materials.features.material.presentation.MaterialScreen
-import com.materials.features.material.presentation.MaterialsSelectedScreen
-import com.materials.features.material.presentation.PrintPreviewScreen
+import com.materials.features.resource.presentation.ResourceScreen
+import com.materials.features.resource.presentation.ResourcesSelectedScreen
+import com.materials.features.resource.presentation.PrintPreviewScreen
 import com.materials.features.price_history.presentation.PriceHistoryScreen
 import com.materials.features.provider.presentation.ProviderScreen
 import org.koin.compose.viewmodel.koinViewModel
@@ -319,7 +319,7 @@ fun MainScreenContent(
                 ) { key ->
                     NavEntry(key) {
                         when (key) {
-                            Screen.Category, is Screen.Section, is Screen.Material -> {
+                            Screen.Category, is Screen.Section, is Screen.Resource -> {
                                 CatalogPane(
                                     screen = key,
                                     shouldUseDualPane = shouldUseRail,
@@ -329,15 +329,15 @@ fun MainScreenContent(
                                     onLogout = onLogout
                                 )
                             }
-                            is Screen.MaterialsSelected -> MaterialsSelectedScreen(
-                                materialIds = key.materialIds,
+                            is Screen.ResourcesSelected -> ResourcesSelectedScreen(
+                                resourcesIds = key.resourceIds,
                                 onBackClick = { backstack.removeLast() },
                                 onPrintPreview = { ids, quantities ->
                                     backstack.add(Screen.PrintPreview(ids, quantities))
                                 }
                             )
                             is Screen.PrintPreview -> PrintPreviewScreen(
-                                materialIds = key.materialIds,
+                                resourceIds = key.resourceIds,
                                 quantities = key.quantities,
                                 onBackClick = { backstack.removeLast() }
                             )
@@ -400,7 +400,7 @@ private fun CatalogPane(
                     onLogout = onLogout,
                     selectedCategoryId = when (screen) {
                         is Screen.Section -> screen.categoryId
-                        is Screen.Material -> screen.categoryId
+                        is Screen.Resource -> screen.categoryId
                         else -> null
                     },
                     columns = 1
@@ -413,18 +413,18 @@ private fun CatalogPane(
                     is Screen.Section -> SectionScreen(
                         categoryId = screen.categoryId,
                         onSectionClick = { sectionId, sectionName ->
-                            backstack.add(element = Screen.Material(sectionId, sectionName, screen.categoryId))
+                            backstack.add(element = Screen.Resource(sectionId, sectionName, screen.categoryId))
                         },
                         onBackClick = { backstack.removeAt(backstack.size - 1) }
                     )
-                    is Screen.Material -> MaterialScreen(
+                    is Screen.Resource -> ResourceScreen(
                         sectionId = screen.sectionId,
                         sectionName = screen.sectionName,
                         userRole = userRole,
                         quoteModeEnabled = quoteModeEnabled,
                         onBackClick = { backstack.removeAt(backstack.size - 1) },
-                        onMaterialsSelected = { ids ->
-                            backstack.add(element = Screen.MaterialsSelected(ids))
+                        onResourcesSelected = { ids ->
+                            backstack.add(element = Screen.ResourcesSelected(ids))
                         }
                     )
                     else -> {
@@ -443,18 +443,18 @@ private fun CatalogPane(
             is Screen.Section -> SectionScreen(
                 categoryId = screen.categoryId,
                 onSectionClick = { sectionId, sectionName -> 
-                    backstack.add(Screen.Material(sectionId, sectionName, screen.categoryId)) 
+                    backstack.add(Screen.Resource(sectionId, sectionName, screen.categoryId))
                 },
                 onBackClick = { backstack.removeLast() }
             )
-            is Screen.Material -> MaterialScreen(
+            is Screen.Resource -> ResourceScreen(
                 sectionId = screen.sectionId,
                 sectionName = screen.sectionName,
                 userRole = userRole,
                 quoteModeEnabled = quoteModeEnabled,
                 onBackClick = { backstack.removeLast() },
-                onMaterialsSelected = { ids ->
-                    backstack.add(element = Screen.MaterialsSelected(ids))
+                onResourcesSelected = { ids ->
+                    backstack.add(element = Screen.ResourcesSelected(ids))
                 }
             )
             else -> {
@@ -473,7 +473,7 @@ private data class NavigationItem(
 
 private fun isNavItemSelected(currentScreen: Screen, targetScreen: Screen): Boolean {
     return when (targetScreen) {
-        is Screen.Category -> currentScreen is Screen.Category || currentScreen is Screen.Section || currentScreen is Screen.Material
+        is Screen.Category -> currentScreen is Screen.Category || currentScreen is Screen.Section || currentScreen is Screen.Resource
         is Screen.Maker -> currentScreen is Screen.Maker
         is Screen.Provider -> currentScreen is Screen.Provider
         is Screen.PriceHistory -> currentScreen is Screen.PriceHistory
@@ -483,7 +483,7 @@ private fun isNavItemSelected(currentScreen: Screen, targetScreen: Screen): Bool
 
 private fun handleNavClick(targetScreen: Screen, currentScreen: Screen, backstack: MutableList<Screen>) {
     val isSelected = isNavItemSelected(currentScreen, targetScreen)
-    if (!isSelected || (targetScreen is Screen.Category && (currentScreen is Screen.Section || currentScreen is Screen.Material))) {
+    if (!isSelected || (targetScreen is Screen.Category && (currentScreen is Screen.Section || currentScreen is Screen.Resource))) {
         backstack.clear()
         backstack.add(targetScreen)
     }

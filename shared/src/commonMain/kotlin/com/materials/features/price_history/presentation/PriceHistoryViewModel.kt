@@ -2,9 +2,9 @@ package com.materials.features.price_history.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.materials.core.domain.util.Resource
-import com.materials.features.material.domain.model.MaterialWithPrices
-import com.materials.features.material.domain.repository.MaterialRepository
+import com.materials.core.domain.util.ResultState
+import com.materials.features.resource.domain.model.ResourceWithPrices
+import com.materials.features.resource.domain.repository.ResourceRepository
 import com.materials.features.price_history.domain.use_case.GetPriceHistoryUseCase
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -12,7 +12,7 @@ import kotlin.time.Duration.Companion.milliseconds
 
 sealed interface PriceHistoryUiState {
     object Loading : PriceHistoryUiState
-    data class Success(val history: List<MaterialWithPrices>) : PriceHistoryUiState
+    data class Success(val history: List<ResourceWithPrices>) : PriceHistoryUiState
     data class Error(val message: String) : PriceHistoryUiState
 }
 
@@ -23,7 +23,7 @@ sealed interface PriceHistoryEvent {
 
 class PriceHistoryViewModel(
     private val getPriceHistoryUseCase: GetPriceHistoryUseCase,
-    private val repository: MaterialRepository
+    private val repository: ResourceRepository
 ) : ViewModel() {
 
     private val _searchQuery = MutableStateFlow("")
@@ -42,9 +42,9 @@ class PriceHistoryViewModel(
         }
         .map { resource ->
             when (resource) {
-                is Resource.Loading -> PriceHistoryUiState.Loading
-                is Resource.Error -> PriceHistoryUiState.Error(resource.message)
-                is Resource.Success<List<MaterialWithPrices>> -> PriceHistoryUiState.Success(resource.data)
+                is ResultState.Loading -> PriceHistoryUiState.Loading
+                is ResultState.Error -> PriceHistoryUiState.Error(resource.message)
+                is ResultState.Success<List<ResourceWithPrices>> -> PriceHistoryUiState.Success(resource.data)
             }
         }.stateIn(
             scope = viewModelScope,
@@ -65,8 +65,8 @@ class PriceHistoryViewModel(
                 viewModelScope.launch {
                     _isRefreshing.value = true
                     _refreshError.value = null
-                    val result = repository.refreshMaterials()
-                    if (result is Resource.Error) {
+                    val result = repository.refreshResources()
+                    if (result is ResultState.Error) {
                         _refreshError.value = result.message
                     }
                     _isRefreshing.value = false

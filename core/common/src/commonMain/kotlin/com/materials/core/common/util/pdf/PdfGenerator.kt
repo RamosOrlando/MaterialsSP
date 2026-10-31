@@ -1,10 +1,10 @@
 package com.materials.core.common.util.pdf
 
-import com.materials.core.common.domain.model.Material
+import com.materials.core.common.domain.model.Resource
 
 interface PdfGenerator {
-    fun generateMaterialsPdf(
-        materials: List<Material>,
+    fun generateResourcesPdf(
+        resources: List<Resource>,
         quantities: Map<String, Double> = emptyMap(),
         title: String = "Listado de Materiales Seleccionados"
     ): String?

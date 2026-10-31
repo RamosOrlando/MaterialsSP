@@ -23,9 +23,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.materials.core.presentation.theme.*
-import com.materials.features.material.domain.model.MaterialWithPrices
-import com.materials.features.material.domain.model.PriceWithProvider
-import com.materials.core.common.domain.model.Material
+import com.materials.features.resource.domain.model.ResourceWithPrices
+import com.materials.features.resource.domain.model.PriceWithProvider
+import com.materials.core.common.domain.model.Resource
 import com.materials.features.maker.domain.model.Maker
 import com.materials.features.provider.domain.model.Provider
 import com.materials.features.price_history.domain.model.PriceHistory
@@ -143,8 +143,8 @@ fun PriceHistoryScreenContent(
                             verticalArrangement = Arrangement.spacedBy(12.dp),
                             modifier = Modifier.fillMaxSize()
                         ) {
-                            items(state.history, key = { it.material.materialId }) { materialWithPrices ->
-                                PriceHistoryItem(materialWithPrices = materialWithPrices)
+                            items(state.history, key = { it.resource.resourceId }) { materialWithPrices ->
+                                PriceHistoryItem(resourceWithPrices = materialWithPrices)
                             }
                         }
                     }
@@ -223,11 +223,11 @@ fun PriceHistorySearchBar(
 
 @Composable
 fun PriceHistoryItem(
-    materialWithPrices: MaterialWithPrices,
+    resourceWithPrices: ResourceWithPrices,
     modifier: Modifier = Modifier
 ) {
-    val pricesByProvider = remember(materialWithPrices) {
-        materialWithPrices.prices
+    val pricesByProvider = remember(resourceWithPrices) {
+        resourceWithPrices.prices
             .groupBy { it.provider?.providerId }
             .values
             .map { quotes ->
@@ -248,7 +248,7 @@ fun PriceHistoryItem(
             modifier = Modifier.padding(16.dp)
         ) {
             Text(
-                text = materialWithPrices.material.name,
+                text = resourceWithPrices.resource.name,
                 color = MaterialTheme.colorScheme.onSurface,
                 fontWeight = FontWeight.Bold,
                 style = MaterialTheme.typography.titleMedium,
@@ -256,7 +256,7 @@ fun PriceHistoryItem(
                 overflow = TextOverflow.Ellipsis
             )
 
-            materialWithPrices.maker.let { maker ->
+            resourceWithPrices.maker.let { maker ->
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = maker.name,
@@ -369,15 +369,14 @@ fun PriceHistoryScreenSuccessPreview() {
         PriceHistoryScreenContent(
             uiState = PriceHistoryUiState.Success(
                 listOf(
-                    MaterialWithPrices(
-                        material = Material(
-                            materialId = "1",
+                    ResourceWithPrices(
+                        resource = Resource(
+                            resourceId = "1",
                             name = "Cemento Holcim Fuerte",
                             unit = "Bulto 50kg",
                             makerId = "MAKER-1",
                             sectionId = "1",
                             specId = null,
-                            historyId = null,
                             providerId = null,
                             quoteDate = "2024-05-16"
                         ),

@@ -1,10 +1,10 @@
-package com.materials.features.material.presentation
+package com.materials.features.resource.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.materials.core.domain.util.Resource
-import com.materials.core.common.domain.model.Material
-import com.materials.features.material.domain.use_case.GetMaterialsUseCase
+import com.materials.core.domain.util.ResultState
+import com.materials.core.common.domain.model.Resource
+import com.materials.features.resource.domain.use_case.GetResourcesUseCase
 import com.materials.features.maker.domain.use_case.GetMakersUseCase
 import com.materials.features.price_history.domain.repository.PriceHistoryRepository
 import com.materials.features.auth.domain.repository.AuthRepository
@@ -18,43 +18,42 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
 
-data class MaterialItem(
-    val material: Material,
+data class ResourceItem(
+    val resource: Resource,
     val makerName: String,
     val providerName: String? = null
 )
 
-sealed interface MaterialUiState {
-    object Loading : MaterialUiState
+sealed interface ResourceUiState {
+    object Loading : ResourceUiState
     data class Success(
-        val materials: List<MaterialItem>,
+        val resources: List<ResourceItem>,
         val providers: List<com.materials.features.provider.domain.model.Provider> = emptyList(),
         val makers: List<com.materials.features.maker.domain.model.Maker> = emptyList(),
         val errorMessage: String? = null
-    ) : MaterialUiState
-    data class Error(val message: String) : MaterialUiState
+    ) : ResourceUiState
+    data class Error(val message: String) : ResourceUiState
 }
 
-sealed interface MaterialEvent {
-    data class OnSearchQueryChanged(val query: String) : MaterialEvent
-    data class SetSection(val sectionId: String?) : MaterialEvent
-    data class ToggleMaterialSelection(val materialId: String) : MaterialEvent
-    data class UpdateMaterial(val material: Material) : MaterialEvent
-    data class CreateMaterial(val material: Material) : MaterialEvent
-    data class DeleteMaterial(val materialId: String) : MaterialEvent
-    data class BulkUpdateMaterials(val updatedMaterials: List<Material>) : MaterialEvent
-    object ClearError : MaterialEvent
-    object ClearSelection : MaterialEvent
-    object Refresh : MaterialEvent
+sealed interface ResourceEvent {
+    data class OnSearchQueryChanged(val query: String) : ResourceEvent
+    data class SetSection(val sectionId: String?) : ResourceEvent
+    data class ToggleResourceSelection(val materialId: String) : ResourceEvent
+    data class UpdateResource(val material: Resource) : ResourceEvent
+    data class CreateResource(val material: Resource) : ResourceEvent
+    data class DeleteResource(val materialId: String) : ResourceEvent
+    data class BulkUpdateMaterials(val updatedMaterials: List<Resource>) : ResourceEvent
+    object ClearError : ResourceEvent
+    object ClearSelection : ResourceEvent
+    object Refresh : ResourceEvent
 }
 
-class MaterialViewModel(
-    private val getMaterialsUseCase: GetMaterialsUseCase,
+class ResourceViewModel(
+    private val getResourcesUseCase: GetResourcesUseCase,
     private val getMakersUseCase: GetMakersUseCase,
     private val getProvidersUseCase: com.materials.features.provider.domain.use_case.GetProvidersUseCase,
     private val priceHistoryRepository: PriceHistoryRepository,
@@ -72,7 +71,7 @@ class MaterialViewModel(
     @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
     val nextIndex: StateFlow<Int> = _sectionId
         .flatMapLatest { id ->
-            if (id != null) getMaterialsUseCase.getNextIndexFlow(id)
+            if (id != null) getResourcesUseCase.getNextIndexFlow(id)
             else emptyFlow()
         }
         .stateIn(
@@ -89,92 +88,94 @@ class MaterialViewModel(
     val userEmail: String? = authRepository.getCurrentUserEmail()
 
     @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class, kotlinx.coroutines.FlowPreview::class)
-    val uiState: StateFlow<MaterialUiState> = combine(
+    val uiState: StateFlow<ResourceUiState> = combine(
         combine(_searchQuery, _sectionId) { query, sectionId ->
             query to sectionId
         }.debounce(300.milliseconds)
             .flatMapLatest { (query, sectionId) ->
-                getMaterialsUseCase.executeFlow(query, sectionId)
+                getResourcesUseCase.executeFlow(query, sectionId)
             },
         getMakersUseCase.executeFlow(""),
         getProvidersUseCase.executeFlow(""),
         _refreshError
     ) { materialsResource, makersResource, providersResource, refreshError ->
         when {
-            materialsResource is Resource.Loading || makersResource is Resource.Loading || providersResource is Resource.Loading -> MaterialUiState.Loading
-            materialsResource is Resource.Error -> MaterialUiState.Error(materialsResource.message)
-            makersResource is Resource.Error -> MaterialUiState.Error(makersResource.message)
-            providersResource is Resource.Error -> MaterialUiState.Error(providersResource.message)
-            materialsResource is Resource.Success && makersResource is Resource.Success && providersResource is Resource.Success -> {
+            materialsResource is ResultState.Loading || makersResource is ResultState.Loading || providersResource is ResultState.Loading -> ResourceUiState.Loading
+            materialsResource is ResultState.Error -> ResourceUiState.Error(materialsResource.message)
+            makersResource is ResultState.Error -> ResourceUiState.Error(makersResource.message)
+            providersResource is ResultState.Error -> ResourceUiState.Error(providersResource.message)
+            materialsResource is ResultState.Success && makersResource is ResultState.Success && providersResource is ResultState.Success -> {
                 val makersMap = makersResource.data.associateBy { it.makerId }
                 val providersMap = providersResource.data.associateBy { it.providerId }
-                val materialItems = materialsResource.data.map { material ->
-                    MaterialItem(
-                        material = material,
+                val resourceItems = materialsResource.data.map { material ->
+                    ResourceItem(
+                        resource = material,
                         makerName = makersMap[material.makerId]?.name ?: "Desconocido",
                         providerName = providersMap[material.providerId]?.name
                     )
                 }
-                MaterialUiState.Success(
-                    materials = materialItems, 
+                ResourceUiState.Success(
+                    resources = resourceItems,
                     providers = providersResource.data,
                     makers = makersResource.data,
                     errorMessage = refreshError
                 )
             }
-            else -> MaterialUiState.Loading
+            else -> ResourceUiState.Loading
         }
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
-        initialValue = MaterialUiState.Loading
+        initialValue = ResourceUiState.Loading
     )
 
-    fun onEvent(event: MaterialEvent) {
+    fun onEvent(event: ResourceEvent) {
         when (event) {
-            is MaterialEvent.OnSearchQueryChanged -> {
+            is ResourceEvent.OnSearchQueryChanged -> {
                 _searchQuery.value = event.query
             }
-            is MaterialEvent.SetSection -> {
+            is ResourceEvent.SetSection -> {
                 _sectionId.value = event.sectionId
             }
-            is MaterialEvent.ToggleMaterialSelection -> {
+            is ResourceEvent.ToggleResourceSelection -> {
                 _selectedMaterialIds.value = _selectedMaterialIds.value.let { current ->
                     if (current.contains(event.materialId)) current - event.materialId
                     else current + event.materialId
                 }
             }
-            MaterialEvent.ClearSelection -> {
+            ResourceEvent.ClearSelection -> {
                 _selectedMaterialIds.value = emptySet()
             }
-            MaterialEvent.ClearError -> {
+            ResourceEvent.ClearError -> {
                 _refreshError.value = null
             }
-            is MaterialEvent.UpdateMaterial -> {
+            is ResourceEvent.UpdateResource -> {
                 viewModelScope.launch {
                     _isRefreshing.value = true
                     _refreshError.value = null
                     
                     try {
-                        // 1. Primero intentamos guardar en el historial
-                        event.material.historyId?.let { hId ->
+                        val matPrice = event.material.price
+                        val matProviderId = event.material.providerId
+                        // 1. Primero intentamos guardar en el historial si hay precio y proveedor
+                        if (matPrice != null && matProviderId != null) {
                             val historyEntry = PriceHistory(
-                                historyId = hId,
-                                materialId = event.material.materialId,
-                                providerId = event.material.providerId ?: "PROV-DEFAULT",
-                                price = event.material.price ?: 0.0,
+                                historyId = com.materials.core.common.util.randomUUID(),
+                                materialId = event.material.resourceId,
+                                providerId = matProviderId,
+                                price = matPrice,
                                 quoteDate = event.material.quoteDate ?: getCurrentDate(),
                                 username = authRepository.getCurrentUserEmail() ?: "anon"
                             )
                             val historyResult = priceHistoryRepository.upsertPriceHistory(historyEntry)
-                            if (historyResult is Resource.Error) {
+                            if (historyResult is ResultState.Error) {
                                 throw Exception(historyResult.message)
                             }
                         }
 
                         // 2. Si el historial se guardó bien, actualizamos el material
-                        val materialResult = getMaterialsUseCase.updateMaterial(event.material)
-                        if (materialResult is Resource.Error) {
+                        val materialResult = getResourcesUseCase.updateResource(event.material)
+                        if (materialResult is ResultState.Error) {
                             throw Exception(materialResult.message)
                         }
                     } catch (e: Exception) {
@@ -184,49 +185,51 @@ class MaterialViewModel(
                     }
                 }
             }
-            is MaterialEvent.CreateMaterial -> {
+            is ResourceEvent.CreateResource -> {
                 viewModelScope.launch {
                     _isRefreshing.value = true
                     _refreshError.value = null
-                    val result = getMaterialsUseCase.updateMaterial(event.material)
-                    if (result is Resource.Error) {
+                    val result = getResourcesUseCase.updateResource(event.material)
+                    if (result is ResultState.Error) {
                         _refreshError.value = result.message
                     }
                     _isRefreshing.value = false
                 }
             }
-            is MaterialEvent.DeleteMaterial -> {
+            is ResourceEvent.DeleteResource -> {
                 viewModelScope.launch {
                     _isRefreshing.value = true
                     _refreshError.value = null
-                    val result = getMaterialsUseCase.deleteMaterial(event.materialId)
-                    if (result is Resource.Error) {
+                    val result = getResourcesUseCase.deleteResource(event.materialId)
+                    if (result is ResultState.Error) {
                         _refreshError.value = result.message
                     }
                     _isRefreshing.value = false
                 }
             }
-            is MaterialEvent.BulkUpdateMaterials -> {
+            is ResourceEvent.BulkUpdateMaterials -> {
                 viewModelScope.launch {
                     _isRefreshing.value = true
                     _refreshError.value = null
                     
                     for (material in event.updatedMaterials) {
-                        val result = getMaterialsUseCase.updateMaterial(material)
-                        if (result is Resource.Error) {
+                        val result = getResourcesUseCase.updateResource(material)
+                        if (result is ResultState.Error) {
                             _refreshError.value = result.message
                         } else {
-                            material.historyId?.let { hId ->
+                            val matPrice = material.price
+                            val matProviderId = material.providerId
+                            if (matPrice != null && matProviderId != null) {
                                 val historyEntry = PriceHistory(
-                                    historyId = hId,
-                                    materialId = material.materialId,
-                                    providerId = material.providerId ?: "PROV-DEFAULT",
-                                    price = material.price ?: 0.0,
+                                    historyId = com.materials.core.common.util.randomUUID(),
+                                    materialId = material.resourceId,
+                                    providerId = matProviderId,
+                                    price = matPrice,
                                     quoteDate = material.quoteDate?.ifBlank { null } ?: getCurrentDate(),
                                     username = authRepository.getCurrentUserEmail() ?: "anon"
                                 )
                                 val historyResult = priceHistoryRepository.upsertPriceHistory(historyEntry)
-                                if (historyResult is Resource.Error) {
+                                if (historyResult is ResultState.Error) {
                                     _refreshError.value = historyResult.message
                                 }
                             }
@@ -236,12 +239,12 @@ class MaterialViewModel(
                     _isRefreshing.value = false
                 }
             }
-            MaterialEvent.Refresh -> {
+            ResourceEvent.Refresh -> {
                 viewModelScope.launch {
                     _isRefreshing.value = true
                     _refreshError.value = null
-                    val result = getMaterialsUseCase.refresh()
-                    if (result is Resource.Error) {
+                    val result = getResourcesUseCase.refresh()
+                    if (result is ResultState.Error) {
                         _refreshError.value = result.message
                     }
                     _isRefreshing.value = false

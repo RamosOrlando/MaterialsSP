@@ -1,6 +1,6 @@
 package com.materials.features.provider.data.repository
 
-import com.materials.core.domain.util.Resource
+import com.materials.core.domain.util.ResultState
 import com.materials.core.database.provider.ProviderDao
 import com.materials.features.provider.data.mapper.toDomain
 import com.materials.features.provider.data.mapper.toEntity
@@ -21,29 +21,29 @@ class ProviderRepositoryImpl(
     private val remoteDataSource: ProviderRemoteDataSource
 ) : ProviderRepository {
 
-    override suspend fun refreshProviders(): Resource<Unit> = withContext(Dispatchers.IO) {
+    override suspend fun refreshProviders(): ResultState<Unit> = withContext(Dispatchers.IO) {
         try {
             println("Starting refreshProviders...")
             val remoteProviders = remoteDataSource.getProviders()
             println("Fetched ${remoteProviders.size} providers")
             providerDao.insertProviders(remoteProviders.map { it.toEntity() })
             println("refreshProviders finished successfully")
-            Resource.Success(Unit)
+            ResultState.Success(Unit)
         } catch (e: Exception) {
             println("Error refreshing providers: ${e.message}")
             e.printStackTrace()
-            Resource.Error(e.message ?: "Unknown error")
+            ResultState.Error(e.message ?: "Unknown error")
         }
     }
 
-    override fun getProvidersFlow(): Flow<Resource<List<Provider>>> {
+    override fun getProvidersFlow(): Flow<ResultState<List<Provider>>> {
         return providerDao.getProviders()
             .map { entities ->
                 val domainProviders = entities.map { it.toDomain() }
-                Resource.Success(domainProviders) as Resource<List<Provider>>
+                ResultState.Success(domainProviders) as ResultState<List<Provider>>
             }
-            .onStart { emit(Resource.Loading) }
-            .catch { e -> emit(Resource.Error(e.message ?: "Unknown error")) }
+            .onStart { emit(ResultState.Loading) }
+            .catch { e -> emit(ResultState.Error(e.message ?: "Unknown error")) }
     }
 
     override fun listenToRealtimeChanges(): Flow<Unit> = flow {
@@ -53,13 +53,13 @@ class ProviderRepositoryImpl(
         }
     }
 
-    override suspend fun saveProvider(provider: Provider): Resource<Unit> = withContext(Dispatchers.IO) {
+    override suspend fun saveProvider(provider: Provider): ResultState<Unit> = withContext(Dispatchers.IO) {
         try {
             remoteDataSource.saveProvider(provider)
             providerDao.insertProviders(listOf(provider.toEntity()))
-            Resource.Success(Unit)
+            ResultState.Success(Unit)
         } catch (e: Exception) {
-            Resource.Error(e.message ?: "Unknown error")
+            ResultState.Error(e.message ?: "Unknown error")
         }
     }
 }

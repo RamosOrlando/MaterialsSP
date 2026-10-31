@@ -8,7 +8,7 @@ import android.graphics.Typeface
 import android.graphics.pdf.PdfDocument
 import android.os.Environment
 import android.widget.Toast
-import com.materials.core.common.domain.model.Material
+import com.materials.core.common.domain.model.Resource
 import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
@@ -17,8 +17,8 @@ import java.util.Locale
 
 class AndroidPdfGenerator(private val context: Context) : PdfGenerator {
 
-    override fun generateMaterialsPdf(
-        materials: List<Material>,
+    override fun generateResourcesPdf(
+        resources: List<Resource>,
         quantities: Map<String, Double>,
         title: String
     ): String? {
@@ -65,7 +65,7 @@ class AndroidPdfGenerator(private val context: Context) : PdfGenerator {
         paint.color = Color.DKGRAY
         val dateStr = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(Date())
         canvas.drawText("Generado el: $dateStr", margin, currentY, paint)
-        canvas.drawText("Total materiales: ${materials.size}", margin + 400f, currentY, paint)
+        canvas.drawText("Total materiales: ${resources.size}", margin + 400f, currentY, paint)
         
         currentY += 40f
         
@@ -91,7 +91,7 @@ class AndroidPdfGenerator(private val context: Context) : PdfGenerator {
         
         var grandTotal = 0.0
         
-        for (material in materials) {
+        for (material in resources) {
             // Check for new page
             if (currentY > pageHeight - margin - 40f) {
                 pdfDocument.finishPage(page)
@@ -115,8 +115,8 @@ class AndroidPdfGenerator(private val context: Context) : PdfGenerator {
                 paint.typeface = Typeface.create(Typeface.SANS_SERIF, Typeface.NORMAL)
             }
             
-            val unit = material.unit ?: "---"
-            val quantity = quantities[material.materialId] ?: 1.0
+            val unit = material.unit
+            val quantity = quantities[material.resourceId] ?: 1.0
             val price = material.price ?: 0.0
             val rowTotal = quantity * price
             grandTotal += rowTotal
@@ -125,7 +125,7 @@ class AndroidPdfGenerator(private val context: Context) : PdfGenerator {
             val totalStr = "$${String.format("%.2f", rowTotal)}"
             
             // Alternating row background
-            if (materials.indexOf(material) % 2 != 0) {
+            if (resources.indexOf(material) % 2 != 0) {
                 paint.color = Color.parseColor("#FAFAFA")
                 canvas.drawRect(margin, currentY - 12f, pageWidth - margin, currentY + 5f, paint)
             }

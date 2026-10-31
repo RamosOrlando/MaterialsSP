@@ -3,7 +3,7 @@ package com.materials.core.domain
 import com.materials.features.category.domain.repository.CategoryRepository
 import com.materials.features.section.domain.repository.SectionRepository
 import com.materials.features.maker.domain.repository.MakerRepository
-import com.materials.features.material.domain.repository.MaterialRepository
+import com.materials.features.resource.domain.repository.ResourceRepository
 import com.materials.features.price_history.domain.repository.PriceHistoryRepository
 import com.materials.features.provider.domain.repository.ProviderRepository
 import com.materials.core.domain.use_case.PerformFullSyncUseCase
@@ -17,7 +17,7 @@ class RealtimeSyncManager(
     private val categoryRepository: CategoryRepository,
     private val sectionRepository: SectionRepository,
     private val makerRepository: MakerRepository,
-    private val materialRepository: MaterialRepository,
+    private val resourceRepository: ResourceRepository,
     private val providerRepository: ProviderRepository,
     private val priceHistoryRepository: PriceHistoryRepository,
     private val performFullSyncUseCase: PerformFullSyncUseCase
@@ -34,7 +34,7 @@ class RealtimeSyncManager(
             categoryRepository.listenToRealtimeChanges().launchIn(this)
             sectionRepository.listenToRealtimeChanges().launchIn(this)
             makerRepository.listenToRealtimeChanges().launchIn(this)
-            materialRepository.listenToRealtimeChanges().launchIn(this)
+            resourceRepository.listenToRealtimeChanges().launchIn(this)
             providerRepository.listenToRealtimeChanges().launchIn(this)
             priceHistoryRepository.listenToRealtimeChanges().launchIn(this)
         }

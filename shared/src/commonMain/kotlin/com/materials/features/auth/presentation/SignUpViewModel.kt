@@ -2,7 +2,7 @@ package com.materials.features.auth.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.materials.core.domain.util.Resource
+import com.materials.core.domain.util.ResultState
 import com.materials.features.auth.domain.repository.AuthRepository
 import com.materials.features.auth.domain.util.AuthErrorMapper
 import com.materials.features.user.domain.model.User
@@ -92,7 +92,7 @@ class SignUpViewModel(
         // Observar Roles
         userRepository.getRolesFlow()
             .onEach { res ->
-                if (res is Resource.Success<List<UserRole>>) {
+                if (res is ResultState.Success<List<UserRole>>) {
                     _uiState.update { state ->
                         val roles = res.data
                         val defaultRoleId = if (state.roleId == null) {
@@ -106,7 +106,7 @@ class SignUpViewModel(
         // Observar Profesiones
         userRepository.getProfessionsFlow()
             .onEach { res ->
-                if (res is Resource.Success<List<UserProfession>>) {
+                if (res is ResultState.Success<List<UserProfession>>) {
                     _uiState.update { state ->
                         val professions = res.data
                         val defaultProfId = if (state.professionId == null) {
@@ -120,7 +120,7 @@ class SignUpViewModel(
         // Observar Planes Activos
         userRepository.getActivePlansFlow()
             .onEach { res ->
-                if (res is Resource.Success<List<UserPlan>>) {
+                if (res is ResultState.Success<List<UserPlan>>) {
                     _uiState.update { it.copy(activePlans = res.data) }
                 }
             }.launchIn(viewModelScope)
@@ -128,7 +128,7 @@ class SignUpViewModel(
         // Disparar sincronización desde el servidor
         viewModelScope.launch {
             val result = userRepository.refreshMetadata()
-            if (result is Resource.Error) {
+            if (result is ResultState.Error) {
                 _uiState.update { it.copy(error = "Error de sincronización: ${result.message}") }
             }
         }
@@ -277,20 +277,20 @@ class SignUpViewModel(
             // 0. Check if user already exists in public.User table
             val existingUserResult = userRepository.getUserByEmail(trimmedEmail)
             
-            if (existingUserResult is Resource.Success && existingUserResult.data != null) {
+            if (existingUserResult is ResultState.Success && existingUserResult.data != null) {
                 val existingUser = existingUserResult.data
                 val userId = existingUser.userId
                 
                 // Try to fetch subscription history for the existing user
                 userRepository.refreshSubscriptionHistory(userId)
                 val historyResult = userRepository.getSubscriptionHistoryFlow(userId)
-                    .filter { it !is Resource.Loading }
+                    .filter { it !is ResultState.Loading }
                     .first()
                 
                 var latestSub: SubscriptionHistory? = null
                 var planName: String? = null
                 
-                if (historyResult is Resource.Success && historyResult.data.isNotEmpty()) {
+                if (historyResult is ResultState.Success && historyResult.data.isNotEmpty()) {
                     latestSub = historyResult.data.maxByOrNull { it.startDate }
                     planName = state.activePlans.find { it.planId == latestSub?.planId }?.name
                 }
@@ -382,10 +382,10 @@ class SignUpViewModel(
             )
 
             val result = userRepository.saveSubscriptionHistory(history)
-            if (result is Resource.Success<*>) {
+            if (result is ResultState.Success<*>) {
                 _uiState.update { it.copy(isLoading = false, isSuccess = true) }
             } else {
-                _uiState.update { it.copy(isLoading = false, error = "Error al suscribirse: ${(result as Resource.Error).message}") }
+                _uiState.update { it.copy(isLoading = false, error = "Error al suscribirse: ${(result as ResultState.Error).message}") }
             }
         }
     }

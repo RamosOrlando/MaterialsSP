@@ -1,6 +1,6 @@
 package com.materials.features.section.data.repository
 
-import com.materials.core.domain.util.Resource
+import com.materials.core.domain.util.ResultState
 import com.materials.core.database.section.SectionDao
 import com.materials.features.section.data.mapper.toDomain
 import com.materials.features.section.data.mapper.toEntity
@@ -21,29 +21,29 @@ class SectionRepositoryImpl(
     private val remoteDataSource: SectionRemoteDataSource
 ) : SectionRepository {
 
-    override suspend fun refreshSections(): Resource<Unit> = withContext(Dispatchers.IO) {
+    override suspend fun refreshSections(): ResultState<Unit> = withContext(Dispatchers.IO) {
         try {
             println("Starting refreshSections...")
             val remoteSections = remoteDataSource.getSections()
             println("Fetched ${remoteSections.size} sections")
             sectionDao.insertSections(remoteSections.map { it.toEntity() })
             println("refreshSections finished successfully")
-            Resource.Success(Unit)
+            ResultState.Success(Unit)
         } catch (e: Exception) {
             println("Error refreshing sections: ${e.message}")
             e.printStackTrace()
-            Resource.Error(e.message ?: "Unknown error")
+            ResultState.Error(e.message ?: "Unknown error")
         }
     }
 
-    override fun getSectionsFlow(): Flow<Resource<List<Section>>> {
+    override fun getSectionsFlow(): Flow<ResultState<List<Section>>> {
         return sectionDao.getSections()
             .map { entities ->
                 val domainSections = entities.map { it.toDomain() }
-                Resource.Success(domainSections) as Resource<List<Section>>
+                ResultState.Success(domainSections) as ResultState<List<Section>>
             }
-            .onStart { emit(Resource.Loading) }
-            .catch { e -> emit(Resource.Error(e.message ?: "Unknown error")) }
+            .onStart { emit(ResultState.Loading) }
+            .catch { e -> emit(ResultState.Error(e.message ?: "Unknown error")) }
     }
 
     override fun listenToRealtimeChanges(): Flow<Unit> = flow {

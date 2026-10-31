@@ -2,7 +2,7 @@ package com.materials.features.section.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.materials.core.domain.util.Resource
+import com.materials.core.domain.util.ResultState
 import com.materials.features.section.domain.model.Section
 import com.materials.features.section.domain.use_case.GetSectionsUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -45,9 +45,9 @@ class SectionViewModel(
         getSectionsUseCase.executeFlow(query, categoryId)
     }.map { resource ->
         when (resource) {
-            is Resource.Loading -> SectionUiState.Loading
-            is Resource.Error -> SectionUiState.Error(resource.message)
-            is Resource.Success<List<Section>> -> SectionUiState.Success(resource.data)
+            is ResultState.Loading -> SectionUiState.Loading
+            is ResultState.Error -> SectionUiState.Error(resource.message)
+            is ResultState.Success<List<Section>> -> SectionUiState.Success(resource.data)
         }
     }.stateIn(
         scope = viewModelScope,
@@ -67,7 +67,7 @@ class SectionViewModel(
                 viewModelScope.launch {
                     _refreshError.value = null
                     val result = getSectionsUseCase.refresh()
-                    if (result is Resource.Error) {
+                    if (result is ResultState.Error) {
                         _refreshError.value = result.message
                     }
                 }
